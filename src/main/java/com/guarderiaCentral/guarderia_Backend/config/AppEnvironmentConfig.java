@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Getter
+//hola
 public class AppEnvironmentConfig {
 
     @Value("${app.jwt.secret}")
