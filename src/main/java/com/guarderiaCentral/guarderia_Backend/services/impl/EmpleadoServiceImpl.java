@@ -6,18 +6,17 @@ import com.guarderiaCentral.guarderia_Backend.dtos.ZonaResponseDTO;
 import com.guarderiaCentral.guarderia_Backend.exceptions.CodigoEmpleadoDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.ErrorNegocio;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
-import com.guarderiaCentral.guarderia_Backend.modelos.Empleado;
-import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
+import com.guarderiaCentral.guarderia_Backend.models.Empleado;
+import com.guarderiaCentral.guarderia_Backend.models.enums.Rol;
 import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.EmpleadoRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.VehiculoRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.dtos.EmpleadoRequestDTO;
-import com.guarderiaCentral.guarderia_Backend.services.EmpleadoService;
-
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -164,7 +163,7 @@ public class EmpleadoServiceImpl implements EmpleadoService {
                 .collect(Collectors.toList());
     }
 
-    // Método auxiliar para verificación de existencia y control de privacidad (ownership)
+    // Metodo auxiliar para verificación de existencia y control de privacidad (ownership)
     private Empleado obtenerYValidarAcceso(Long empleadoId, String usernameActual, boolean esAdmin) {
         Empleado emp = empleadoRepository.findById(empleadoId)
                 .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el empleado con ID: " + empleadoId));
