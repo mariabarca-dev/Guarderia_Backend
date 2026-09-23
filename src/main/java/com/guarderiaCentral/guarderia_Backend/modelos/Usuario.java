@@ -1,42 +1,54 @@
 package com.guarderiaCentral.guarderia_Backend.modelos;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
+import java.io.Serializable;
+
+/**
+ * Entidad base abstracta para todos los tipos de usuarios del sistema.
+ * Utiliza estrategia de herencia JOINED para Socio, Empleado y Administrador.
+ *
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
+ */
 @Entity
 @Table(name = "usuarios")
 @Inheritance(strategy = InheritanceType.JOINED)
-@DiscriminatorColumn(name = "tipo_usuario")
 @Data
 @NoArgsConstructor
-@SuperBuilder
-public abstract class Usuario {
+@AllArgsConstructor
+public abstract class Usuario implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private int id;
 
-    @Column(nullable = false, length = 80)
+    @Column(name = "nombre", nullable = false, length = 100)
     private String nombre;
 
-    @Column(nullable = false, length = 80)
+    @Column(name = "apellido", nullable = false, length = 100)
     private String apellido;
 
-    @Column(length = 150)
+    @Column(name = "direccion", length = 200)
     private String direccion;
 
-    @Column(length = 30)
+    @Column(name = "telefono", length = 50)
     private String telefono;
 
     @Column(name = "nombre_usuario", nullable = false, unique = true, length = 50)
     private String nombreUsuario;
 
-    @Column(nullable = false)
+    @Column(name = "clave", nullable = false)
     private String clave;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "rol", nullable = false, length = 30)
     private Rol rol;
+
+    @Column(name = "activo", nullable = false)
+    private Boolean activo = true;
 }

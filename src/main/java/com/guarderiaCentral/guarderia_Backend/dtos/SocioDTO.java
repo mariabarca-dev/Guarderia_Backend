@@ -6,19 +6,21 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.time.LocalDate;
+
 /**
- * DTO que representa a un Administrador del sistema para las transferencias de datos en la API REST.
- * Extiende de {@link UsuarioDTO} y no contiene lógica de negocio ni anotaciones JPA.
+ * DTO limpio y simple para la entidad Socio, heredando de UsuarioDTO.
+ * Respeta la estructura estricta de la cátedra (sin JPA, sin lógica de mapeo, utilizando Lombok).
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
- * @version 1.0
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public class AdministradorDTO extends UsuarioDTO {
+public class SocioDTO extends UsuarioDTO {
 
-
+    private String dni;
+    private LocalDate fechaIngreso;
 }

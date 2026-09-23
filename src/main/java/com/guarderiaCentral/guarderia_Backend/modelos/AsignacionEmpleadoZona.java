@@ -5,9 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Entidad asociativa que representa la relación N a N entre Empleado y Zona,
+ * incluyendo la cantidad de vehículos a cargo.
+ *
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
+ */
 @Entity
-@Table(name = "asignaciones_empleado_zona",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"empleado_id", "zona_id"}))
+@Table(name = "asignaciones_empleado_zona")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,16 +20,19 @@ public class AsignacionEmpleadoZona {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private int id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "empleado_id", nullable = false)
     private Empleado empleado;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "zona_id", nullable = false)
     private Zona zona;
 
     @Column(name = "cant_vehiculos_a_cargo", nullable = false)
     private int cantVehiculosACargo;
+
+    @Column(name = "activo", nullable = false)
+    private Boolean activo = true;
 }

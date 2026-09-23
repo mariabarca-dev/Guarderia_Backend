@@ -5,38 +5,47 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Entidad que representa un Vehículo registrado perteneciente a un Socio
+ * y gestionado/registrado por un Empleado responsable.
+ *
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
+ */
 @Entity
 @Table(name = "vehiculos")
 @Data
 @NoArgsConstructor
-
+@AllArgsConstructor
 public class Vehiculo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private int id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "socio_id", nullable = false)
     private Socio socio;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "empleado_id", nullable = false)
     private Empleado empleado;
 
-    @Column(length = 80)
+    @Column(name = "nombre", length = 100)
     private String nombre;
 
-    @Column(nullable = false, unique = true, length = 15)
+    @Column(name = "matricula", nullable = false, unique = true, length = 50)
     private String matricula;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "tipo", nullable = false, length = 30)
     private TipoVehiculo tipo;
 
-    @Column(nullable = false)
+    @Column(name = "profundidad", nullable = false)
     private float profundidad;
 
-    @Column(nullable = false)
+    @Column(name = "ancho", nullable = false)
     private float ancho;
+
+    @Column(name = "activo", nullable = false)
+    private Boolean activo = true;
 }
