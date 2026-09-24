@@ -12,4 +12,7 @@ public class AppEnvironmentConfig {
 
     @Value("${app.jwt.expiration-ms}")
     private long jwtExpirationMs;
+
+    @Value("${app.cors.allowed-origin}")
+    private String corsAllowedOrigin;
 }

@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.security;
 
+import com.guarderiaCentral.guarderia_Backend.config.AppEnvironmentConfig;
 import com.guarderiaCentral.guarderia_Backend.security.JwtAuthenticationFilter;
 import com.guarderiaCentral.guarderia_Backend.security.JwtProvider;
 import org.springframework.context.annotation.Bean;
@@ -20,9 +21,12 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
+    private final AppEnvironmentConfig appEnvironmentConfig;
 
-    public SecurityConfig(JwtProvider jwtProvider) {
+    // Inyectamos AppEnvironmentConfig en el constructor
+    public SecurityConfig(JwtProvider jwtProvider, AppEnvironmentConfig appEnvironmentConfig) {
         this.jwtProvider = jwtProvider;
+        this.appEnvironmentConfig = appEnvironmentConfig;
     }
 
     @Bean
@@ -43,7 +47,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:8081"));
+        // Usamos la variable que viene de la configuración externa
+        config.setAllowedOrigins(List.of(appEnvironmentConfig.getCorsAllowedOrigin()));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
