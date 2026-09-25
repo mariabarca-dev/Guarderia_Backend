@@ -3,10 +3,8 @@ package com.guarderiaCentral.guarderia_Backend.services.impl;
 import com.guarderiaCentral.guarderia_Backend.dtos.AdministradorResponseDTO;
 import com.guarderiaCentral.guarderia_Backend.modelos.Administrador;
 import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
-import com.guarderiaCentral.guarderia_Backend.repositories.AdministradorRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.dtos.AdministradorRequestDTO;
 import com.guarderiaCentral.guarderia_Backend.services.AdministradorService;
-import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
