@@ -34,7 +34,7 @@ public interface AsignacionVehiculoGarageRepository extends JpaRepository<Asigna
      * @return Optional con la asignación encontrada si está activa.
      */
     @Query("SELECT a FROM AsignacionVehiculoGarage a WHERE a.id = :id AND a.activo = true")
-    Optional<AsignacionVehiculoGarage> findActiveById(int id);
+    Optional<AsignacionVehiculoGarage> findActiveById(Integer id);
 
     /**
      * Método explícito para uso administrativo que devuelve todos los registros,

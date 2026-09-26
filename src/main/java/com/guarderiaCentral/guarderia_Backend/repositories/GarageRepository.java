@@ -33,7 +33,7 @@ public interface GarageRepository extends JpaRepository<Garage, Integer> {
      * @return Optional con el garage encontrado si está activo.
      */
     @Query("SELECT g FROM Garage g WHERE g.id = :id AND g.activo = true")
-    Optional<Garage> findActiveById(int id);
+    Optional<Garage> findActiveById(Integer id);
 
     /**
      * Método explícito para uso administrativo que devuelve todos los registros,

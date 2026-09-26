@@ -17,7 +17,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class SocioResponse {
 
-    private int id;
+    private Integer id;
     private String nombre;
     private String apellido;
     private String direccion;

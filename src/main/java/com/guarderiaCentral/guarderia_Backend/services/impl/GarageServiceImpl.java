@@ -106,7 +106,7 @@ public class GarageServiceImpl implements GarageService {
      */
     @Override
     @Transactional(readOnly = true)
-    public GarageResponse buscarPorId(int id) {
+    public GarageResponse buscarPorId(Integer id) {
         log.info("Buscando garage activo con ID: {}", id);
         Garage garage = obtenerGarageActivoPorId(id);
         return garageRepository.fromEntity(garage);
@@ -117,7 +117,7 @@ public class GarageServiceImpl implements GarageService {
      */
     @Override
     @Transactional
-    public GarageResponse actualizarGarage(int id, GarageUpdate update) {
+    public GarageResponse actualizarGarage(Integer id, GarageUpdate update) {
         log.info("Iniciando actualización del garage ID: {}", id);
         Garage garage = obtenerGarageActivoPorId(id);
 
@@ -157,7 +157,7 @@ public class GarageServiceImpl implements GarageService {
      */
     @Override
     @Transactional
-    public void eliminarGarage(int id) {
+    public void eliminarGarage(Integer id) {
         log.info("Iniciando borrado lógico para el garage ID: {}", id);
         Garage garage = obtenerGarageActivoPorId(id);
 
@@ -220,7 +220,7 @@ public class GarageServiceImpl implements GarageService {
 
     // --- Métodos Privados Auxiliares ---
 
-    private Garage obtenerGarageActivoPorId(int id) {
+    private Garage obtenerGarageActivoPorId(Integer id) {
         return garageRepository.findById(id)
                 .filter(g -> Boolean.TRUE.equals(g.getActivo()))
                 .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró un garage activo con el ID: " + id));

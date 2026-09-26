@@ -32,7 +32,7 @@ public interface VehiculoService {
      * @return DTO de respuesta con la información del vehículo.
      * @throws RegistroNoEncontradoException Si no existe un vehículo activo con el ID proporcionado.
      */
-    VehiculoResponse buscarPorId(int id);
+    VehiculoResponse buscarPorId(Integer id);
 
     /**
      * Busca un vehículo activo por su matrícula.
@@ -57,7 +57,7 @@ public interface VehiculoService {
      * @return Lista de DTOs simplificados (VehiculoDTO) pertenecientes al socio.
      * @throws RegistroNoEncontradoException Si el socio especificado no existe o se encuentra inactivo.
      */
-    List<VehiculoDTO> listarPorSocio(int socioId);
+    List<VehiculoDTO> listarPorSocio(Integer socioId);
 
     /**
      * Método alternativo de consulta de vehículos pertenecientes a un socio.
@@ -66,7 +66,7 @@ public interface VehiculoService {
      * @return Lista de DTOs simplificados (VehiculoDTO).
      * @throws RegistroNoEncontradoException Si el socio especificado no existe o se encuentra inactivo.
      */
-    List<VehiculoDTO> buscarVehiculosPorSocio(int socioId);
+    List<VehiculoDTO> buscarVehiculosPorSocio(Integer socioId);
 
     /**
      * Filtra los vehículos activos por su tipo (por ejemplo: LANCHA, MOTO_AQUATICA, etc.).
@@ -94,7 +94,7 @@ public interface VehiculoService {
      * @throws RegistroNoEncontradoException Si el vehículo o las entidades asociadas no existen.
      * @throws MatriculaDuplicadaException Si la nueva matrícula pertenece a otro vehículo.
      */
-    VehiculoResponse actualizarVehiculo(int id, VehiculoUpdate update);
+    VehiculoResponse actualizarVehiculo(Integer id, VehiculoUpdate update);
 
     /**
      * Realiza el borrado lógico de un vehículo a partir de su matrícula.
@@ -110,5 +110,5 @@ public interface VehiculoService {
      * @param id Identificador del vehículo a dar de baja.
      * @throws RegistroNoEncontradoException Si no existe un vehículo activo con dicho ID.
      */
-    void eliminarVehiculoPorId(int id);
+    void eliminarVehiculoPorId(Integer id);
 }

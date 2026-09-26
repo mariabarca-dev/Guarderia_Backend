@@ -34,7 +34,7 @@ public interface PropiedadGarageRepository extends JpaRepository<PropiedadGarage
      * @return Optional con la propiedad encontrada si está activa.
      */
     @Query("SELECT p FROM PropiedadGarage p WHERE p.id = :id AND p.activo = true")
-    Optional<PropiedadGarage> findActiveById(int id);
+    Optional<PropiedadGarage> findActiveById(Integer id);
 
     /**
      * Método explícito para uso administrativo que devuelve todos los registros,

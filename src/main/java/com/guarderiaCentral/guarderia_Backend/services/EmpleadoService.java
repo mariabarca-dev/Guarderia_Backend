@@ -50,7 +50,7 @@ public interface EmpleadoService {
      * @return {@link EmpleadoResponse} del empleado encontrado.
      * @throws RegistroNoEncontradoException si no existe el empleado activo con el ID proporcionado.
      */
-    EmpleadoResponse buscarEmpleadoPorId(int id);
+    EmpleadoResponse buscarEmpleadoPorId(Integer id);
 
     /**
      * Actualiza la información de un empleado existente.
@@ -62,7 +62,7 @@ public interface EmpleadoService {
      * @throws CodigoEmpleadoDuplicadoException si el nuevo código pertenece a otro empleado.
      * @throws DniDuplicadoException            si el nuevo DNI pertenece a otro usuario.
      */
-    EmpleadoResponse actualizarEmpleado(int id, EmpleadoUpdate update);
+    EmpleadoResponse actualizarEmpleado(Integer id, EmpleadoUpdate update);
 
     /**
      * Realiza el borrado lógico de un empleado (activo = false).
@@ -71,7 +71,7 @@ public interface EmpleadoService {
      * @param id Identificador único del empleado a desactivar.
      * @throws RegistroNoEncontradoException si no existe el empleado con el ID especificado.
      */
-    void eliminarEmpleado(int id);
+    void eliminarEmpleado(Integer id);
 
     /**
      * Obtiene el listado de asignaciones de zona activas asociadas a un empleado.

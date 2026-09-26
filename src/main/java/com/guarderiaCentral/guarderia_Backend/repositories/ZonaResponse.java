@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ZonaResponse {
 
-    private int id;
+    private Integer id;
     private String letra;
     private TipoVehiculo tipoVehiculo;
     private int capacidadVehiculos;

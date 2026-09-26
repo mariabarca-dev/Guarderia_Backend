@@ -17,9 +17,9 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class PropiedadGarageResponse {
 
-    private int id;
-    private int socioId;
-    private int garageId;
+    private Integer id;
+    private Integer socioId;
+    private Integer garageId;
     private LocalDate fechaCompraGarage;
     private Boolean activo;
 }

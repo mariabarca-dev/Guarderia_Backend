@@ -78,7 +78,7 @@ public class AsignacionEmpleadoZonaRestController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SOCIO', 'EMPLEADO', 'ADMINISTRADOR')")
-    public ResponseEntity<AsignacionEmpleadoZonaResponse> obtenerPorId(@PathVariable int id) {
+    public ResponseEntity<AsignacionEmpleadoZonaResponse> obtenerPorId(@PathVariable Integer id) {
         logger.info("REST Request para obtener la asignación con ID: {}", id);
         AsignacionEmpleadoZonaResponse response = asignacionService.buscarPorId(id);
         return ResponseEntity.ok(response);
@@ -114,7 +114,7 @@ public class AsignacionEmpleadoZonaRestController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<AsignacionEmpleadoZonaResponse> actualizar(
-            @PathVariable int id,
+            @PathVariable Integer id,
             @Valid @RequestBody AsignacionEmpleadoZonaUpdate update) {
         logger.info("REST Request para actualizar la asignación con ID: {}", id);
         AsignacionEmpleadoZonaResponse asignacionActualizada = asignacionService.actualizar(id, update);
@@ -130,7 +130,7 @@ public class AsignacionEmpleadoZonaRestController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<Void> eliminar(@PathVariable int id) {
+    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         logger.info("REST Request para eliminar (borrado lógico) la asignación con ID: {}", id);
         asignacionService.eliminar(id);
         return ResponseEntity.noContent().build();

@@ -98,7 +98,7 @@ public class EmpleadoServiceImpl implements EmpleadoService {
      */
     @Override
     @Transactional(readOnly = true)
-    public EmpleadoResponse buscarEmpleadoPorId(int id) {
+    public EmpleadoResponse buscarEmpleadoPorId(Integer id) {
         log.info("Buscando empleado activo por ID: {}", id);
         Empleado empleado = obtenerEmpleadoActivoPorId(id);
         return empleadoRepository.fromEntity(empleado);
@@ -109,7 +109,7 @@ public class EmpleadoServiceImpl implements EmpleadoService {
      */
     @Override
     @Transactional
-    public EmpleadoResponse actualizarEmpleado(int id, EmpleadoUpdate update) {
+    public EmpleadoResponse actualizarEmpleado(Integer id, EmpleadoUpdate update) {
         log.info("Actualizando información del empleado con ID: {}", id);
         Empleado empleado = obtenerEmpleadoActivoPorId(id);
 
@@ -139,7 +139,7 @@ public class EmpleadoServiceImpl implements EmpleadoService {
      */
     @Override
     @Transactional
-    public void eliminarEmpleado(int id) {
+    public void eliminarEmpleado(Integer id) {
         log.info("Ejecutando borrado lógico para empleado con ID: {}", id);
         Empleado empleado = obtenerEmpleadoActivoPorId(id);
 
@@ -230,7 +230,7 @@ public class EmpleadoServiceImpl implements EmpleadoService {
 
     // --- Métodos Privados Auxiliares ---
 
-    private Empleado obtenerEmpleadoActivoPorId(int id) {
+    private Empleado obtenerEmpleadoActivoPorId(Integer id) {
         return empleadoRepository.findById(id)
                 .filter(emp -> Boolean.TRUE.equals(emp.getActivo()))
                 .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró un empleado activo con el ID: " + id));

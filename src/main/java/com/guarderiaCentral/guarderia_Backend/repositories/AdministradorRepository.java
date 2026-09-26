@@ -32,7 +32,7 @@ public interface AdministradorRepository extends JpaRepository<Administrador, In
      * @return Optional con el administrador encontrado si está activo.
      */
     @Query("SELECT a FROM Administrador a WHERE a.id = :id AND a.activo = true")
-    Optional<Administrador> findActiveById(int id);
+    Optional<Administrador> findActiveById(Integer id);
 
     /**
      * Busca un administrador por su nombre de usuario asegurando que esté activo.

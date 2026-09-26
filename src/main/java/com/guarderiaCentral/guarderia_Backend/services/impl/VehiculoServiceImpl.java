@@ -81,7 +81,7 @@ public class VehiculoServiceImpl implements VehiculoService {
      */
     @Override
     @Transactional(readOnly = true)
-    public VehiculoResponse buscarPorId(int id) {
+    public VehiculoResponse buscarPorId(Integer id) {
         log.debug("Buscando vehículo por ID: {}", id);
         Vehiculo vehiculo = vehiculoRepository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> {
@@ -133,7 +133,7 @@ public class VehiculoServiceImpl implements VehiculoService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<VehiculoDTO> listarPorSocio(int socioId) {
+    public List<VehiculoDTO> listarPorSocio(Integer socioId) {
         log.debug("Listando vehículos en formato DTO para socio ID: {}", socioId);
         validarSocioExistente(socioId);
 
@@ -159,7 +159,7 @@ public class VehiculoServiceImpl implements VehiculoService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<VehiculoDTO> buscarVehiculosPorSocio(int socioId) {
+    public List<VehiculoDTO> buscarVehiculosPorSocio(Integer socioId) {
         return listarPorSocio(socioId);
     }
 
@@ -225,7 +225,7 @@ public class VehiculoServiceImpl implements VehiculoService {
      */
     @Override
     @Transactional
-    public VehiculoResponse actualizarVehiculo(int id, VehiculoUpdate update) {
+    public VehiculoResponse actualizarVehiculo(Integer id, VehiculoUpdate update) {
         log.info("Iniciando actualización de vehículo ID: {}", id);
 
         Vehiculo vehiculoExistente = vehiculoRepository.findByIdAndActivoTrue(id)
@@ -288,7 +288,7 @@ public class VehiculoServiceImpl implements VehiculoService {
      */
     @Override
     @Transactional
-    public void eliminarVehiculoPorId(int id) {
+    public void eliminarVehiculoPorId(Integer id) {
         log.info("Iniciando baja lógica de vehículo con ID: {}", id);
 
         Vehiculo vehiculo = vehiculoRepository.findByIdAndActivoTrue(id)
@@ -308,7 +308,7 @@ public class VehiculoServiceImpl implements VehiculoService {
      * @param socioId Identificador del socio a validar.
      * @throws RegistroNoEncontradoException Si el socio no se encuentra activo.
      */
-    private void validarSocioExistente(int socioId) {
+    private void validarSocioExistente(Integer socioId) {
         if (!socioRepository.existsByIdAndActivoTrue(socioId)) {
             log.error("Socio ID {} no existe o se encuentra inactivo.", socioId);
             throw new RegistroNoEncontradoException("Socio no encontrado con ID: " + socioId);

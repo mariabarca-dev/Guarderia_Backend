@@ -59,7 +59,7 @@ public class VehiculoRestController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
-    public ResponseEntity<VehiculoResponse> buscarVehiculoPorId(@PathVariable int id) {
+    public ResponseEntity<VehiculoResponse> buscarVehiculoPorId(@PathVariable Integer id) {
         log.info("REST Request: Consulta de vehículo por ID: {}", id);
         VehiculoResponse vehiculo = vehiculoService.buscarPorId(id);
         return ResponseEntity.ok(vehiculo);
@@ -74,7 +74,7 @@ public class VehiculoRestController {
      */
     @GetMapping("/zona/{zonaId}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
-    public ResponseEntity<List<VehiculoResponse>> listarVehiculosPorZona(@PathVariable int zonaId) {
+    public ResponseEntity<List<VehiculoResponse>> listarVehiculosPorZona(@PathVariable Integer zonaId) {
         log.info("REST Request: Consulta de vehículos en la zona ID: {}", zonaId);
         List<VehiculoResponse> vehiculos = vehiculoService.listarPorZona(zonaId);
         return ResponseEntity.ok(vehiculos);
@@ -110,7 +110,7 @@ public class VehiculoRestController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<VehiculoResponse> modificarVehiculo(
-            @PathVariable int id,
+            @PathVariable Integer id,
             @Valid @RequestBody VehiculoUpdate update) {
         log.info("REST Request: Actualización de vehículo con ID: {}", id);
         VehiculoResponse vehiculoActualizado = vehiculoService.actualizarVehiculo(id, update);
@@ -127,7 +127,7 @@ public class VehiculoRestController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<Void> eliminarVehiculo(@PathVariable int id) {
+    public ResponseEntity<Void> eliminarVehiculo(@PathVariable Integer id) {
         log.info("REST Request: Baja lógica de vehículo con ID: {}", id);
         vehiculoService.eliminarVehiculo(id);
         return ResponseEntity.noContent().build();

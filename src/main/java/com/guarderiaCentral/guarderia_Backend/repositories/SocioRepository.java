@@ -32,7 +32,7 @@ public interface SocioRepository extends JpaRepository<Socio, Integer> {
      * @return Optional con el socio encontrado si está activo.
      */
     @Query("SELECT s FROM Socio s WHERE s.id = :id AND s.activo = true")
-    Optional<Socio> findActiveById(int id);
+    Optional<Socio> findActiveById(Integer id);
 
     /**
      * Busca un socio por su DNI único asegurando que esté activo.

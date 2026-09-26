@@ -33,7 +33,7 @@ public interface PropiedadGarageService {
      * @return {@link PropiedadGarageResponse} con los datos de la propiedad hallada.
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si la propiedad no existe o está dada de baja lógicamente.
      */
-    PropiedadGarageResponse obtenerPorId(int id);
+    PropiedadGarageResponse obtenerPorId(Integer id);
 
     /**
      * Lista todas las propiedades de garage activas en el sistema.
@@ -49,7 +49,7 @@ public interface PropiedadGarageService {
      * @return Lista de {@link PropiedadGarageResponse} vinculadas al socio.
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el socio especificado no existe o está inactivo.
      */
-    List<PropiedadGarageResponse> listarPorSocio(int socioId);
+    List<PropiedadGarageResponse> listarPorSocio(Integer socioId);
 
     /**
      * Actualiza los datos de un registro de propiedad existente.
@@ -59,7 +59,7 @@ public interface PropiedadGarageService {
      * @return {@link PropiedadGarageResponse} con la entidad actualizada.
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si la propiedad, el socio o el garage no existen.
      */
-    PropiedadGarageResponse actualizar(int id, PropiedadGarageUpdate update);
+    PropiedadGarageResponse actualizar(Integer id, PropiedadGarageUpdate update);
 
     /**
      * Realiza el borrado lógico de un registro de propiedad de garage.
@@ -67,5 +67,5 @@ public interface PropiedadGarageService {
      * @param id Identificador único de la propiedad a dar de baja.
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el registro no existe o ya está inactivo.
      */
-    void eliminar(int id);
+    void eliminar(Integer id);
 }

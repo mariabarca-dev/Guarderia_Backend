@@ -63,7 +63,7 @@ public class SocioRestController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SYSADMIN', 'ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
-    public ResponseEntity<SocioResponse> buscarSocioPorId(@PathVariable int id) {
+    public ResponseEntity<SocioResponse> buscarSocioPorId(@PathVariable Integer id) {
         log.info("REST Request: Consulta de socio por ID: {}", id);
         SocioResponse socio = socioService.buscarPorId(id);
         return ResponseEntity.ok(socio);
@@ -112,7 +112,7 @@ public class SocioRestController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('SYSADMIN')")
     public ResponseEntity<SocioResponse> modificarSocio(
-            @PathVariable int id,
+            @PathVariable Integer id,
             @Valid @RequestBody SocioUpdate update) {
         log.info("REST Request: Actualización de socio con ID: {}", id);
         SocioResponse socioActualizado = socioService.actualizarSocio(id, update);
@@ -129,7 +129,7 @@ public class SocioRestController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SYSADMIN')")
-    public ResponseEntity<Void> eliminarSocio(@PathVariable int id) {
+    public ResponseEntity<Void> eliminarSocio(@PathVariable Integer id) {
         log.info("REST Request: Baja lógica de socio con ID: {}", id);
         socioService.eliminarSocio(id);
         return ResponseEntity.noContent().build();
@@ -144,7 +144,7 @@ public class SocioRestController {
      */
     @GetMapping("/{socioId}/vehiculos")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
-    public ResponseEntity<List<VehiculoResponse>> listarVehiculosPorSocio(@PathVariable int socioId) {
+    public ResponseEntity<List<VehiculoResponse>> listarVehiculosPorSocio(@PathVariable Integer socioId) {
         log.info("REST Request: Consulta de vehículos asociados al socio ID: {}", socioId);
         List<VehiculoResponse> vehiculos = socioService.listarVehiculosPorSocio(socioId);
         return ResponseEntity.ok(vehiculos);
@@ -159,7 +159,7 @@ public class SocioRestController {
      */
     @GetMapping("/{socioId}/garages")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
-    public ResponseEntity<List<GarageResponse>> listarGarajesPorSocio(@PathVariable int socioId) {
+    public ResponseEntity<List<GarageResponse>> listarGarajesPorSocio(@PathVariable Integer socioId) {
         log.info("REST Request: Consulta de garages pertenecientes al socio ID: {}", socioId);
         List<GarageResponse> garages = socioService.listarGarajesPorSocio(socioId);
         return ResponseEntity.ok(garages);

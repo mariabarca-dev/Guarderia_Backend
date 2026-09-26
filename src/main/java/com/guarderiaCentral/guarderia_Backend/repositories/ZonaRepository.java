@@ -32,7 +32,7 @@ public interface ZonaRepository extends JpaRepository<Zona, Integer> {
      * @return Optional con la zona encontrada si está activa.
      */
     @Query("SELECT z FROM Zona z WHERE z.id = :id AND z.activo = true")
-    Optional<Zona> findActiveById(int id);
+    Optional<Zona> findActiveById(Integer id);
 
     /**
      * Busca una zona por su letra identificatoria asegurando que esté activa.

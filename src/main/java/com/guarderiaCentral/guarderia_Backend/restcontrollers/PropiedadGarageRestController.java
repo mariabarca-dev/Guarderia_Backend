@@ -68,7 +68,7 @@ public class PropiedadGarageRestController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
-    public ResponseEntity<PropiedadGarageResponse> obtenerPorId(@PathVariable int id) {
+    public ResponseEntity<PropiedadGarageResponse> obtenerPorId(@PathVariable Integer id) {
         logger.info("REST Request para obtener la propiedad de garage con ID: {}", id);
         PropiedadGarageResponse response = propiedadGarageService.buscarPorId(id);
         return ResponseEntity.ok(response);
@@ -102,7 +102,7 @@ public class PropiedadGarageRestController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<PropiedadGarageResponse> actualizar(
-            @PathVariable int id,
+            @PathVariable Integer id,
             @Valid @RequestBody PropiedadGarageUpdate update) {
         logger.info("REST Request para actualizar la propiedad de garage con ID: {}", id);
         PropiedadGarageResponse propiedadActualizada = propiedadGarageService.actualizar(id, update);
@@ -118,7 +118,7 @@ public class PropiedadGarageRestController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<Void> eliminar(@PathVariable int id) {
+    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         logger.info("REST Request para dar de baja la propiedad de garage con ID: {}", id);
         propiedadGarageService.eliminar(id);
         return ResponseEntity.noContent().build();
@@ -133,7 +133,7 @@ public class PropiedadGarageRestController {
      */
     @GetMapping("/socio/{socioId}/estado")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
-    public ResponseEntity<String> obtenerEstadoGarageSocio(@PathVariable int socioId) {
+    public ResponseEntity<String> obtenerEstadoGarageSocio(@PathVariable Integer socioId) {
         logger.info("REST Request para obtener el estado del garage del socio ID: {}", socioId);
         String estado = propiedadGarageService.obtenerEstadoGarageSocio(socioId);
         return ResponseEntity.ok(estado);
@@ -148,7 +148,7 @@ public class PropiedadGarageRestController {
      */
     @GetMapping("/socio/{socioId}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
-    public ResponseEntity<List<GarageDTO>> listarPorSocio(@PathVariable int socioId) {
+    public ResponseEntity<List<GarageDTO>> listarPorSocio(@PathVariable Integer socioId) {
         logger.info("REST Request para listar los garages pertenecientes al socio ID: {}", socioId);
         List<GarageDTO> garages = propiedadGarageService.listarPorSocio(socioId);
         return ResponseEntity.ok(garages);

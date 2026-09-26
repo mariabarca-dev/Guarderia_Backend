@@ -95,7 +95,7 @@ public class SocioServiceImpl implements SocioService {
      */
     @Override
     @Transactional(readOnly = true)
-    public SocioResponse buscarPorId(int id) {
+    public SocioResponse buscarPorId(Integer id) {
         log.debug("Buscando socio por ID: {}", id);
         Socio socio = socioRepository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> {
@@ -149,7 +149,7 @@ public class SocioServiceImpl implements SocioService {
      */
     @Override
     @Transactional
-    public SocioResponse actualizarSocio(int id, SocioUpdate update) {
+    public SocioResponse actualizarSocio(Integer id, SocioUpdate update) {
         log.info("Iniciando actualización para el socio con ID: {}", id);
 
         Socio socioExistente = socioRepository.findByIdAndActivoTrue(id)
@@ -188,7 +188,7 @@ public class SocioServiceImpl implements SocioService {
      */
     @Override
     @Transactional
-    public void eliminarSocio(int id) {
+    public void eliminarSocio(Integer id) {
         log.info("Iniciando baja lógica del socio con ID: {}", id);
 
         Socio socio = socioRepository.findByIdAndActivoTrue(id)
@@ -210,7 +210,7 @@ public class SocioServiceImpl implements SocioService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<VehiculoDTO> listarVehiculosPorSocio(int socioId) {
+    public List<VehiculoDTO> listarVehiculosPorSocio(Integer socioId) {
         log.debug("Listando vehículos para el socio ID: {}", socioId);
         validarSocioExistente(socioId);
         return vehiculoService.listarPorSocio(socioId);
@@ -224,7 +224,7 @@ public class SocioServiceImpl implements SocioService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<GarageDTO> listarGarajesPorSocio(int socioId) {
+    public List<GarageDTO> listarGarajesPorSocio(Integer socioId) {
         log.debug("Listando garages en propiedad para el socio ID: {}", socioId);
         validarSocioExistente(socioId);
         return propiedadGarageService.listarPorSocio(socioId);
@@ -238,7 +238,7 @@ public class SocioServiceImpl implements SocioService {
      */
     @Override
     @Transactional(readOnly = true)
-    public String obtenerEstadoGarageSocio(int socioId) {
+    public String obtenerEstadoGarageSocio(Integer socioId) {
         log.debug("Obteniendo estado del garage para el socio ID: {}", socioId);
         validarSocioExistente(socioId);
         return propiedadGarageService.obtenerEstadoGarageSocio(socioId);
@@ -250,7 +250,7 @@ public class SocioServiceImpl implements SocioService {
      * @param socioId ID del socio a verificar.
      * @throws RegistroNoEncontradoException Si no existe un socio activo con el ID proporcionado.
      */
-    private void validarSocioExistente(int socioId) {
+    private void validarSocioExistente(Integer socioId) {
         if (!socioRepository.existsByIdAndActivoTrue(socioId)) {
             log.error("Operación cancelada: El socio con ID {} no existe o está inactivo.", socioId);
             throw new RegistroNoEncontradoException("Socio no encontrado con ID: " + socioId);

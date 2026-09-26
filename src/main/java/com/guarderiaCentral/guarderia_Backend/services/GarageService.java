@@ -50,7 +50,7 @@ public interface GarageService {
      * @return {@link GarageResponse} con los datos del garage encontrado.
      * @throws RegistroNoEncontradoException Si no existe un garage activo con el ID proporcionado.
      */
-    GarageResponse buscarPorId(int id);
+    GarageResponse buscarPorId(Integer id);
 
     /**
      * Actualiza la información de un garage existente.
@@ -61,7 +61,7 @@ public interface GarageService {
      * @throws RegistroNoEncontradoException Si el garage o la zona especificada no existen o están inactivos.
      * @throws BusinessException             Si el nuevo número de garage ya pertenece a otro registro activo.
      */
-    GarageResponse actualizarGarage(int id, GarageUpdate update);
+    GarageResponse actualizarGarage(Integer id, GarageUpdate update);
 
     /**
      * Realiza el borrado lógico de un garage (cambiando su estado activo a false)
@@ -70,7 +70,7 @@ public interface GarageService {
      * @param id Identificador único del garage a eliminar.
      * @throws RegistroNoEncontradoException Si no se encuentra un garage activo con el ID indicado.
      */
-    void eliminarGarage(int id);
+    void eliminarGarage(Integer id);
 
     /**
      * Genera un reporte detallado de disponibilidad de garages organizados por zona,

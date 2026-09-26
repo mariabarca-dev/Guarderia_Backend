@@ -31,7 +31,7 @@ public interface SocioService {
      * @return DTO de respuesta con la información del socio.
      * @throws RegistroNoEncontradoException Si no se encuentra un socio activo con el ID proporcionado.
      */
-    SocioResponse buscarPorId(int id);
+    SocioResponse buscarPorId(Integer id);
 
     /**
      * Busca un socio activo por su número de DNI.
@@ -58,7 +58,7 @@ public interface SocioService {
      * @throws RegistroNoEncontradoException Si el socio no existe o no se encuentra activo.
      * @throws DniDuplicadoException Si el nuevo DNI ya pertenece a otro usuario.
      */
-    SocioResponse actualizarSocio(int id, SocioUpdate update);
+    SocioResponse actualizarSocio(Integer id, SocioUpdate update);
 
     /**
      * Realiza el borrado lógico de un socio desactivando su registro.
@@ -67,7 +67,7 @@ public interface SocioService {
      * @param id Identificador único del socio a desactivar.
      * @throws RegistroNoEncontradoException Si no se encuentra el socio activo.
      */
-    void eliminarSocio(int id);
+    void eliminarSocio(Integer id);
 
     /**
      * Obtiene los vehículos asociados a un socio específico.
@@ -76,7 +76,7 @@ public interface SocioService {
      * @return Lista de DTOs de vehículos pertenecientes al socio.
      * @throws RegistroNoEncontradoException Si el socio no existe o no está activo.
      */
-    List<VehiculoDTO> listarVehiculosPorSocio(int socioId);
+    List<VehiculoDTO> listarVehiculosPorSocio(Integer socioId);
 
     /**
      * Obtiene los garages asociados en propiedad a un socio específico.
@@ -85,7 +85,7 @@ public interface SocioService {
      * @return Lista de DTOs de garages pertenecientes al socio.
      * @throws RegistroNoEncontradoException Si el socio no existe o no está activo.
      */
-    List<GarageDTO> listarGarajesPorSocio(int socioId);
+    List<GarageDTO> listarGarajesPorSocio(Integer socioId);
 
     /**
      * Obtiene una descripción del estado del garage asignado o en propiedad del socio.
@@ -94,5 +94,5 @@ public interface SocioService {
      * @return Cadena de texto con el resumen o estado del garage.
      * @throws RegistroNoEncontradoException Si el socio no existe o no está activo.
      */
-    String obtenerEstadoGarageSocio(int socioId);
+    String obtenerEstadoGarageSocio(Integer socioId);
 }

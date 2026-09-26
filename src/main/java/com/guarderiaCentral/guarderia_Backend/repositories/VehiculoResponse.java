@@ -16,8 +16,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class VehiculoResponse {
 
-    private int id;
-    private int socioId;
+    private Integer id;
+    private Integer socioId;
     private int empleadoId;
     private String nombre;
     private String matricula;

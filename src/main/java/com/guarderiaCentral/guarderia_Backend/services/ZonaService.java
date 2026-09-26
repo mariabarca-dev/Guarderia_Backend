@@ -27,7 +27,7 @@ public interface ZonaService {
      * @param id Identificador único de la zona.
      * @return {@link ZonaResponse} Datos de la zona encontrada.
      */
-    ZonaResponse buscarPorId(int id);
+    ZonaResponse buscarPorId(Integer id);
 
     /**
      * Obtiene una zona activa por su letra identificadora.
@@ -58,12 +58,12 @@ public interface ZonaService {
      * @param update Datos actualizados para la zona.
      * @return {@link ZonaResponse} Datos de la zona actualizada.
      */
-    ZonaResponse actualizarZona(int id, ZonaUpdate update);
+    ZonaResponse actualizarZona(Integer id, ZonaUpdate update);
 
     /**
      * Ejecuta el borrado lógico de una zona si no posee garajes o relaciones activas asociadas.
      *
      * @param id Identificador único de la zona a eliminar.
      */
-    void eliminarZona(int id);
+    void eliminarZona(Integer id);
 }

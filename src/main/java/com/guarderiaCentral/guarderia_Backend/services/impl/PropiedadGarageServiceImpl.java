@@ -104,7 +104,7 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
      */
     @Override
     @Transactional(readOnly = true)
-    public PropiedadGarageResponse obtenerPorId(int id) {
+    public PropiedadGarageResponse obtenerPorId(Integer id) {
         log.debug("Buscando propiedad de garage con ID: {}", id);
         return propiedadGarageRepository.findById(id)
                 .filter(PropiedadGarage::getActivo)
@@ -139,7 +139,7 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<PropiedadGarageResponse> listarPorSocio(int socioId) {
+    public List<PropiedadGarageResponse> listarPorSocio(Integer socioId) {
         log.debug("Listando propiedades para el Socio ID: {}", socioId);
 
         if (!socioRepository.existsById(socioId)) {
@@ -161,7 +161,7 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
      * @throws RegistroNoEncontradoException Si la propiedad o las entidades relacionadas no existen.
      */
     @Override
-    public PropiedadGarageResponse actualizar(int id, PropiedadGarageUpdate update) {
+    public PropiedadGarageResponse actualizar(Integer id, PropiedadGarageUpdate update) {
         log.info("Actualizando propiedad de garage con ID: {}", id);
 
         PropiedadGarage propiedadExistente = propiedadGarageRepository.findById(id)
@@ -198,7 +198,7 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
      * @throws RegistroNoEncontradoException Si el registro no se encuentra.
      */
     @Override
-    public void eliminar(int id) {
+    public void eliminar(Integer id) {
         log.info("Realizando borrado lógico de la propiedad de garage con ID: {}", id);
 
         PropiedadGarage propiedad = propiedadGarageRepository.findById(id)

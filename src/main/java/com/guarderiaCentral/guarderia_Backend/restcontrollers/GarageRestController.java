@@ -66,7 +66,7 @@ public class GarageRestController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
-    public ResponseEntity<GarageResponse> obtenerPorId(@PathVariable int id) {
+    public ResponseEntity<GarageResponse> obtenerPorId(@PathVariable Integer id) {
         logger.info("REST Request para obtener el garage con ID: {}", id);
         GarageResponse response = garageService.buscarPorId(id);
         return ResponseEntity.ok(response);
@@ -115,7 +115,7 @@ public class GarageRestController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<GarageResponse> actualizar(
-            @PathVariable int id,
+            @PathVariable Integer id,
             @Valid @RequestBody GarageUpdate update) {
         logger.info("REST Request para actualizar el garage con ID: {}", id);
         GarageResponse garageActualizado = garageService.actualizar(id, update);
@@ -131,7 +131,7 @@ public class GarageRestController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<Void> eliminar(@PathVariable int id) {
+    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         logger.info("REST Request para dar de baja lógicamente el garage con ID: {}", id);
         garageService.eliminar(id);
         return ResponseEntity.noContent().build();

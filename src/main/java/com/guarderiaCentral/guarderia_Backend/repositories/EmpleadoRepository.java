@@ -32,7 +32,7 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Integer> {
      * @return Optional con el empleado encontrado si está activo.
      */
     @Query("SELECT e FROM Empleado e WHERE e.id = :id AND e.activo = true")
-    Optional<Empleado> findActiveById(int id);
+    Optional<Empleado> findActiveById(Integer id);
 
     /**
      * Busca un empleado por su código único asegurando que esté activo.

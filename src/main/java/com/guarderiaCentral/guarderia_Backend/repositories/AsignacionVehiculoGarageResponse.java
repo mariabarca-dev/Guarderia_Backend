@@ -17,9 +17,9 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class AsignacionVehiculoGarageResponse {
 
-    private int id;
-    private int vehiculoId;
-    private int garageId;
+    private Integer id;
+    private Integer vehiculoId;
+    private Integer garageId;
     private LocalDate fechaAsignacionGarage;
     private Boolean activo;
 }

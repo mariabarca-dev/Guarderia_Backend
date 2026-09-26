@@ -34,7 +34,7 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
      * @return Optional con el vehículo encontrado si está activo.
      */
     @Query("SELECT v FROM Vehiculo v WHERE v.id = :id AND v.activo = true")
-    Optional<Vehiculo> findActiveById(int id);
+    Optional<Vehiculo> findActiveById(Integer id);
 
     /**
      * Busca un vehículo por su matrícula única asegurando que esté activo.

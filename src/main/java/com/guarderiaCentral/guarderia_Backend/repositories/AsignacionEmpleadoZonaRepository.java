@@ -34,7 +34,7 @@ public interface AsignacionEmpleadoZonaRepository extends JpaRepository<Asignaci
      * @return Optional con la asignación encontrada si está activa.
      */
     @Query("SELECT a FROM AsignacionEmpleadoZona a WHERE a.id = :id AND a.activo = true")
-    Optional<AsignacionEmpleadoZona> findActiveById(int id);
+    Optional<AsignacionEmpleadoZona> findActiveById(Integer id);
 
     /**
      * Método explícito para uso administrativo que devuelve todos los registros,

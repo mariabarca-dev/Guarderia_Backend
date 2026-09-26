@@ -77,7 +77,7 @@ public class AsignacionVehiculoGarageRestController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SOCIO', 'EMPLEADO', 'ADMINISTRADOR')")
-    public ResponseEntity<AsignacionVehiculoGarageResponse> obtenerPorId(@PathVariable int id) {
+    public ResponseEntity<AsignacionVehiculoGarageResponse> obtenerPorId(@PathVariable Integer id) {
         logger.info("REST Request para obtener la asignación de vehículo a garaje por ID: {}", id);
         AsignacionVehiculoGarageResponse response = asignacionService.buscarPorId(id);
         return ResponseEntity.ok(response);
@@ -92,7 +92,7 @@ public class AsignacionVehiculoGarageRestController {
      */
     @GetMapping("/vehiculo/{vehiculoId}")
     @PreAuthorize("hasAnyRole('SOCIO', 'EMPLEADO', 'ADMINISTRADOR')")
-    public ResponseEntity<AsignacionVehiculoGarageResponse> buscarPorVehiculo(@PathVariable int vehiculoId) {
+    public ResponseEntity<AsignacionVehiculoGarageResponse> buscarPorVehiculo(@PathVariable Integer vehiculoId) {
         logger.info("REST Request para consultar la asignación asociada al vehículo ID: {}", vehiculoId);
         AsignacionVehiculoGarageResponse response = asignacionService.buscarPorVehiculo(vehiculoId);
         return ResponseEntity.ok(response);
@@ -128,7 +128,7 @@ public class AsignacionVehiculoGarageRestController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<AsignacionVehiculoGarageResponse> actualizar(
-            @PathVariable int id,
+            @PathVariable Integer id,
             @Valid @RequestBody AsignacionVehiculoGarageUpdate update) {
         logger.info("REST Request para actualizar la asignación de vehículo a garaje ID: {}", id);
         AsignacionVehiculoGarageResponse asignacionActualizada = asignacionService.actualizar(id, update);
@@ -144,7 +144,7 @@ public class AsignacionVehiculoGarageRestController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<Void> eliminar(@PathVariable int id) {
+    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         logger.info("REST Request para eliminar (borrado lógico) la asignación con ID: {}", id);
         asignacionService.eliminar(id);
         return ResponseEntity.noContent().build();

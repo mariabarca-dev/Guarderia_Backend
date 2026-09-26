@@ -82,7 +82,7 @@ public class AdministradorRestController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('SYSADMIN')")
-    public ResponseEntity<AdministradorResponse> buscarPorId(@PathVariable int id) {
+    public ResponseEntity<AdministradorResponse> buscarPorId(@PathVariable Integer id) {
         log.info("REST Request para obtener el administrador con ID: {}", id);
         AdministradorResponse admin = administradorService.buscarPorId(id);
         return ResponseEntity.ok(admin);
@@ -101,7 +101,7 @@ public class AdministradorRestController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('SYSADMIN')")
     public ResponseEntity<AdministradorResponse> actualizarAdministrador(
-            @PathVariable int id,
+            @PathVariable Integer id,
             @Valid @RequestBody AdministradorUpdate update) {
         log.info("REST Request para actualizar el administrador con ID: {}", id);
         AdministradorResponse adminActualizado = administradorService.actualizarAdministrador(id, update);
@@ -119,7 +119,7 @@ public class AdministradorRestController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SYSADMIN')")
-    public ResponseEntity<Void> eliminarAdministrador(@PathVariable int id) {
+    public ResponseEntity<Void> eliminarAdministrador(@PathVariable Integer id) {
         log.info("REST Request para realizar el borrado lógico del administrador con ID: {}", id);
         administradorService.eliminarAdministrador(id);
         return ResponseEntity.noContent().build();

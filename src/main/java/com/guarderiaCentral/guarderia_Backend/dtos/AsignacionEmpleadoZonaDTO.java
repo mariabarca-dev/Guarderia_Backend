@@ -16,9 +16,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AsignacionEmpleadoZonaDTO {
 
-    private int id;
-    private int empleadoId;
-    private int zonaId;
+    private Integer id;
+    private Integer empleadoId;
+    private Integer zonaId;
     private int cantVehiculosACargo;
     private Boolean activo;
 }

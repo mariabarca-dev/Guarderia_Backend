@@ -15,10 +15,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class GarageResponse {
 
-    private int id;
+    private Integer id;
     private int numeroGarage;
     private double lecturaLuz;
     private boolean servicioMantenimiento;
-    private int zonaId;
+    private Integer zonaId;
     private Boolean activo;
 }

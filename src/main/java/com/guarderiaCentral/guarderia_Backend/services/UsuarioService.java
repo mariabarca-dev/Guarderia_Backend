@@ -50,7 +50,7 @@ public interface UsuarioService {
      * @return {@link UsuarioDTO} correspondiente.
      * @throws RegistroNoEncontradoException Si no existe un usuario activo con ese ID.
      */
-    UsuarioDTO buscarUsuarioPorId(int id) throws RegistroNoEncontradoException;
+    UsuarioDTO buscarUsuarioPorId(Integer id) throws RegistroNoEncontradoException;
 
     /**
      * Recupera la lista completa de todos los usuarios activos en el sistema.
@@ -73,5 +73,5 @@ public interface UsuarioService {
      * @param id Identificador del usuario a desactivar.
      * @throws RegistroNoEncontradoException Si no existe el usuario activo.
      */
-    void eliminarUsuario(int id) throws RegistroNoEncontradoException;
+    void eliminarUsuario(Integer id) throws RegistroNoEncontradoException;
 }

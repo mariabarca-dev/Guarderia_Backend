@@ -70,7 +70,7 @@ public class AdministradorServiceImpl implements AdministradorService {
      */
     @Override
     @Transactional(readOnly = true)
-    public AdministradorDTO buscarPorId(int id) {
+    public AdministradorDTO buscarPorId(Integer id) {
         log.info("Buscando administrador con ID: {}", id);
         Administrador admin = administradorRepository.findById(id)
                 .filter(Administrador::getActivo)
@@ -116,7 +116,7 @@ public class AdministradorServiceImpl implements AdministradorService {
      */
     @Override
     @Transactional
-    public AdministradorResponse actualizarAdministrador(int id, AdministradorUpdate update) {
+    public AdministradorResponse actualizarAdministrador(Integer id, AdministradorUpdate update) {
         log.info("Actualizando administrador con ID: {}", id);
 
         Administrador admin = administradorRepository.findById(id)
@@ -139,7 +139,7 @@ public class AdministradorServiceImpl implements AdministradorService {
      */
     @Override
     @Transactional
-    public void eliminarAdministrador(int id) {
+    public void eliminarAdministrador(Integer id) {
         log.info("Ejecutando borrado lógico para el administrador con ID: {}", id);
 
         Administrador admin = administradorRepository.findById(id)

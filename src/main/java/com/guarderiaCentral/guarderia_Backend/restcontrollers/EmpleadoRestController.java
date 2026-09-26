@@ -78,7 +78,7 @@ public class EmpleadoRestController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('SYSADMIN')")
-    public ResponseEntity<EmpleadoResponse> obtenerPorId(@PathVariable int id) {
+    public ResponseEntity<EmpleadoResponse> obtenerPorId(@PathVariable Integer id) {
         logger.info("REST Request para buscar el empleado con ID: {}", id);
         EmpleadoResponse response = empleadoService.buscarPorId(id);
         return ResponseEntity.ok(response);
@@ -112,7 +112,7 @@ public class EmpleadoRestController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('SYSADMIN')")
     public ResponseEntity<EmpleadoResponse> actualizar(
-            @PathVariable int id,
+            @PathVariable Integer id,
             @Valid @RequestBody EmpleadoUpdate update) {
         logger.info("REST Request para actualizar el empleado con ID: {}", id);
         EmpleadoResponse empleadoActualizado = empleadoService.actualizar(id, update);
@@ -128,7 +128,7 @@ public class EmpleadoRestController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SYSADMIN')")
-    public ResponseEntity<Void> eliminar(@PathVariable int id) {
+    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         logger.info("REST Request para dar de baja lógicamente al empleado con ID: {}", id);
         empleadoService.eliminar(id);
         return ResponseEntity.noContent().build();

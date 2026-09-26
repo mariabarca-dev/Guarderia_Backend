@@ -70,7 +70,7 @@ public class ZonaServiceImpl implements ZonaService {
      */
     @Override
     @Transactional(readOnly = true)
-    public ZonaResponse buscarPorId(int id) {
+    public ZonaResponse buscarPorId(Integer id) {
         log.info("Buscando zona por ID: {}", id);
         Zona zona = zonaRepository.findById(id)
                 .filter(Zona::getActivo)
@@ -144,7 +144,7 @@ public class ZonaServiceImpl implements ZonaService {
      */
     @Override
     @Transactional
-    public ZonaResponse actualizarZona(int id, ZonaUpdate update) {
+    public ZonaResponse actualizarZona(Integer id, ZonaUpdate update) {
         log.info("Iniciando actualización de la zona con ID: {}", id);
 
         Zona zonaExistente = zonaRepository.findById(id)
@@ -191,7 +191,7 @@ public class ZonaServiceImpl implements ZonaService {
      */
     @Override
     @Transactional
-    public void eliminarZona(int id) {
+    public void eliminarZona(Integer id) {
         log.info("Iniciando borrado lógico de la zona con ID: {}", id);
 
         Zona zona = zonaRepository.findById(id)

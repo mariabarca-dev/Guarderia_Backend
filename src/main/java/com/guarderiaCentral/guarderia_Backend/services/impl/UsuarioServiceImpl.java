@@ -87,7 +87,7 @@ public class UsuarioServiceImpl implements UsuarioService {
      */
     @Override
     @Transactional(readOnly = true)
-    public UsuarioDTO buscarUsuarioPorId(int id) throws RegistroNoEncontradoException {
+    public UsuarioDTO buscarUsuarioPorId(Integer id) throws RegistroNoEncontradoException {
         log.info("Buscando usuario activo con ID: {}", id);
 
         Usuario u = usuarioRepository.findByIdAndActivoTrue(id)
@@ -142,7 +142,7 @@ public class UsuarioServiceImpl implements UsuarioService {
      */
     @Override
     @Transactional
-    public void eliminarUsuario(int id) throws RegistroNoEncontradoException {
+    public void eliminarUsuario(Integer id) throws RegistroNoEncontradoException {
         log.info("Ejecutando borrado lógico para el usuario con ID: {}", id);
 
         Usuario u = usuarioRepository.findByIdAndActivoTrue(id)

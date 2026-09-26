@@ -97,7 +97,7 @@ public class ZonaRestController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<ZonaResponse> actualizarZona(
-            @PathVariable int id,
+            @PathVariable Integer id,
             @Valid @RequestBody ZonaUpdate update) {
 
         log.info("REST Request para actualizar Zona con ID: {}", id);

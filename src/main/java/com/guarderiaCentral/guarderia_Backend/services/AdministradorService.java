@@ -33,7 +33,7 @@ public interface AdministradorService {
      * @param id Identificador único del administrador.
      * @return AdministradorDTO correspondiente al ID.
      */
-    AdministradorDTO buscarPorId(int id);
+    AdministradorDTO buscarPorId(Integer id);
 
     /**
      * Registra un nuevo administrador en el sistema.
@@ -50,12 +50,12 @@ public interface AdministradorService {
      * @param update  Datos a modificar.
      * @return AdministradorResponse actualizado.
      */
-    AdministradorResponse actualizarAdministrador(int id, AdministradorUpdate update);
+    AdministradorResponse actualizarAdministrador(Integer id, AdministradorUpdate update);
 
     /**
      * Realiza el borrado lógico de un administrador cambiando su estado activo a false.
      *
      * @param id Identificador del administrador.
      */
-    void eliminarAdministrador(int id);
+    void eliminarAdministrador(Integer id);
 }

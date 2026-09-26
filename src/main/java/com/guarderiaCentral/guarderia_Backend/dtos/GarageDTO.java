@@ -16,9 +16,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class GarageDTO {
 
-    private int id;
+    private Integer id;
     private int numeroGarage;
     private float lecturaLuz;
     private boolean servicioMantenimiento;
-    private int zonaId;
+    private Integer zonaId;
 }
