@@ -68,7 +68,7 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
         Vehiculo vehiculo = new Vehiculo();
         vehiculo.setSocio(socio);
         vehiculo.setEmpleado(empleado);
-        vehiculo.setName(request.getNombre());
+        vehiculo.setNombre(request.getNombre());
         vehiculo.setMatricula(request.getMatricula());
         vehiculo.setTipo(request.getTipo());
         vehiculo.setProfundidad(request.getProfundidad());
@@ -97,7 +97,7 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
             vehiculo.setEmpleado(empleado);
         }
         if (update.getNombre() != null) {
-            vehiculo.setName(update.getNombre());
+            vehiculo.setNombre(update.getNombre());
         }
         if (update.getMatricula() != null) {
             vehiculo.setMatricula(update.getMatricula());
@@ -131,7 +131,7 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
         if (vehiculo.getEmpleado() != null) {
             response.setEmpleadoId(vehiculo.getEmpleado().getId());
         }
-        response.setName(vehiculo.getName());
+        response.setName(vehiculo.getNombre());
         response.setMatricula(vehiculo.getMatricula());
         response.setTipo(vehiculo.getTipo());
         response.setProfundidad(vehiculo.getProfundidad());
