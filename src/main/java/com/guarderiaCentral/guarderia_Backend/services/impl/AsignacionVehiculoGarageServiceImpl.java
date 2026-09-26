@@ -48,19 +48,19 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
     @Transactional
     public AsignacionVehiculoGarageResponse crearAsignacion(AsignacionVehiculoGarageRequest request) {
         log.info("Iniciando solicitud de asignación -> Vehículo ID: {}, Garage ID: {}",
-                request.getIdVehiculo(), request.getIdGarage());
+                request.getVehiculoId(), request.getGarageId());
 
-        if (request.getIdVehiculo() == null || request.getIdGarage() == null) {
+        if (request.getVehiculoId() == null || request.getGarageId() == null) {
             log.error("Error al crear asignación: Identificadores de vehículo y garaje obligatorios");
             throw new BusinessException("Error: El vehículo y el garaje son obligatorios.", HttpStatus.BAD_REQUEST);
         }
 
         // 1. Recuperar y verificar que las entidades existen y están activas
-        Vehiculo vehiculo = vehiculoRepository.findById(request.getIdVehiculo())
+        Vehiculo vehiculo = vehiculoRepository.findById(request.getVehiculoId())
                 .filter(Vehiculo::getActivo)
                 .orElseThrow(() -> new RegistroNoEncontradoException("El vehículo especificado no existe o se encuentra inactivo."));
 
-        Garage garage = garageRepository.findById(request.getIdGarage())
+        Garage garage = garageRepository.findById(request.getGarageId())
                 .filter(Garage::getActivo)
                 .orElseThrow(() -> new RegistroNoEncontradoException("El garaje especificado no existe o se encuentra inactivo."));
 

@@ -48,18 +48,14 @@ public interface AsignacionVehiculoGarageRepository extends JpaRepository<Asigna
     /**
      * Convierte un {@link AsignacionVehiculoGarageRequest} en una entidad {@link AsignacionVehiculoGarage}.
      *
-     * @param request  Objeto con los datos de entrada.
-     * @param vehiculo Entidad Vehiculo asociada.
-     * @param garage   Entidad Garage asociada.
+     * @param request Objeto con los datos de entrada.
      * @return Entidad AsignacionVehiculoGarage mapeada con activo = true.
      */
-    default AsignacionVehiculoGarage toEntity(AsignacionVehiculoGarageRequest request, Vehiculo vehiculo, Garage garage) {
+    default AsignacionVehiculoGarage toEntity(AsignacionVehiculoGarageRequest request) {
         if (request == null) {
             return null;
         }
         AsignacionVehiculoGarage asignacion = new AsignacionVehiculoGarage();
-        asignacion.setVehiculo(vehiculo);
-        asignacion.setGarage(garage);
         asignacion.setFechaAsignacionGarage(request.getFechaAsignacionGarage());
         asignacion.setActivo(true);
         return asignacion;
@@ -70,18 +66,10 @@ public interface AsignacionVehiculoGarageRepository extends JpaRepository<Asigna
      *
      * @param asignacion Entidad existente.
      * @param update     Objeto con los nuevos valores.
-     * @param vehiculo   Nueva entidad Vehiculo (opcional).
-     * @param garage     Nueva entidad Garage (opcional).
      */
-    default void updateEntity(AsignacionVehiculoGarage asignacion, AsignacionVehiculoGarageUpdate update, Vehiculo vehiculo, Garage garage) {
+    default void updateEntity(AsignacionVehiculoGarage asignacion, AsignacionVehiculoGarageUpdate update) {
         if (asignacion == null || update == null) {
             return;
-        }
-        if (vehiculo != null) {
-            asignacion.setVehiculo(vehiculo);
-        }
-        if (garage != null) {
-            asignacion.setGarage(garage);
         }
         if (update.getFechaAsignacionGarage() != null) {
             asignacion.setFechaAsignacionGarage(update.getFechaAsignacionGarage());
