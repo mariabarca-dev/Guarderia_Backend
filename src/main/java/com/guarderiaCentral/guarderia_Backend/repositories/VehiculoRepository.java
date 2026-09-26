@@ -131,7 +131,7 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
         if (vehiculo.getEmpleado() != null) {
             response.setEmpleadoId(vehiculo.getEmpleado().getId());
         }
-        response.setName(vehiculo.getNombre());
+        response.setNombre(vehiculo.getNombre());
         response.setMatricula(vehiculo.getMatricula());
         response.setTipo(vehiculo.getTipo());
         response.setProfundidad(vehiculo.getProfundidad());
