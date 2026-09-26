@@ -1,12 +1,14 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
+import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
+import com.guarderiaCentral.guarderia_Backend.exceptions.ZonaSinCapacidadException;
 import com.guarderiaCentral.guarderia_Backend.modelos.AsignacionEmpleadoZona;
 import com.guarderiaCentral.guarderia_Backend.modelos.Empleado;
 import com.guarderiaCentral.guarderia_Backend.modelos.Zona;
 import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaRepository;
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaRequestDTO;
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaResponseDTO;
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaUpdateDTO;
+import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaUpdate;
 import com.guarderiaCentral.guarderia_Backend.repositories.EmpleadoRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.ZonaRepository;
 import com.guarderiaCentral.guarderia_Backend.services.AsignacionEmpleadoZonaService;
@@ -18,128 +20,161 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
+/**
+ * Implementación del servicio para la gestión de Asignación de Empleados a Zonas.
+ */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZonaService {
 
     private final AsignacionEmpleadoZonaRepository asignacionRepository;
     private final EmpleadoRepository empleadoRepository;
     private final ZonaRepository zonaRepository;
 
-    public AsignacionEmpleadoZonaServiceImpl(AsignacionEmpleadoZonaRepository asignacionRepository,
-                                             EmpleadoRepository empleadoRepository,
-                                             ZonaRepository zonaRepository) {
-        this.asignacionRepository = asignacionRepository;
-        this.empleadoRepository = empleadoRepository;
-        this.zonaRepository = zonaRepository;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<AsignacionEmpleadoZonaResponseDTO> listarTodas() {
-        return asignacionRepository.findAll().stream()
-                .map(this::mapearAResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<AsignacionEmpleadoZonaResponseDTO> buscarPorCodigoEmpleado(String codigo) {
-        return asignacionRepository.findByEmpleadoCodigo(codigo).stream()
-                .map(this::mapearAResponseDTO)
-                .collect(Collectors.toList());
-    }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional
-    public AsignacionEmpleadoZonaResponseDTO crearAsignacionPorIds(Long idEmpleado, Long idZona, Integer cantVehiculos) {
-        if (idEmpleado == null || idEmpleado <= 0 || idZona == null || idZona <= 0) {
-            throw new ErrorNegocio("Los IDs de empleado y zona deben ser mayores a cero.");
+    public AsignacionEmpleadoZonaResponse crearAsignacion(AsignacionEmpleadoZonaRequest request) {
+        log.info("Iniciando creación de asignación para empleado ID: {} en zona ID: {}",
+                request.getIdEmpleado(), request.getIdZona());
+
+        Empleado empleado = empleadoRepository.findById(request.getIdEmpleado())
+                .filter(Empleado::getActivo)
+                .orElseThrow(() -> new RegistroNoEncontradoException("El empleado especificado no existe o está inactivo."));
+
+        Zona zona = zonaRepository.findById(request.getIdZona())
+                .filter(Zona::getActivo)
+                .orElseThrow(() -> new RegistroNoEncontradoException("La zona especificada no existe o está inactiva."));
+
+        if (request.getCantVehiculosACargo() < 0) {
+            throw new IllegalArgumentException("La cantidad de vehículos a cargo no puede ser negativa.");
         }
 
-        AsignacionEmpleadoZonaRequestDTO requestDTO = new AsignacionEmpleadoZonaRequestDTO();
-        requestDTO.setIdEmpleado(idEmpleado);
-        requestDTO.setIdZona(idZona);
-        requestDTO.setCantVehiculosACargo(cantVehiculos);
+        // Validar si ya existe una asignación activa para este empleado en esta zona
+        boolean yaAsignado = asignacionRepository.findAll().stream()
+                .anyMatch(a -> Boolean.TRUE.equals(a.getActivo())
+                        && a.getEmpleado() != null && a.getEmpleado().getId().equals(empleado.getId())
+                        && a.getZona() != null && a.getZona().getId().equals(zona.getId()));
 
-        return crearAsignacion(requestDTO);
-    }
-
-    @Override
-    @Transactional
-    public AsignacionEmpleadoZonaResponseDTO crearAsignacion(AsignacionEmpleadoZonaRequestDTO dto) {
-        if (dto == null || dto.getIdEmpleado() == null || dto.getIdZona() == null) {
-            throw new ErrorNegocio("El empleado y la zona son obligatorios.");
-        }
-
-        if (dto.getCantVehiculosACargo() == null || dto.getCantVehiculosACargo() < 0) {
-            throw new ErrorNegocio("La cantidad de vehículos a cargo no puede ser negativa.");
-        }
-
-        Empleado empleado = empleadoRepository.findById(dto.getIdEmpleado())
-                .orElseThrow(() -> new RegistroNoEncontradoException("El empleado especificado con ID " + dto.getIdEmpleado() + " no existe."));
-
-        Zona zona = zonaRepository.findById(dto.getIdZona())
-                .orElseThrow(() -> new RegistroNoEncontradoException("La zona especificada con ID " + dto.getIdZona() + " no existe."));
-
-        // 1. Validar si ya existe la asignación
-        boolean yaAsignado = asignacionRepository.existsByEmpleadoIdAndZonaId(empleado.getId(), zona.getId());
         if (yaAsignado) {
-            throw new ErrorNegocio("El empleado ya está asignado a la zona " + zona.getLetra() + ".");
+            throw new IllegalArgumentException("El empleado ya se encuentra asignado a la zona seleccionada.");
         }
 
-        // 2. Validar capacidad de vehículos de la zona
-        Integer vehiculosActuales = asignacionRepository.sumVehiculosByZonaId(zona.getId());
-        if (vehiculosActuales == null) {
-            vehiculosActuales = 0;
-        }
+        // Calcular vehículos actuales gestionados en la zona por las asignaciones activas
+        int vehiculosActuales = asignacionRepository.findAll().stream()
+                .filter(a -> Boolean.TRUE.equals(a.getActivo())
+                        && a.getZona() != null
+                        && a.getZona().getId().equals(zona.getId()))
+                .mapToInt(AsignacionEmpleadoZona::getCantVehiculosACargo)
+                .sum();
 
-        if ((vehiculosActuales + dto.getCantVehiculosACargo()) > zona.getCapacidadVehiculos()) {
+        if ((vehiculosActuales + request.getCantVehiculosACargo()) > zona.getCapacidadVehiculos()) {
+            log.warn("Capacidad excedida para la zona ID: {}. Capacidad máxima: {}, Ocupados/Asignados: {}, Intentando agregar: {}",
+                    zona.getId(), zona.getCapacidadVehiculos(), vehiculosActuales, request.getCantVehiculosACargo());
             throw new ZonaSinCapacidadException("La zona " + zona.getLetra() +
-                    " no tiene capacidad suficiente para gestionar " + dto.getCantVehiculosACargo() + " vehículos más.");
+                    " no tiene capacidad suficiente para gestionar " + request.getCantVehiculosACargo() + " vehículos más.");
         }
 
-        // 3. Crear y guardar asignación
-        AsignacionEmpleadoZona asignacion = new AsignacionEmpleadoZona();
-        asignacion.setEmpleado(empleado);
-        asignacion.setZona(zona);
-        asignacion.setCantVehiculosACargo(dto.getCantVehiculosACargo());
-
+        AsignacionEmpleadoZona asignacion = request.toEntity(empleado, zona);
         AsignacionEmpleadoZona guardada = asignacionRepository.save(asignacion);
-        return mapearAResponseDTO(guardada);
+
+        log.info("Asignación creada exitosamente con ID: {}", guardada.getId());
+        return AsignacionEmpleadoZonaResponse.fromEntity(guardada);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
-    public List<EmpleadoResponseDTO> obtenerEmpleadosPorZona(Long idZona) {
-        if (!zonaRepository.existsById(idZona)) {
-            throw new RegistroNoEncontradoException("La zona con ID " + idZona + " no existe.");
-        }
-
-        return asignacionRepository.findEmpleadosByZonaId(idZona).stream()
-                .map(this::mapearAEmpleadoResponseDTO)
+    public List<AsignacionEmpleadoZonaResponse> listarTodas() {
+        log.info("Listando todas las asignaciones de empleado a zona activas");
+        return asignacionRepository.findAll().stream()
+                .filter(a -> Boolean.TRUE.equals(a.getActivo()))
+                .map(AsignacionEmpleadoZonaResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    // Auxiliares de mapeo interno a DTO de salida
-    private AsignacionEmpleadoZonaResponseDTO mapearAResponseDTO(AsignacionEmpleadoZona asignacion) {
-        AsignacionEmpleadoZonaResponseDTO dto = new AsignacionEmpleadoZonaResponseDTO();
-        dto.setId(asignacion.getId());
-        dto.setEmpleado(mapearAEmpleadoResponseDTO(asignacion.getEmpleado()));
-        dto.setCantVehiculosACargo(asignacion.getCantVehiculosACargo());
-        // El mapeo de ZonaResponseDTO asumimos que lo resuelve la capa DTO correspondiente
-        return dto;
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<AsignacionEmpleadoZonaResponse> listarTodasIncluyendoInactivas() {
+        log.info("Listando todas las asignaciones (incluyendo inactivas)");
+        return asignacionRepository.findAll().stream()
+                .map(AsignacionEmpleadoZonaResponse::fromEntity)
+                .collect(Collectors.toList());
     }
 
-    private EmpleadoResponseDTO mapearAEmpleadoResponseDTO(Empleado emp) {
-        if (emp == null) return null;
-        EmpleadoResponseDTO dto = new EmpleadoResponseDTO();
-        dto.setId(emp.getId());
-        dto.setNombre(emp.getNombre());
-        dto.setApellido(emp.getApellido());
-        dto.setNombreUsuario(emp.getNombreUsuario());
-        return dto;
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public AsignacionEmpleadoZonaResponse buscarPorId(Integer id) {
+        log.info("Buscando asignación por ID: {}", id);
+        AsignacionEmpleadoZona asignacion = asignacionRepository.findById(id)
+                .filter(a -> Boolean.TRUE.equals(a.getActivo()))
+                .orElseThrow(() -> new RegistroNoEncontradoException("La asignación con ID " + id + " no fue encontrada."));
+        return AsignacionEmpleadoZonaResponse.fromEntity(asignacion);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public AsignacionEmpleadoZonaResponse actualizarAsignacion(Integer id, AsignacionEmpleadoZonaUpdate update) {
+        log.info("Actualizando asignación con ID: {}", id);
+        AsignacionEmpleadoZona asignacion = asignacionRepository.findById(id)
+                .filter(a -> Boolean.TRUE.equals(a.getActivo()))
+                .orElseThrow(() -> new RegistroNoEncontradoException("La asignación con ID " + id + " no fue encontrada."));
+
+        if (update.getCantVehiculosACargo() != null) {
+            if (update.getCantVehiculosACargo() < 0) {
+                throw new IllegalArgumentException("La cantidad de vehículos a cargo no puede ser negativa.");
+            }
+
+            // Validar capacidad considerando el cambio
+            Zona zona = asignacion.getZona();
+            int vehiculosActualesOtros = asignacionRepository.findAll().stream()
+                    .filter(a -> Boolean.TRUE.equals(a.getActivo())
+                            && a.getZona() != null
+                            && a.getZona().getId().equals(zona.getId())
+                            && !a.getId().equals(asignacion.getId()))
+                    .mapToInt(AsignacionEmpleadoZona::getCantVehiculosACargo)
+                    .sum();
+
+            if ((vehiculosActualesOtros + update.getCantVehiculosACargo()) > zona.getCapacidadVehiculos()) {
+                throw new ZonaSinCapacidadException("La zona " + zona.getLetra() +
+                        " no tiene capacidad suficiente para actualizar a " + update.getCantVehiculosACargo() + " vehículos.");
+            }
+        }
+
+        update.updateEntity(asignacion);
+        AsignacionEmpleadoZona actualizada = asignacionRepository.save(asignacion);
+
+        log.info("Asignación con ID: {} actualizada exitosamente", actualizada.getId());
+        return AsignacionEmpleadoZonaResponse.fromEntity(actualizada);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public void eliminarAsignacion(Integer id) {
+        log.info("Ejecutando borrado lógico para asignación con ID: {}", id);
+        AsignacionEmpleadoZona asignacion = asignacionRepository.findById(id)
+                .filter(a -> Boolean.TRUE.equals(a.getActivo()))
+                .orElseThrow(() -> new RegistroNoEncontradoException("La asignación con ID " + id + " no fue encontrada."));
+
+        asignacion.setActivo(false);
+        asignacionRepository.save(asignacion);
+        log.info("Borrado lógico aplicado exitosamente a la asignación con ID: {}", id);
     }
 }
-
-
