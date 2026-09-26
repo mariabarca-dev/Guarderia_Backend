@@ -1,12 +1,16 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
-import com.guarderiaCentral.guarderia_Backend.dtos.AdministradorResponseDTO;
-import com.guarderiaCentral.guarderia_Backend.modelos.Administrador;
-import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
-import com.guarderiaCentral.guarderia_Backend.repositories.dtos.AdministradorRequestDTO;
-import com.guarderiaCentral.guarderia_Backend.services.AdministradorService;
+import com.guarderiaCentral.guarderia_Backend.dtos.AdministradorDTO;
+import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
-
+import com.guarderiaCentral.guarderia_Backend.modelos.Administrador;
+import com.guarderiaCentral.guarderia_Backend.repositories.AdministradorRepository;
+import com.guarderiaCentral.guarderia_Backend.repositories.AdministradorRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.AdministradorResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.AdministradorUpdate;
+import com.guarderiaCentral.guarderia_Backend.services.AdministradorService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,124 +18,136 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Implementación de la lógica de negocio para la entidad Administrador.
+ * Maneja persistencia JPA, validaciones de unicidad y borrado lógico.
+ */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class AdministradorServiceImpl implements AdministradorService {
 
     private final AdministradorRepository administradorRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public AdministradorServiceImpl(AdministradorRepository administradorRepository,
-                                    PasswordEncoder passwordEncoder) {
-        this.administradorRepository = administradorRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
-    public List<AdministradorResponseDTO> listarTodos() {
-        return administradorRepository.findAll().stream()
-                .filter(admin -> admin.getActivo() == null || admin.getActivo()) // Considera borrado lógico si la entidad lo tiene
-                .map(this::mapearAResponseDTO)
+    public List<AdministradorDTO> listarActivos() {
+        log.info("Listando todos los administradores activos.");
+        return administradorRepository.findByActivoTrue().stream()
+                .map(AdministradorResponse::fromEntity)
+                .map(response -> {
+                    AdministradorDTO dto = new AdministradorDTO();
+                    dto.setId(response.getId());
+                    dto.setNombreUsuario(response.getNombreUsuario());
+                    dto.setDni(response.getDni());
+                    dto.setNombre(response.getNombre());
+                    dto.setApellido(response.getApellido());
+                    dto.setEmail(response.getEmail());
+                    dto.setTelefono(response.getTelefono());
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
-    public AdministradorResponseDTO buscarPorId(Long id) {
-        Administrador admin = administradorRepository.findById(id)
-                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el administrador con ID: " + id));
-
-        return mapearAResponseDTO(admin);
+    public List<AdministradorResponse> listarTodosAdmin() {
+        log.info("Listando todos los administradores (incluyendo inactivos) por solicitud administrativa.");
+        return administradorRepository.findAllIncludingInactive().stream()
+                .map(AdministradorResponse::fromEntity)
+                .collect(Collectors.toList());
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public AdministradorDTO buscarPorId(int id) {
+        log.info("Buscando administrador con ID: {}", id);
+        Administrador admin = administradorRepository.findById(id)
+                .filter(Administrador::getActivo)
+                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el administrador activo con ID: " + id));
+
+        AdministradorResponse response = AdministradorResponse.fromEntity(admin);
+        AdministradorDTO dto = new AdministradorDTO();
+        dto.setId(response.getId());
+        dto.setNombreUsuario(response.getNombreUsuario());
+        dto.setDni(response.getDni());
+        dto.setNombre(response.getNombre());
+        dto.setApellido(response.getApellido());
+        dto.setEmail(response.getEmail());
+        dto.setTelefono(response.getTelefono());
+        return dto;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional
-    public AdministradorResponseDTO registrarAdministrador(AdministradorRequestDTO dto) {
-        if (dto == null) {
-            throw new ErrorNegocio("Los datos del administrador no pueden ser nulos.");
+    public AdministradorResponse registrarAdministrador(AdministradorRequest request) {
+        log.info("Registrando nuevo administrador con DNI: {}", request.getDni());
+
+        if (administradorRepository.existsByDni(request.getDni())) {
+            throw new DniDuplicadoException("Ya existe un administrador registrado con el DNI: " + request.getDni());
         }
 
-        // 1. Validar regla de negocio de unicidad de username
-        if (administradorRepository.existsByNombreUsuario(dto.getNombreUsuario())) {
-            throw new ErrorNegocio("El nombre de usuario '" + dto.getNombreUsuario() + "' ya existe.");
-        }
-
-        // 2. Mapeo manual hacia el modelo
-        Administrador admin = new Administrador();
-        admin.setNombre(dto.getNombre().trim());
-        admin.setApellido(dto.getApellido().trim());
-        admin.setDireccion(dto.getDireccion().trim());
-        admin.setTelefono(dto.getTelefono().trim());
-        admin.setNombreUsuario(dto.getNombreUsuario().trim());
-
-        // Cifrado de contraseña obligatorio antes de guardar
-        admin.setClave(passwordEncoder.encode(dto.getClave()));
-
-        // Asignación de rol por defecto
-        admin.setRol(Rol.ADMINISTRADOR);
+        Administrador admin = request.toEntity();
+        // Encriptar password usando el PasswordEncoder inyectado por seguridad
+        admin.setPassword(passwordEncoder.encode(request.getPassword()));
         admin.setActivo(true);
 
-        // 3. Persistencia (el ID lo genera la BD de forma autoincremental/sequence)
-        Administrador guardado = administradorRepository.save(admin);
+        Administrador savedAdmin = administradorRepository.save(admin);
+        log.info("Administrador registrado exitosamente con ID: {}", savedAdmin.getId());
 
-        return mapearAResponseDTO(guardado);
+        return AdministradorResponse.fromEntity(savedAdmin);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional
-    public AdministradorResponseDTO actualizarAdministrador(Long id, AdministradorRequestDTO dto) {
-        if (dto == null) {
-            throw new ErrorNegocio("Los datos a actualizar no pueden ser nulos.");
-        }
+    public AdministradorResponse actualizarAdministrador(int id, AdministradorUpdate update) {
+        log.info("Actualizando administrador con ID: {}", id);
 
-        Administrador adminExistente = administradorRepository.findById(id)
-                .orElseThrow(() -> new RegistroNoEncontradoException("No se puede actualizar: El administrador con ID " + id + " no existe."));
-
-        // Validar si intenta cambiar el nombre de usuario a uno que ya pertenece a otro registro
-        if (!adminExistente.getNombreUsuario().equalsIgnoreCase(dto.getNombreUsuario()) &&
-                administradorRepository.existsByNombreUsuario(dto.getNombreUsuario())) {
-            throw new ErrorNegocio("El nombre de usuario '" + dto.getNombreUsuario() + "' ya está en uso.");
-        }
-
-        adminExistente.setNombre(dto.getNombre().trim());
-        adminExistente.setApellido(dto.getApellido().trim());
-        adminExistente.setDireccion(dto.getDireccion().trim());
-        adminExistente.setTelefono(dto.getTelefono().trim());
-        adminExistente.setNombreUsuario(dto.getNombreUsuario().trim());
-
-        // Actualizar clave únicamente si se envía una nueva
-        if (dto.getClave() != null && !dto.getClave().isBlank()) {
-            adminExistente.setClave(passwordEncoder.encode(dto.getClave()));
-        }
-
-        Administrador actualizado = administradorRepository.save(adminExistente);
-        return mapearAResponseDTO(actualizado);
-    }
-
-    @Override
-    @Transactional
-    public void eliminarAdministrador(Long id) {
         Administrador admin = administradorRepository.findById(id)
-                .orElseThrow(() -> new RegistroNoEncontradoException("No se puede eliminar: El administrador con ID " + id + " no existe."));
+                .filter(Administrador::getActivo)
+                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el administrador activo con ID: " + id));
 
-        // Borrado lógico (recomendado en entornos enterprise con Spring Data JPA)
+        update.updateEntity(admin);
+        if (update.getPassword() != null && !update.getPassword().isEmpty()) {
+            admin.setPassword(passwordEncoder.encode(update.getPassword()));
+        }
+
+        Administrador updatedAdmin = administradorRepository.save(admin);
+        log.info("Administrador con ID: {} actualizado exitosamente.", id);
+
+        return AdministradorResponse.fromEntity(updatedAdmin);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public void eliminarAdministrador(int id) {
+        log.info("Ejecutando borrado lógico para el administrador con ID: {}", id);
+
+        Administrador admin = administradorRepository.findById(id)
+                .filter(Administrador::getActivo)
+                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el administrador activo con ID: " + id));
+
         admin.setActivo(false);
         administradorRepository.save(admin);
-
-        // Si fuera borrado físico:
-        // administradorRepository.delete(admin);
-    }
-
-    // Auxiliar de mapeo interno a DTO de salida
-    private AdministradorResponseDTO mapearAResponseDTO(Administrador admin) {
-        AdministradorResponseDTO response = new AdministradorResponseDTO();
-        response.setId(admin.getId());
-        response.setNombre(admin.getNombre());
-        response.setApellido(admin.getApellido());
-        response.setDireccion(admin.getDireccion());
-        response.setTelefono(admin.getTelefono());
-        response.setNombreUsuario(admin.getNombreUsuario());
-        response.setRol(admin.getRol());
-        return response;
+        log.info("Administrador con ID: {} desactivado correctamente.", id);
     }
 }
