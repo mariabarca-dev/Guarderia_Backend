@@ -32,7 +32,7 @@ import java.util.List;
  * - ADMINISTRADOR: Control total CRUD (GET/POST/PUT/DELETE) sobre las propiedades de garages.
  * - SYSADMIN: Sin acceso a la entidad de negocio PropiedadGarage.
  *
- * @author Franco Tomás Buyatti
+ *
  * @version 1.0
  */
 @RestController

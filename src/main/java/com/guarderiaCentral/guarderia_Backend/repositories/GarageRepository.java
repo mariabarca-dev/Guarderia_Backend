@@ -11,7 +11,7 @@ import java.util.Optional;
 
 /**
  * Repositorio Spring Data JPA para la entidad Garage.
- * Filtra por defecto los registros activos e incluye los métodos default de mapeo.
+ * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -19,21 +19,27 @@ import java.util.Optional;
 public interface GarageRepository extends JpaRepository<Garage, Integer> {
 
     /**
-     * Busca todos los garages cuyo estado activo sea true.
+     * Busca todos los garages cuyo estado activo sea true (Convención Spring Data).
      *
      * @return Lista de garages activos.
      */
-    @Query("SELECT g FROM Garage g WHERE g.activo = true")
-    List<Garage> findAllActive();
+    List<Garage> findAllByActivoTrue();
 
     /**
-     * Busca un garage por su ID asegurando que se encuentre activo.
+     * Busca un garage por su ID asegurando que se encuentre activo (Convención Spring Data).
      *
      * @param id ID del garage.
      * @return Optional con el garage encontrado si está activo.
      */
-    @Query("SELECT g FROM Garage g WHERE g.id = :id AND g.activo = true")
-    Optional<Garage> findActiveById(Integer id);
+    Optional<Garage> findByIdAndActivoTrue(Integer id);
+
+    /**
+     * Verifica la existencia de un garage activo por su ID.
+     *
+     * @param id ID del garage.
+     * @return true si existe y está activo, false en caso contrario.
+     */
+    boolean existsByIdAndActivoTrue(Integer id);
 
     /**
      * Método explícito para uso administrativo que devuelve todos los registros,

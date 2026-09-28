@@ -12,7 +12,7 @@ import java.util.Optional;
 
 /**
  * Repositorio Spring Data JPA para la entidad AsignacionEmpleadoZona.
- * Filtra por defecto los registros activos e incluye los métodos default de mapeo.
+ * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -20,21 +20,27 @@ import java.util.Optional;
 public interface AsignacionEmpleadoZonaRepository extends JpaRepository<AsignacionEmpleadoZona, Integer> {
 
     /**
-     * Busca todas las asignaciones cuyo estado activo sea true.
+     * Busca todas las asignaciones cuyo estado activo sea true (Convención Spring Data).
      *
      * @return Lista de asignaciones activas.
      */
-    @Query("SELECT a FROM AsignacionEmpleadoZona a WHERE a.activo = true")
-    List<AsignacionEmpleadoZona> findAllActive();
+    List<AsignacionEmpleadoZona> findAllByActivoTrue();
 
     /**
-     * Busca una asignación por su ID asegurando que se encuentre activa.
+     * Busca una asignación por su ID asegurando que se encuentre activa (Convención Spring Data).
      *
      * @param id ID de la asignación.
      * @return Optional con la asignación encontrada si está activa.
      */
-    @Query("SELECT a FROM AsignacionEmpleadoZona a WHERE a.id = :id AND a.activo = true")
-    Optional<AsignacionEmpleadoZona> findActiveById(Integer id);
+    Optional<AsignacionEmpleadoZona> findByIdAndActivoTrue(Integer id);
+
+    /**
+     * Verifica la existencia de una asignación activa por su ID.
+     *
+     * @param id ID de la asignación.
+     * @return true si existe y está activa, false en caso contrario.
+     */
+    boolean existsByIdAndActivoTrue(Integer id);
 
     /**
      * Método explícito para uso administrativo que devuelve todos los registros,

@@ -29,7 +29,7 @@ import java.util.List;
  * Proporciona endpoints para la gestión de usuarios de tipo Empleado por parte del SYSADMIN,
  * así como endpoints de consulta de zonas y vehículos bajo responsabilidad del empleado.
  *
- * @author Franco Tomás Buyatti
+ *
  * @version 1.0
  */
 @RestController

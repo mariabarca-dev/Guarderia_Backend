@@ -25,9 +25,9 @@ import java.util.List;
 /**
  * Controlador RESTful para la gestión de asignaciones entre vehículos y garajes (AsignacionVehiculoGarage).
  * Proporciona endpoints REST limpios para operaciones CRUD sobre la relación asociativa 1 a 1 de asignación,
- * respetando la matriz de seguridad medianteSpring Security y anotaciones @PreAuthorize.
+ * respetando la matriz de seguridad mediante Spring Security y anotaciones @PreAuthorize.
  *
- * @author Franco Tomás Buyatti
+ *
  * @version 1.0
  */
 @RestController
@@ -111,8 +111,8 @@ public class AsignacionVehiculoGarageRestController {
     public ResponseEntity<AsignacionVehiculoGarageResponse> crear(
             @Valid @RequestBody AsignacionVehiculoGarageRequest request) {
         logger.info("REST Request para registrar una asignación del vehículo ID: {} al garaje ID: {}",
-                request.getIdVehiculo(), request.getIdGarage());
-        AsignacionVehiculoGarageResponse nuevaAsignacion = asignacionService.crear(request);
+                request.getVehiculoId(), request.getGarageId());
+        AsignacionVehiculoGarageResponse nuevaAsignacion = asignacionService.crearAsignacion(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaAsignacion);
     }
 
@@ -131,7 +131,7 @@ public class AsignacionVehiculoGarageRestController {
             @PathVariable Integer id,
             @Valid @RequestBody AsignacionVehiculoGarageUpdate update) {
         logger.info("REST Request para actualizar la asignación de vehículo a garaje ID: {}", id);
-        AsignacionVehiculoGarageResponse asignacionActualizada = asignacionService.actualizar(id, update);
+        AsignacionVehiculoGarageResponse asignacionActualizada = asignacionService.actualizarAsignacion(id, update);
         return ResponseEntity.ok(asignacionActualizada);
     }
 
@@ -146,7 +146,7 @@ public class AsignacionVehiculoGarageRestController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         logger.info("REST Request para eliminar (borrado lógico) la asignación con ID: {}", id);
-        asignacionService.eliminar(id);
+        asignacionService.eliminarAsignacion(id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -31,7 +31,7 @@ import java.util.List;
  * - ADMINISTRADOR: Control total (CRUD - GET/POST/PUT/DELETE) sobre la entidad Garage.
  * - SYSADMIN: Sin acceso a la entidad de negocio Garage.
  *
- * @author Franco Tomás Buyatti
+ *
  * @version 1.0
  */
 @RestController

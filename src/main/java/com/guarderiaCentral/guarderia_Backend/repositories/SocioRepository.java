@@ -10,7 +10,7 @@ import java.util.Optional;
 
 /**
  * Repositorio Spring Data JPA para la entidad Socio.
- * Filtra por defecto los registros activos e incluye los métodos default de mapeo.
+ * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -18,21 +18,43 @@ import java.util.Optional;
 public interface SocioRepository extends JpaRepository<Socio, Integer> {
 
     /**
-     * Busca todos los socios cuyo estado activo sea true.
+     * Busca todos los socios cuyo estado activo sea true (Convención Spring Data).
      *
      * @return Lista de socios activos.
      */
-    @Query("SELECT s FROM Socio s WHERE s.activo = true")
-    List<Socio> findAllActive();
+    List<Socio> findAllByActivoTrue();
 
     /**
-     * Busca un socio por su ID asegurando que se encuentre activo.
+     * Busca un socio por su ID asegurando que se encuentre activo (Convención Spring Data).
      *
      * @param id ID del socio.
      * @return Optional con el socio encontrado si está activo.
      */
-    @Query("SELECT s FROM Socio s WHERE s.id = :id AND s.activo = true")
-    Optional<Socio> findActiveById(Integer id);
+    Optional<Socio> findByIdAndActivoTrue(Integer id);
+
+    /**
+     * Verifica la existencia de un socio activo por su ID.
+     *
+     * @param id ID del socio.
+     * @return true si existe y está activo, false en caso contrario.
+     */
+    boolean existsByIdAndActivoTrue(Integer id);
+
+    /**
+     * Verifica la existencia de un socio activo por su DNI.
+     *
+     * @param dni DNI del socio.
+     * @return true si existe y está activo.
+     */
+    boolean existsByDniAndActivoTrue(String dni);
+
+    /**
+     * Verifica la existencia de un socio activo por su nombre de usuario.
+     *
+     * @param nombreUsuario Nombre de usuario.
+     * @return true si existe y está activo.
+     */
+    boolean existsByNombreUsuarioAndActivoTrue(String nombreUsuario);
 
     /**
      * Busca un socio por su DNI único asegurando que esté activo.

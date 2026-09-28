@@ -10,7 +10,7 @@ import java.util.Optional;
 
 /**
  * Repositorio Spring Data JPA para la entidad Zona.
- * Filtra por defecto los registros activos e incluye los métodos default de mapeo.
+ * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -18,21 +18,35 @@ import java.util.Optional;
 public interface ZonaRepository extends JpaRepository<Zona, Integer> {
 
     /**
-     * Busca todas las zonas cuyo estado activo sea true.
+     * Busca todas las zonas cuyo estado activo sea true (Convención Spring Data).
      *
      * @return Lista de zonas activas.
      */
-    @Query("SELECT z FROM Zona z WHERE z.activo = true")
-    List<Zona> findAllActive();
+    List<Zona> findAllByActivoTrue();
 
     /**
-     * Busca una zona por su ID asegurando que se encuentre activa.
+     * Busca una zona por su ID asegurando que se encuentre activa (Convención Spring Data).
      *
      * @param id ID de la zona.
      * @return Optional con la zona encontrada si está activa.
      */
-    @Query("SELECT z FROM Zona z WHERE z.id = :id AND z.activo = true")
-    Optional<Zona> findActiveById(Integer id);
+    Optional<Zona> findByIdAndActivoTrue(Integer id);
+
+    /**
+     * Verifica la existencia de una zona activa por su ID.
+     *
+     * @param id ID de la zona.
+     * @return true si existe y está activa, false en caso contrario.
+     */
+    boolean existsByIdAndActivoTrue(Integer id);
+
+    /**
+     * Verifica la existencia de una zona activa por su letra identificatoria.
+     *
+     * @param letra Letra de la zona.
+     * @return true si existe y está activa.
+     */
+    boolean existsByLetraAndActivoTrue(String letra);
 
     /**
      * Busca una zona por su letra identificatoria asegurando que esté activa.

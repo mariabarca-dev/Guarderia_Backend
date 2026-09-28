@@ -12,7 +12,7 @@ import java.util.Optional;
 
 /**
  * Repositorio Spring Data JPA para la entidad AsignacionVehiculoGarage.
- * Filtra por defecto los registros activos e incluye los métodos default de mapeo.
+ * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -20,21 +20,27 @@ import java.util.Optional;
 public interface AsignacionVehiculoGarageRepository extends JpaRepository<AsignacionVehiculoGarage, Integer> {
 
     /**
-     * Busca todas las asignaciones de vehículo a garage cuyo estado activo sea true.
+     * Busca todas las asignaciones de vehículo a garage cuyo estado activo sea true (Convención Spring Data).
      *
      * @return Lista de asignaciones activas.
      */
-    @Query("SELECT a FROM AsignacionVehiculoGarage a WHERE a.activo = true")
-    List<AsignacionVehiculoGarage> findAllActive();
+    List<AsignacionVehiculoGarage> findAllByActivoTrue();
 
     /**
-     * Busca una asignación por su ID asegurando que se encuentre activa.
+     * Busca una asignación por su ID asegurando que se encuentre activa (Convención Spring Data).
      *
      * @param id ID de la asignación.
      * @return Optional con la asignación encontrada si está activa.
      */
-    @Query("SELECT a FROM AsignacionVehiculoGarage a WHERE a.id = :id AND a.activo = true")
-    Optional<AsignacionVehiculoGarage> findActiveById(Integer id);
+    Optional<AsignacionVehiculoGarage> findByIdAndActivoTrue(Integer id);
+
+    /**
+     * Verifica la existencia de una asignación activa por su ID.
+     *
+     * @param id ID de la asignación.
+     * @return true si existe y está activa, false en caso contrario.
+     */
+    boolean existsByIdAndActivoTrue(Integer id);
 
     /**
      * Método explícito para uso administrativo que devuelve todos los registros,
@@ -48,14 +54,18 @@ public interface AsignacionVehiculoGarageRepository extends JpaRepository<Asigna
     /**
      * Convierte un {@link AsignacionVehiculoGarageRequest} en una entidad {@link AsignacionVehiculoGarage}.
      *
-     * @param request Objeto con los datos de entrada.
+     * @param request  Objeto con los datos de entrada.
+     * @param vehiculo Entidad Vehiculo asociada.
+     * @param garage   Entidad Garage asociada.
      * @return Entidad AsignacionVehiculoGarage mapeada con activo = true.
      */
-    default AsignacionVehiculoGarage toEntity(AsignacionVehiculoGarageRequest request) {
+    default AsignacionVehiculoGarage toEntity(AsignacionVehiculoGarageRequest request, Vehiculo vehiculo, Garage garage) {
         if (request == null) {
             return null;
         }
         AsignacionVehiculoGarage asignacion = new AsignacionVehiculoGarage();
+        asignacion.setVehiculo(vehiculo);
+        asignacion.setGarage(garage);
         asignacion.setFechaAsignacionGarage(request.getFechaAsignacionGarage());
         asignacion.setActivo(true);
         return asignacion;
@@ -66,10 +76,18 @@ public interface AsignacionVehiculoGarageRepository extends JpaRepository<Asigna
      *
      * @param asignacion Entidad existente.
      * @param update     Objeto con los nuevos valores.
+     * @param vehiculo   Nueva entidad Vehiculo (opcional).
+     * @param garage     Nueva entidad Garage (opcional).
      */
-    default void updateEntity(AsignacionVehiculoGarage asignacion, AsignacionVehiculoGarageUpdate update) {
+    default void updateEntity(AsignacionVehiculoGarage asignacion, AsignacionVehiculoGarageUpdate update, Vehiculo vehiculo, Garage garage) {
         if (asignacion == null || update == null) {
             return;
+        }
+        if (vehiculo != null) {
+            asignacion.setVehiculo(vehiculo);
+        }
+        if (garage != null) {
+            asignacion.setGarage(garage);
         }
         if (update.getFechaAsignacionGarage() != null) {
             asignacion.setFechaAsignacionGarage(update.getFechaAsignacionGarage());

@@ -12,7 +12,7 @@ import java.util.Optional;
 
 /**
  * Repositorio Spring Data JPA para la entidad Vehiculo.
- * Filtra por defecto los registros activos e incluye los métodos default de mapeo.
+ * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -20,21 +20,35 @@ import java.util.Optional;
 public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
 
     /**
-     * Busca todos los vehículos cuyo estado activo sea true.
+     * Busca todos los vehículos cuyo estado activo sea true (Convención Spring Data).
      *
      * @return Lista de vehículos activos.
      */
-    @Query("SELECT v FROM Vehiculo v WHERE v.activo = true")
-    List<Vehiculo> findAllActive();
+    List<Vehiculo> findAllByActivoTrue();
 
     /**
-     * Busca un vehículo por su ID asegurando que se encuentre activo.
+     * Busca un vehículo por su ID asegurando que se encuentre activo (Convención Spring Data).
      *
      * @param id ID del vehículo.
      * @return Optional con el vehículo encontrado si está activo.
      */
-    @Query("SELECT v FROM Vehiculo v WHERE v.id = :id AND v.activo = true")
-    Optional<Vehiculo> findActiveById(Integer id);
+    Optional<Vehiculo> findByIdAndActivoTrue(Integer id);
+
+    /**
+     * Verifica la existencia de un vehículo activo por su ID.
+     *
+     * @param id ID del vehículo.
+     * @return true si existe y está activo, false en caso contrario.
+     */
+    boolean existsByIdAndActivoTrue(Integer id);
+
+    /**
+     * Verifica la existencia de un vehículo activo por su matrícula.
+     *
+     * @param matricula Matrícula del vehículo.
+     * @return true si existe y está activo.
+     */
+    boolean existsByMatriculaAndActivoTrue(String matricula);
 
     /**
      * Busca un vehículo por su matrícula única asegurando que esté activo.

@@ -2,11 +2,11 @@ package com.guarderiaCentral.guarderia_Backend.services;
 
 import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
+import com.guarderiaCentral.guarderia_Backend.repositories.GarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.SocioRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.SocioResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.SocioUpdate;
-import com.guarderiaCentral.guarderia_Backend.dtos.GarageDTO;
-import com.guarderiaCentral.guarderia_Backend.dtos.VehiculoDTO;
+import com.guarderiaCentral.guarderia_Backend.repositories.VehiculoResponse;
 
 import java.util.List;
 
@@ -76,7 +76,7 @@ public interface SocioService {
      * @return Lista de DTOs de vehículos pertenecientes al socio.
      * @throws RegistroNoEncontradoException Si el socio no existe o no está activo.
      */
-    List<VehiculoDTO> listarVehiculosPorSocio(Integer socioId);
+    List<VehiculoResponse> listarVehiculosPorSocio(Integer socioId);
 
     /**
      * Obtiene los garages asociados en propiedad a un socio específico.
@@ -85,7 +85,7 @@ public interface SocioService {
      * @return Lista de DTOs de garages pertenecientes al socio.
      * @throws RegistroNoEncontradoException Si el socio no existe o no está activo.
      */
-    List<GarageDTO> listarGarajesPorSocio(Integer socioId);
+    List<GarageResponse> listarGarajesPorSocio(Integer socioId);
 
     /**
      * Obtiene una descripción del estado del garage asignado o en propiedad del socio.

@@ -39,13 +39,13 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
     @Transactional
     public AsignacionEmpleadoZonaResponse crearAsignacion(AsignacionEmpleadoZonaRequest request) {
         log.info("Iniciando creación de asignación para empleado ID: {} en zona ID: {}",
-                request.getIdEmpleado(), request.getIdZona());
+                request.getEmpleadoId(), request.getZonaId());
 
-        Empleado empleado = empleadoRepository.findById(request.getIdEmpleado())
+        Empleado empleado = empleadoRepository.findById(request.getEmpleadoId())
                 .filter(Empleado::getActivo)
                 .orElseThrow(() -> new RegistroNoEncontradoException("El empleado especificado no existe o está inactivo."));
 
-        Zona zona = zonaRepository.findById(request.getIdZona())
+        Zona zona = zonaRepository.findById(request.getZonaId())
                 .filter(Zona::getActivo)
                 .orElseThrow(() -> new RegistroNoEncontradoException("La zona especificada no existe o está inactiva."));
 
@@ -78,11 +78,11 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
                     " no tiene capacidad suficiente para gestionar " + request.getCantVehiculosACargo() + " vehículos más.");
         }
 
-        AsignacionEmpleadoZona asignacion = request.toEntity(empleado, zona);
+        AsignacionEmpleadoZona asignacion = asignacionRepository.toEntity(request, empleado, zona);
         AsignacionEmpleadoZona guardada = asignacionRepository.save(asignacion);
 
         log.info("Asignación creada exitosamente con ID: {}", guardada.getId());
-        return AsignacionEmpleadoZonaResponse.fromEntity(guardada);
+        return asignacionRepository.fromEntity(guardada);
     }
 
     /**
@@ -94,7 +94,7 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
         log.info("Listando todas las asignaciones de empleado a zona activas");
         return asignacionRepository.findAll().stream()
                 .filter(a -> Boolean.TRUE.equals(a.getActivo()))
-                .map(AsignacionEmpleadoZonaResponse::fromEntity)
+                .map(asignacionRepository::fromEntity)
                 .collect(Collectors.toList());
     }
 
@@ -106,7 +106,7 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
     public List<AsignacionEmpleadoZonaResponse> listarTodasIncluyendoInactivas() {
         log.info("Listando todas las asignaciones (incluyendo inactivas)");
         return asignacionRepository.findAll().stream()
-                .map(AsignacionEmpleadoZonaResponse::fromEntity)
+                .map(asignacionRepository::fromEntity)
                 .collect(Collectors.toList());
     }
 
@@ -120,7 +120,7 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
         AsignacionEmpleadoZona asignacion = asignacionRepository.findById(id)
                 .filter(a -> Boolean.TRUE.equals(a.getActivo()))
                 .orElseThrow(() -> new RegistroNoEncontradoException("La asignación con ID " + id + " no fue encontrada."));
-        return AsignacionEmpleadoZonaResponse.fromEntity(asignacion);
+        return asignacionRepository.fromEntity(asignacion);
     }
 
     /**
@@ -155,11 +155,19 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
             }
         }
 
-        update.updateEntity(asignacion);
+        // Resolver nuevas relaciones si se envían en el update
+        Empleado empleadoNuevo = (update.getEmpleadoId() != null)
+                ? empleadoRepository.findById(update.getEmpleadoId()).orElse(null)
+                : null;
+        Zona zonaNueva = (update.getZonaId() != null)
+                ? zonaRepository.findById(update.getZonaId()).orElse(null)
+                : null;
+
+        asignacionRepository.updateEntity(asignacion, update, empleadoNuevo, zonaNueva);
         AsignacionEmpleadoZona actualizada = asignacionRepository.save(asignacion);
 
         log.info("Asignación con ID: {} actualizada exitosamente", actualizada.getId());
-        return AsignacionEmpleadoZonaResponse.fromEntity(actualizada);
+        return asignacionRepository.fromEntity(actualizada);
     }
 
     /**

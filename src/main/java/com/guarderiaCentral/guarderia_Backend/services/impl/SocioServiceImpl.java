@@ -1,17 +1,17 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
-import com.guarderiaCentral.guarderia_Backend.dtos.GarageDTO;
-import com.guarderiaCentral.guarderia_Backend.dtos.VehiculoDTO;
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import com.guarderiaCentral.guarderia_Backend.modelos.Socio;
+import com.guarderiaCentral.guarderia_Backend.repositories.GarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.SocioRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.SocioRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.SocioResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.SocioUpdate;
 import com.guarderiaCentral.guarderia_Backend.repositories.UsuarioRepository;
+import com.guarderiaCentral.guarderia_Backend.repositories.VehiculoResponse;
 import com.guarderiaCentral.guarderia_Backend.services.PropiedadGarageService;
 import com.guarderiaCentral.guarderia_Backend.services.SocioService;
 import com.guarderiaCentral.guarderia_Backend.services.VehiculoService;
@@ -206,11 +206,11 @@ public class SocioServiceImpl implements SocioService {
      * Obtiene los vehículos asignados al socio especificado.
      *
      * @param socioId Identificador del socio.
-     * @return Lista de DTOs {@link VehiculoDTO}.
+     * @return Lista de DTOs {@link VehiculoResponse}.
      */
     @Override
     @Transactional(readOnly = true)
-    public List<VehiculoDTO> listarVehiculosPorSocio(Integer socioId) {
+    public List<VehiculoResponse> listarVehiculosPorSocio(Integer socioId) {
         log.debug("Listando vehículos para el socio ID: {}", socioId);
         validarSocioExistente(socioId);
         return vehiculoService.listarPorSocio(socioId);
@@ -220,11 +220,11 @@ public class SocioServiceImpl implements SocioService {
      * Obtiene los garages pertenecientes al socio especificado.
      *
      * @param socioId Identificador del socio.
-     * @return Lista de DTOs {@link GarageDTO}.
+     * @return Lista de DTOs {@link GarageResponse}.
      */
     @Override
     @Transactional(readOnly = true)
-    public List<GarageDTO> listarGarajesPorSocio(Integer socioId) {
+    public List<GarageResponse> listarGarajesPorSocio(Integer socioId) {
         log.debug("Listando garages en propiedad para el socio ID: {}", socioId);
         validarSocioExistente(socioId);
         return propiedadGarageService.listarPorSocio(socioId);

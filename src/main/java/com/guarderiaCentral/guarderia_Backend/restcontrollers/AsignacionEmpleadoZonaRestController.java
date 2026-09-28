@@ -28,7 +28,7 @@ import java.util.List;
  * Controlador RESTful para la gestión de las asignaciones de empleados a zonas (AsignacionEmpleadoZona).
  * Proporciona endpoints para realizar operaciones CRUD respetando la seguridad y permisos asignados por rol.
  *
- * @author Franco Tomás Buyatti
+ *
  * @version 1.0
  */
 @RestController

@@ -10,7 +10,7 @@ import java.util.Optional;
 
 /**
  * Repositorio Spring Data JPA para la entidad Empleado.
- * Filtra por defecto los registros activos e incluye los métodos default de mapeo.
+ * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -18,21 +18,43 @@ import java.util.Optional;
 public interface EmpleadoRepository extends JpaRepository<Empleado, Integer> {
 
     /**
-     * Busca todos los empleados cuyo estado activo sea true.
+     * Busca todos los empleados cuyo estado activo sea true (Convención Spring Data).
      *
      * @return Lista de empleados activos.
      */
-    @Query("SELECT e FROM Empleado e WHERE e.activo = true")
-    List<Empleado> findAllActive();
+    List<Empleado> findAllByActivoTrue();
 
     /**
-     * Busca un empleado por su ID asegurando que se encuentre activo.
+     * Busca un empleado por su ID asegurando que se encuentre activo (Convención Spring Data).
      *
      * @param id ID del empleado.
      * @return Optional con el empleado encontrado si está activo.
      */
-    @Query("SELECT e FROM Empleado e WHERE e.id = :id AND e.activo = true")
-    Optional<Empleado> findActiveById(Integer id);
+    Optional<Empleado> findByIdAndActivoTrue(Integer id);
+
+    /**
+     * Verifica la existencia de un empleado activo por su ID.
+     *
+     * @param id ID del empleado.
+     * @return true si existe y está activo, false en caso contrario.
+     */
+    boolean existsByIdAndActivoTrue(Integer id);
+
+    /**
+     * Verifica la existencia de un empleado activo por su código único.
+     *
+     * @param codigo Código único del empleado.
+     * @return true si existe y está activo.
+     */
+    boolean existsByCodigoAndActivoTrue(String codigo);
+
+    /**
+     * Verifica la existencia de un empleado activo por su nombre de usuario.
+     *
+     * @param nombreUsuario Nombre de usuario.
+     * @return true si existe y está activo.
+     */
+    boolean existsByNombreUsuarioAndActivoTrue(String nombreUsuario);
 
     /**
      * Busca un empleado por su código único asegurando que esté activo.

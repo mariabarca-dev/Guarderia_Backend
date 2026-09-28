@@ -19,6 +19,29 @@ import java.util.Optional;
 public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     /**
+     * Busca todos los usuarios activos del sistema sin importar su rol específico (Convención Spring Data).
+     *
+     * @return Lista de usuarios activos.
+     */
+    List<Usuario> findAllByActivoTrue();
+
+    /**
+     * Busca un usuario por su ID asegurando que se encuentre activo (Convención Spring Data).
+     *
+     * @param id ID del usuario.
+     * @return Optional con el usuario encontrado si está activo.
+     */
+    Optional<Usuario> findByIdAndActivoTrue(Integer id);
+
+    /**
+     * Verifica la existencia de un usuario activo por su ID.
+     *
+     * @param id ID del usuario.
+     * @return true si existe y está activo, false en caso contrario.
+     */
+    boolean existsByIdAndActivoTrue(Integer id);
+
+    /**
      * Busca un usuario por su nombre de usuario asegurando que esté activo.
      * Esencial para el sistema de seguridad y login (AuthService).
      *
@@ -28,7 +51,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
     Optional<Usuario> findByNombreUsuarioAndActivoTrue(String nombreUsuario);
 
     /**
-     * Busca todos los usuarios activos del sistema sin importar su rol específico.
+     * Busca todos los usuarios activos del sistema sin importar su rol específico (Consulta manual alternativa).
      *
      * @return Lista de usuarios activos.
      */

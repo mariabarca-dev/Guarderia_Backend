@@ -10,7 +10,7 @@ import java.util.Optional;
 
 /**
  * Repositorio Spring Data JPA para la entidad Administrador.
- * Filtra por defecto los registros activos y encapsula los métodos default de mapeo.
+ * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barcat
  */
@@ -18,21 +18,27 @@ import java.util.Optional;
 public interface AdministradorRepository extends JpaRepository<Administrador, Integer> {
 
     /**
-     * Busca todos los administradores cuyo estado activo sea true.
+     * Busca todos los administradores cuyo estado activo sea true (Convención Spring Data).
      *
      * @return Lista de administradores activos.
      */
-    @Query("SELECT a FROM Administrador a WHERE a.activo = true")
-    List<Administrador> findAllActive();
+    List<Administrador> findAllByActivoTrue();
 
     /**
-     * Busca un administrador por su ID asegurando que se encuentre activo.
+     * Busca un administrador por su ID asegurando que se encuentre activo (Convención Spring Data).
      *
      * @param id ID del administrador.
      * @return Optional con el administrador encontrado si está activo.
      */
-    @Query("SELECT a FROM Administrador a WHERE a.id = :id AND a.activo = true")
-    Optional<Administrador> findActiveById(Integer id);
+    Optional<Administrador> findByIdAndActivoTrue(Integer id);
+
+    /**
+     * Verifica la existencia de un administrador activo por su ID.
+     *
+     * @param id ID del administrador.
+     * @return true si existe y está activo, false en caso contrario.
+     */
+    boolean existsByIdAndActivoTrue(Integer id);
 
     /**
      * Busca un administrador por su nombre de usuario asegurando que esté activo.
