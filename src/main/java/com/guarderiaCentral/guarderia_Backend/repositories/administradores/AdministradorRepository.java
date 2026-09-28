@@ -1,6 +1,7 @@
-package com.guarderiaCentral.guarderia_Backend.repositories;
+package com.guarderiaCentral.guarderia_Backend.repositories.administradores;
 
 import com.guarderiaCentral.guarderia_Backend.modelos.Administrador;
+import com.guarderiaCentral.guarderia_Backend.repositories.AdministradorUpdate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

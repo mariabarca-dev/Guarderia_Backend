@@ -1,9 +1,9 @@
 package com.guarderiaCentral.guarderia_Backend.services;
 
 import com.guarderiaCentral.guarderia_Backend.dtos.AdministradorDTO;
-import com.guarderiaCentral.guarderia_Backend.repositories.AdministradorRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.AdministradorUpdate;
-import com.guarderiaCentral.guarderia_Backend.repositories.AdministradorResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorResponse;
 
 import java.util.List;
 

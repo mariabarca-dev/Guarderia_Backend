@@ -1,4 +1,4 @@
-package com.guarderiaCentral.guarderia_Backend.repositories;
+package com.guarderiaCentral.guarderia_Backend.repositories.administradores;
 
 import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import lombok.AllArgsConstructor;
