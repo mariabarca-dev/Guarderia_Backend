@@ -1,193 +1,215 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
-import com.guarderiaCentral.guarderia_Backend.dtos.EstadoGarageSocioResponseDTO;
-import com.guarderiaCentral.guarderia_Backend.dtos.GarageResponseDTO;
-import com.guarderiaCentral.guarderia_Backend.dtos.PropiedadGarageResponseDTO;
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.GarageYaVendidoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
-import com.guarderiaCentral.guarderia_Backend.modelos.AsignacionVehiculoGarage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Garage;
 import com.guarderiaCentral.guarderia_Backend.modelos.PropiedadGarage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Socio;
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionVehiculoGarageRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.GarageRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.PropiedadGarageRepository;
+import com.guarderiaCentral.guarderia_Backend.repositories.PropiedadGarageRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.PropiedadGarageResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.PropiedadGarageUpdate;
 import com.guarderiaCentral.guarderia_Backend.repositories.SocioRepository;
-import com.guarderiaCentral.guarderia_Backend.repositories.dtos.PropiedadGarageRequestDTO;
 import com.guarderiaCentral.guarderia_Backend.services.PropiedadGarageService;
-
-import org.springframework.security.access.AccessDeniedException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Implementación del servicio de gestión de propiedades de garage ({@link PropiedadGarageService}).
+ * Maneja las transacciones y aplica de manera estricta las reglas de negocio del dominio:
+ * - Un garage no puede venderse más de una vez mientras mantenga una propiedad activa.
+ * - La fecha de compra del garage no puede ser anterior a la fecha de alta/ingreso del socio.
+ * - Soporte nativo para borrado lógico y mapeo de datos.
+ *
+ * @author Cátedra
+ * @version 1.0
+ */
+@Slf4j
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class PropiedadGarageServiceImpl implements PropiedadGarageService {
 
-    private final PropiedadGarageRepository propiedadRepository;
+    private final PropiedadGarageRepository propiedadGarageRepository;
     private final SocioRepository socioRepository;
     private final GarageRepository garageRepository;
-    private final AsignacionVehiculoGarageRepository asignacionRepository;
 
-    public PropiedadGarageServiceImpl(PropiedadGarageRepository propiedadRepository,
-                                      SocioRepository socioRepository,
-                                      GarageRepository garageRepository,
-                                      AsignacionVehiculoGarageRepository asignacionRepository) {
-        this.propiedadRepository = propiedadRepository;
-        this.socioRepository = socioRepository;
-        this.garageRepository = garageRepository;
-        this.asignacionRepository = asignacionRepository;
-    }
-
+    /**
+     * Registra la compra de un garage por un socio comprobando la existencia de las entidades,
+     * la disponibilidad previa del garage y la coherencia cronológica de la transacción.
+     *
+     * @param request DTO con la información requerida para registrar la propiedad.
+     * @return {@link PropiedadGarageResponse} formateado de la entidad creada.
+     * @throws RegistroNoEncontradoException Si el socio o garage no existen o están inactivos.
+     * @throws GarageYaVendidoException Si el garage ya fue vendido a otro o al mismo socio.
+     * @throws BusinessException Si la fecha de compra es anterior a la fecha de ingreso del socio.
+     */
     @Override
-    @Transactional
-    public PropiedadGarageResponseDTO registrarPropiedad(PropiedadGarageRequestDTO dto) {
-        if (dto == null) {
-            throw new ErrorNegocio("El objeto DTO no puede ser nulo.");
+    public PropiedadGarageResponse registrarPropiedad(PropiedadGarageRequest request) {
+        log.info("Iniciando registro de propiedad para Socio ID: {} y Garage ID: {}", request.getSocioId(), request.getGarageId());
+
+        Socio socio = socioRepository.findById(request.getSocioId())
+                .filter(Socio::getActivo)
+                .orElseThrow(() -> {
+                    log.error("Socio no encontrado con ID: {}", request.getSocioId());
+                    return new RegistroNoEncontradoException("El socio especificado no existe o está inactivo en el sistema.");
+                });
+
+        Garage garage = garageRepository.findById(request.getGarageId())
+                .filter(Garage::getActivo)
+                .orElseThrow(() -> {
+                    log.error("Garage no encontrado con ID: {}", request.getGarageId());
+                    return new RegistroNoEncontradoException("El garage especificado no existe o está inactivo en el sistema.");
+                });
+
+        // REGLA DE NEGOCIO: Validar que el garage no tenga una propiedad activa
+        boolean yaVendido = propiedadGarageRepository.findByGarageIdAndActivoTrue(garage.getId()).isPresent();
+        if (yaVendido) {
+            log.warn("Intento fallido de compra: El garage N° {} ya tiene un socio propietario asignado.", garage.getNumeroGarage());
+            throw new GarageYaVendidoException("Error: El garaje N° " + garage.getNumeroGarage() + " ya tiene un socio propietario asignado.");
         }
 
-        if (dto.getFechaCompraGarage() == null) {
-            throw new ErrorNegocio("La fecha de compra no puede ser nula.");
+        // REGLA DE NEGOCIO: La fecha de compra no puede ser anterior a la fecha de ingreso del socio
+        LocalDate fechaCompra = request.getFechaCompra();
+        if (socio.getFechaIngreso() != null && fechaCompra.isBefore(socio.getFechaIngreso())) {
+            log.warn("Fecha de compra invalida: {} es anterior a la fecha de ingreso del socio: {}", fechaCompra, socio.getFechaIngreso());
+            throw new BusinessException("Error de negocio: La fecha de compra (" + fechaCompra
+                    + ") no puede ser anterior a la fecha de ingreso del socio (" + socio.getFechaIngreso() + ").", HttpStatus.BAD_REQUEST);
         }
 
-        if (dto.getFechaCompraGarage().isAfter(LocalDate.now())) {
-            throw new ErrorNegocio("La fecha de compra no puede ser una fecha futura.");
-        }
+        PropiedadGarage nuevaPropiedad = propiedadGarageRepository.toEntity(request, socio, garage);
+        nuevaPropiedad.setActivo(true);
 
-        // 1. Validar existencia del socio y del garaje
-        Socio socio = socioRepository.findById(dto.getSocioId())
-                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el socio con ID: " + dto.getSocioId()));
+        PropiedadGarage guardada = propiedadGarageRepository.save(nuevaPropiedad);
+        log.info("Propiedad registrada exitosamente con ID: {}", guardada.getId());
 
-        Garage garage = garageRepository.findByNumeroGarage(dto.getNumeroGarage())
-                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el garaje N°: " + dto.getNumeroGarage()));
-
-        // 2. REGLA DE NEGOCIO: Excepción específica si el garaje ya tiene dueño
-        if (garage.getSocioPropietario() != null) {
-            throw new GarageYaVendidoException("Error: El garaje N° " + garage.getNumeroGarage()
-                    + " ya tiene un socio propietario asignado.");
-        }
-
-        // 3. REGLA DE NEGOCIO: La fecha de compra no puede ser anterior a la fecha de ingreso del socio
-        if (socio.getFechaIngreso() != null && dto.getFechaCompraGarage().isBefore(socio.getFechaIngreso())) {
-            throw new ErrorNegocio("Error de negocio: La fecha de compra (" + dto.getFechaCompraGarage()
-                    + ") no puede ser anterior a la fecha de ingreso del socio (" + socio.getFechaIngreso() + ").");
-        }
-
-        // 4. Mapear y registrar la propiedad
-        PropiedadGarage nuevaPropiedad = new PropiedadGarage();
-        nuevaPropiedad.setSocio(socio);
-        nuevaPropiedad.setGarage(garage);
-        nuevaPropiedad.setFechaCompraGarage(dto.getFechaCompraGarage());
-
-        PropiedadGarage guardada = propiedadRepository.save(nuevaPropiedad);
-
-        // 5. Vinculación bidireccional en el garaje
-        garage.setSocioPropietario(socio);
-        garageRepository.save(garage);
-
-        return mapearAResponseDTO(guardada);
+        return propiedadGarageRepository.fromEntity(guardada);
     }
 
+    /**
+     * Busca y retorna una propiedad por su ID.
+     *
+     * @param id Identificador de la propiedad.
+     * @return DTO de respuesta con la propiedad hallada.
+     * @throws RegistroNoEncontradoException Si no existe la propiedad.
+     */
     @Override
     @Transactional(readOnly = true)
-    public List<PropiedadGarageResponseDTO> listarTodas() {
-        return propiedadRepository.findAll().stream()
-                .map(this::mapearAResponseDTO)
+    public PropiedadGarageResponse obtenerPorId(Integer id) {
+        log.debug("Buscando propiedad de garage con ID: {}", id);
+        return propiedadGarageRepository.findById(id)
+                .filter(PropiedadGarage::getActivo)
+                .map(propiedadGarageRepository::fromEntity)
+                .orElseThrow(() -> {
+                    log.error("Propiedad de garage no encontrada con ID: {}", id);
+                    return new RegistroNoEncontradoException("Propiedad de garage no encontrada con ID: " + id);
+                });
+    }
+
+    /**
+     * Devuelve el listado completo de las propiedades de garage activas.
+     *
+     * @return Lista de DTOs de respuesta.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<PropiedadGarageResponse> listarTodas() {
+        log.debug("Listando todas las propiedades de garage activas");
+        return propiedadGarageRepository.findAll().stream()
+                .filter(PropiedadGarage::getActivo)
+                .map(propiedadGarageRepository::fromEntity)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Obtiene el listado de garages que pertenecen a un socio en particular.
+     *
+     * @param socioId Identificador del socio.
+     * @return Lista de propiedades pertenecientes al socio.
+     * @throws RegistroNoEncontradoException Si el socio no existe o está inactivo.
+     */
     @Override
     @Transactional(readOnly = true)
-    public EstadoGarageSocioResponseDTO obtenerEstadoGarageSocio(Long socioId, String usernameActual, boolean esSocio) {
-        Socio socio = validarYObtenerSocio(socioId, usernameActual, esSocio);
+    public List<PropiedadGarageResponse> listarPorSocio(Integer socioId) {
+        log.debug("Listando propiedades para el Socio ID: {}", socioId);
 
-        EstadoGarageSocioResponseDTO respuesta = new EstadoGarageSocioResponseDTO();
-
-        Optional<PropiedadGarage> propiedadOpt = propiedadRepository.findBySocioId(socio.getId());
-        if (propiedadOpt.isEmpty()) {
-            respuesta.setMensaje("No posee ningún garaje registrado como propiedad.");
-            return respuesta;
+        if (!socioRepository.existsById(socioId)) {
+            log.error("Socio no encontrado con ID: {}", socioId);
+            throw new RegistroNoEncontradoException("El socio especificado con ID " + socioId + " no existe.");
         }
 
-        Garage garage = propiedadOpt.get().getGarage();
-        respuesta.setGarageId(garage.getId());
-        respuesta.setNumeroGarage(garage.getNumeroGarage());
-
-        Optional<AsignacionVehiculoGarage> asignacionOpt = asignacionRepository.findByGarageId(garage.getId());
-
-        if (asignacionOpt.isPresent()) {
-            AsignacionVehiculoGarage asignacion = asignacionOpt.get();
-            respuesta.setEstado("OCUPADO");
-            if (asignacion.getVehiculo() != null) {
-                respuesta.setVehiculoMatricula(asignacion.getVehiculo().getMatricula());
-                respuesta.setVehiculoNombre(asignacion.getVehiculo().getNombre());
-            }
-            respuesta.setMensaje("Garaje ocupado por vehículo asignado.");
-        } else {
-            respuesta.setEstado("LIBRE");
-            respuesta.setMensaje("Puede asignar un vehículo a su garaje.");
-        }
-
-        return respuesta;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<GarageResponseDTO> listarPorSocio(Long socioId, String usernameActual, boolean esSocio) {
-        Socio socio = validarYObtenerSocio(socioId, usernameActual, esSocio);
-
-        return garageRepository.findBySocioPropietarioId(socio.getId()).stream()
-                .map(g -> {
-                    GarageResponseDTO dto = new GarageResponseDTO();
-                    dto.setId(g.getId());
-                    dto.setNumeroGarage(g.getNumeroGarage());
-                    dto.setLecturaLuz(g.getLecturaLuz());
-                    if (g.getZona() != null) {
-                        dto.setZona(g.getZona().getLetra());
-                    }
-                    dto.setSocioPropietarioDni(socio.getDni());
-                    dto.setSocioPropietarioNombre(socio.getNombre() + " " + socio.getApellido());
-                    return dto;
-                })
+        return propiedadGarageRepository.findBySocioIdAndActivoTrue(socioId).stream()
+                .map(propiedadGarageRepository::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    private Socio validarYObtenerSocio(Long socioId, String usernameActual, boolean esSocio) {
-        if (socioId == null || socioId <= 0) {
-            throw new ErrorNegocio("El ID de socio proporcionado no es válido.");
+    /**
+     * Actualiza los valores de la propiedad especificada.
+     *
+     * @param id Identificador de la propiedad a actualizar.
+     * @param update DTO con las modificaciones solicitadas.
+     * @return DTO de respuesta actualizado.
+     * @throws RegistroNoEncontradoException Si la propiedad o las entidades relacionadas no existen.
+     */
+    @Override
+    public PropiedadGarageResponse actualizar(Integer id, PropiedadGarageUpdate update) {
+        log.info("Actualizando propiedad de garage con ID: {}", id);
+
+        PropiedadGarage propiedadExistente = propiedadGarageRepository.findById(id)
+                .filter(PropiedadGarage::getActivo)
+                .orElseThrow(() -> {
+                    log.error("Propiedad de garage no encontrada para actualizar con ID: {}", id);
+                    return new RegistroNoEncontradoException("No se encontró la propiedad de garage especificada.");
+                });
+
+        Socio socio = socioRepository.findById(update.getSocioId())
+                .filter(Socio::getActivo)
+                .orElseThrow(() -> new RegistroNoEncontradoException("El socio especificado no existe o está inactivo."));
+
+        Garage garage = garageRepository.findById(update.getGarageId())
+                .filter(Garage::getActivo)
+                .orElseThrow(() -> new RegistroNoEncontradoException("El garage especificado no existe o está inactivo."));
+
+        if (socio.getFechaIngreso() != null && update.getFechaCompra().isBefore(socio.getFechaIngreso())) {
+            throw new BusinessException("Error de negocio: La fecha de compra (" + update.getFechaCompra()
+                    + ") no puede ser anterior a la fecha de ingreso del socio (" + socio.getFechaIngreso() + ").", HttpStatus.BAD_REQUEST);
         }
 
-        Socio socio = socioRepository.findById(socioId)
-                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el socio con ID: " + socioId));
+        propiedadGarageRepository.updateEntity(propiedadExistente, update, socio, garage);
+        PropiedadGarage actualizada = propiedadGarageRepository.save(propiedadExistente);
+        log.info("Propiedad de garage actualizada exitosamente con ID: {}", actualizada.getId());
 
-        if (esSocio && !socio.getNombreUsuario().equalsIgnoreCase(usernameActual)) {
-            throw new AccessDeniedException("Acceso denegado: No tiene permisos para consultar información de otro socio.");
-        }
-
-        return socio;
+        return propiedadGarageRepository.fromEntity(actualizada);
     }
 
-    private PropiedadGarageResponseDTO mapearAResponseDTO(PropiedadGarage p) {
-        PropiedadGarageResponseDTO dto = new PropiedadGarageResponseDTO();
-        dto.setId(p.getId());
-        dto.setFechaCompraGarage(p.getFechaCompraGarage());
+    /**
+     * Ejecuta el borrado lógico de la propiedad de garage marcando activo=false.
+     *
+     * @param id Identificador de la propiedad a dar de baja.
+     * @throws RegistroNoEncontradoException Si el registro no se encuentra.
+     */
+    @Override
+    public void eliminar(Integer id) {
+        log.info("Realizando borrado lógico de la propiedad de garage con ID: {}", id);
 
-        if (p.getSocio() != null) {
-            dto.setSocioId(p.getSocio().getId());
-            dto.setSocioNombre(p.getSocio().getNombre() + " " + p.getSocio().getApellido());
-            dto.setSocioDni(p.getSocio().getDni());
-        }
+        PropiedadGarage propiedad = propiedadGarageRepository.findById(id)
+                .filter(PropiedadGarage::getActivo)
+                .orElseThrow(() -> {
+                    log.error("Propiedad de garage no encontrada con ID: {}", id);
+                    return new RegistroNoEncontradoException("Propiedad de garage no encontrada con ID: " + id);
+                });
 
-        if (p.getGarage() != null) {
-            dto.setGarageId(p.getGarage().getId());
-            dto.setNumeroGarage(p.getGarage().getNumeroGarage());
-        }
-
-        return dto;
+        propiedad.setActivo(false);
+        propiedadGarageRepository.save(propiedad);
+        log.info("Borrado lógico completado para propiedad con ID: {}", id);
     }
 }

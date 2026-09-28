@@ -15,6 +15,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ZonaDTO {
 
-    private int id;
+    private Integer id;
     private String letra;
 }

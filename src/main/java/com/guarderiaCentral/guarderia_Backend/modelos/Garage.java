@@ -20,7 +20,7 @@ public class Garage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
     @Column(name = "numero_garage", nullable = false)
     private int numeroGarage;

@@ -1,21 +1,22 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
-import com.guarderiaCentral.guarderia_Backend.dtos.GarageResponseDTO;
-import com.guarderiaCentral.guarderia_Backend.dtos.ReporteDisponibilidadZonaDTO;
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.ZonaSinCapacidadException;
+import com.guarderiaCentral.guarderia_Backend.modelos.AsignacionVehiculoGarage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Garage;
-import com.guarderiaCentral.guarderia_Backend.modelos.Socio;
 import com.guarderiaCentral.guarderia_Backend.modelos.Zona;
 import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionVehiculoGarageRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.GarageRepository;
-import com.guarderiaCentral.guarderia_Backend.repositories.SocioRepository;
+import com.guarderiaCentral.guarderia_Backend.repositories.GarageRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.GarageResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.GarageUpdate;
 import com.guarderiaCentral.guarderia_Backend.repositories.ZonaRepository;
-import com.guarderiaCentral.guarderia_Backend.repositories.dtos.GarageRequestDTO;
 import com.guarderiaCentral.guarderia_Backend.services.GarageService;
-
-import org.springframework.security.access.AccessDeniedException;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,186 +24,216 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Implementación de la capa de servicio {@link GarageService}.
+ * Administra las reglas de negocio, validaciones de capacidad de zona,
+ * unicidad de número de garage, propagación de borrado lógico y reporte de ocupación.
+ */
 @Service
+@RequiredArgsConstructor
 public class GarageServiceImpl implements GarageService {
+
+    private static final Logger log = LoggerFactory.getLogger(GarageServiceImpl.class);
 
     private final GarageRepository garageRepository;
     private final ZonaRepository zonaRepository;
-    private final SocioRepository socioRepository;
-    private final AsignacionVehiculoGarageRepository asignacionRepository;
+    private final AsignacionVehiculoGarageRepository asignacionVehiculoGarageRepository;
 
-    public GarageServiceImpl(GarageRepository garageRepository,
-                             ZonaRepository zonaRepository,
-                             SocioRepository socioRepository,
-                             AsignacionVehiculoGarageRepository asignacionRepository) {
-        this.garageRepository = garageRepository;
-        this.zonaRepository = zonaRepository;
-        this.socioRepository = socioRepository;
-        this.asignacionRepository = asignacionRepository;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<GarageResponseDTO> listarGarages(String usernameActual, boolean esSocio, String dniSocio) {
-        if (esSocio) {
-            // Un socio solo lista sus propios garajes
-            return garageRepository.findBySocioPropietarioDni(dniSocio).stream()
-                    .map(this::mapearAResponseDTO)
-                    .collect(Collectors.toList());
-        }
-
-        return garageRepository.findAll().stream()
-                .map(this::mapearAResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public GarageResponseDTO buscarPorId(Long id) {
-        Garage garage = garageRepository.findById(id)
-                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el garaje con ID: " + id));
-        return mapearAResponseDTO(garage);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public GarageResponseDTO buscarPorNumero(Integer numeroGarage, String usernameActual, boolean esSocio, String dniSocio) {
-        Garage garage = garageRepository.findByNumeroGarage(numeroGarage)
-                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el garaje número: " + numeroGarage));
-
-        if (esSocio) {
-            if (garage.getSocioPropietario() == null || !garage.getSocioPropietario().getDni().equals(dniSocio)) {
-                throw new AccessDeniedException("Acceso denegado: El garaje N° " + numeroGarage + " no está asociado a su cuenta.");
-            }
-        }
-
-        return mapearAResponseDTO(garage);
-    }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional
-    public GarageResponseDTO registrarGarage(GarageRequestDTO dto) {
-        if (dto == null) {
-            throw new ErrorNegocio("El objeto de solicitud no puede ser nulo.");
-        }
+    public GarageResponse registrarGarage(GarageRequest request) {
+        log.info("Iniciando registro de nuevo garage número: {} en la zona ID: {}", request.getNumeroGarage(), request.getZonaId());
 
-        String codigoZona = dto.getZona().trim().toUpperCase();
+        Zona zona = zonaRepository.findById(request.getZonaId())
+                .filter(z -> Boolean.TRUE.equals(z.getActivo()))
+                .orElseThrow(() -> new RegistroNoEncontradoException("No existe una zona activa con el ID: " + request.getZonaId()));
 
-        // 1. Validar existencia de la Zona
-        Zona zona = zonaRepository.findByLetra(codigoZona)
-                .orElseThrow(() -> new RegistroNoEncontradoException("No existe la zona especificada: " + codigoZona));
+        long garajesEnZona = garageRepository.findAll().stream()
+                .filter(g -> g.getZona() != null
+                        && g.getZona().getId() == zona.getId()
+                        && Boolean.TRUE.equals(g.getActivo()))
+                .count();
 
-        // 2. Validar capacidad máxima de garajes creados en la zona
-        long garajesEnZona = garageRepository.countByZonaLetra(codigoZona);
         if (garajesEnZona >= zona.getCapacidadVehiculos()) {
-            throw new ZonaSinCapacidadException("La zona '" + codigoZona + "' alcanzó su capacidad máxima de "
+            log.error("Capacidad máxima superada para la zona ID: {}. Capacidad: {}, Registrados: {}",
+                    zona.getId(), zona.getCapacidadVehiculos(), garajesEnZona);
+            throw new ZonaSinCapacidadException("La zona '" + zona.getLetra() + "' alcanzó su capacidad máxima de "
                     + zona.getCapacidadVehiculos() + " garajes.");
         }
 
-        // 3. Validar unicidad del número de garaje
-        if (garageRepository.existsByNumeroGarage(dto.getNumeroGarage())) {
-            throw new ErrorNegocio("Ya existe un garaje registrado con el número: " + dto.getNumeroGarage());
-        }
+        validarNumeroGarageUnico(request.getNumeroGarage(), null);
 
-        // 4. Resolver Socio Propietario (si aplica)
-        Socio socioPropietario = resolverSocioPropietario(dto.getSocioPropietario());
-
-        // 5. Instanciar y Persistir
-        Garage garage = new Garage();
-        garage.setNumeroGarage(dto.getNumeroGarage());
-        garage.setLecturaLuz(dto.getLecturaLuz());
+        Garage garage = garageRepository.toEntity(request);
         garage.setZona(zona);
-        garage.setSocioPropietario(socioPropietario);
+        garage.setActivo(true);
 
         Garage guardado = garageRepository.save(garage);
-        return mapearAResponseDTO(guardado);
+        log.info("Garage registrado con éxito ID: {}", guardado.getId());
+
+        return garageRepository.fromEntity(guardado);
     }
 
-    @Override
-    @Transactional
-    public GarageResponseDTO actualizarGarage(Long id, GarageRequestDTO dto) {
-        Garage existente = garageRepository.findById(id)
-                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el garaje con ID: " + id));
-
-        String codigoZona = dto.getZona().trim().toUpperCase();
-
-        Zona zona = zonaRepository.findByLetra(codigoZona)
-                .orElseThrow(() -> new RegistroNoEncontradoException("No existe la zona especificada: " + codigoZona));
-
-        // Verificar si se cambió el número de garaje y si el nuevo ya existe
-        if (!existente.getNumeroGarage().equals(dto.getNumeroGarage()) &&
-                garageRepository.existsByNumeroGarage(dto.getNumeroGarage())) {
-            throw new ErrorNegocio("Ya existe un garaje registrado con el número: " + dto.getNumeroGarage());
-        }
-
-        Socio socioPropietario = resolverSocioPropietario(dto.getSocioPropietario());
-
-        existente.setNumeroGarage(dto.getNumeroGarage());
-        existente.setLecturaLuz(dto.getLecturaLuz());
-        existente.setZona(zona);
-        existente.setSocioPropietario(socioPropietario);
-
-        Garage actualizado = garageRepository.save(existente);
-        return mapearAResponseDTO(actualizado);
-    }
-
-    @Override
-    @Transactional
-    public void eliminarGarage(Integer numeroGarage) {
-        Garage existente = garageRepository.findByNumeroGarage(numeroGarage)
-                .orElseThrow(() -> new RegistroNoEncontradoException("No se puede eliminar: El garaje N° " + numeroGarage + " no existe."));
-
-        garageRepository.delete(existente);
-    }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(readOnly = true)
-    public List<ReporteDisponibilidadZonaDTO> consultarDisponibilidadGarages() {
-        List<ReporteDisponibilidadZonaDTO> reporte = new ArrayList<>();
-        List<Zona> zonas = zonaRepository.findAll();
+    public List<GarageResponse> listarTodos() {
+        log.info("Consultando listado de garages activos.");
+        return garageRepository.findAll().stream()
+                .filter(g -> Boolean.TRUE.equals(g.getActivo()))
+                .map(garageRepository::fromEntity)
+                .collect(Collectors.toList());
+    }
 
-        for (Zona z : zonas) {
-            long ocupadosReales = asignacionRepository.countByGarageZonaId(z.getId());
-            int disponibles = Math.max(0, z.getCapacidadVehiculos() - (int) ocupadosReales);
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<GarageResponse> listarTodosIncluyendoInactivos() {
+        log.info("Consultando listado completo de garages (incluyendo inactivos).");
+        return garageRepository.findAllIncludingInactive().stream()
+                .map(garageRepository::fromEntity)
+                .collect(Collectors.toList());
+    }
 
-            ReporteDisponibilidadZonaDTO dto = new ReporteDisponibilidadZonaDTO();
-            dto.setLetraZona(z.getLetra());
-            dto.setTipoVehiculo(z.getTipoVehiculo() != null ? z.getTipoVehiculo().name() : "N/A");
-            dto.setCapacidadTotal(z.getCapacidadVehiculos());
-            dto.setOcupados(ocupadosReales);
-            dto.setDisponibles(disponibles);
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public GarageResponse buscarPorId(Integer id) {
+        log.info("Buscando garage activo con ID: {}", id);
+        Garage garage = obtenerGarageActivoPorId(id);
+        return garageRepository.fromEntity(garage);
+    }
 
-            reporte.add(dto);
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public GarageResponse actualizarGarage(Integer id, GarageUpdate update) {
+        log.info("Iniciando actualización del garage ID: {}", id);
+        Garage garage = obtenerGarageActivoPorId(id);
+
+        if (update.getNumeroGarage() != null && update.getNumeroGarage() != garage.getNumeroGarage()) {
+            validarNumeroGarageUnico(update.getNumeroGarage(), id);
+        }
+
+        if (update.getZonaId() != null && (garage.getZona() == null || garage.getZona().getId() != update.getZonaId())) {
+            Zona nuevaZona = zonaRepository.findById(update.getZonaId())
+                    .filter(z -> Boolean.TRUE.equals(z.getActivo()))
+                    .orElseThrow(() -> new RegistroNoEncontradoException("No existe una zona activa con el ID: " + update.getZonaId()));
+
+            long garajesEnNuevaZona = garageRepository.findAll().stream()
+                    .filter(g -> g.getZona() != null
+                            && g.getZona().getId() == nuevaZona.getId()
+                            && Boolean.TRUE.equals(g.getActivo()))
+                    .count();
+
+            if (garajesEnNuevaZona >= nuevaZona.getCapacidadVehiculos()) {
+                throw new ZonaSinCapacidadException("La nueva zona '" + nuevaZona.getLetra() + "' alcanzó su capacidad máxima de "
+                        + nuevaZona.getCapacidadVehiculos() + " garajes.");
+            }
+            garage.setZona(nuevaZona);
+        }
+
+        garageRepository.updateEntity(garage, update);
+        Garage actualizado = garageRepository.save(garage);
+        log.info("Garage ID: {} actualizado correctamente.", actualizado.getId());
+
+        return garageRepository.fromEntity(actualizado);
+    }
+
+    /**
+     * {@inheritDoc}
+     * Aplica borrado lógico (activo = false) y propaga en cascada la desactivación
+     * a las asignaciones de vehículos en este garage.
+     */
+    @Override
+    @Transactional
+    public void eliminarGarage(Integer id) {
+        log.info("Iniciando borrado lógico para el garage ID: {}", id);
+        Garage garage = obtenerGarageActivoPorId(id);
+
+        garage.setActivo(false);
+        garageRepository.save(garage);
+
+        List<AsignacionVehiculoGarage> asignaciones = asignacionVehiculoGarageRepository.findAll().stream()
+                .filter(a -> a.getGarage() != null
+                        && a.getGarage().getId() == id
+                        && Boolean.TRUE.equals(a.getActivo()))
+                .collect(Collectors.toList());
+
+        for (AsignacionVehiculoGarage asignacion : asignaciones) {
+            asignacion.setActivo(false);
+            asignacionVehiculoGarageRepository.save(asignacion);
+            log.info("Propagación de borrado lógico a AsignacionVehiculoGarage ID: {}", asignacion.getId());
+        }
+
+        log.info("Borrado lógico finalizado para el garage ID: {}", id);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> consultarDisponibilidadGarages() {
+        log.info("Generando informe de disponibilidad de garages por zona.");
+        List<String> reporte = new ArrayList<>();
+
+        List<Zona> zonasActivas = zonaRepository.findAll().stream()
+                .filter(z -> Boolean.TRUE.equals(z.getActivo()))
+                .collect(Collectors.toList());
+
+        List<AsignacionVehiculoGarage> asignacionesActivas = asignacionVehiculoGarageRepository.findAll().stream()
+                .filter(a -> Boolean.TRUE.equals(a.getActivo())
+                        && a.getVehiculo() != null
+                        && Boolean.TRUE.equals(a.getVehiculo().getActivo()))
+                .collect(Collectors.toList());
+
+        for (Zona z : zonasActivas) {
+            long ocupadosReales = asignacionesActivas.stream()
+                    .filter(a -> a.getGarage() != null
+                            && a.getGarage().getZona() != null
+                            && a.getGarage().getZona().getId() == z.getId()
+                            && Boolean.TRUE.equals(a.getGarage().getActivo()))
+                    .count();
+
+            int disponibles = z.getCapacidadVehiculos() - (int) ocupadosReales;
+            if (disponibles < 0) {
+                disponibles = 0;
+            }
+
+            reporte.add("Zona " + z.getLetra() + " (" + z.getTipoVehiculo() + "): "
+                    + disponibles + " disponibles de " + z.getCapacidadVehiculos() + " totales (Ocupados: " + ocupadosReales + ").");
         }
 
         return reporte;
     }
 
-    private Socio resolverSocioPropietario(String dniSocio) {
-        if (dniSocio == null || dniSocio.isBlank() || dniSocio.equalsIgnoreCase("Libre")) {
-            return null;
-        }
-        return socioRepository.findByDni(dniSocio.trim())
-                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el socio con DNI: " + dniSocio));
+    // --- Métodos Privados Auxiliares ---
+
+    private Garage obtenerGarageActivoPorId(Integer id) {
+        return garageRepository.findById(id)
+                .filter(g -> Boolean.TRUE.equals(g.getActivo()))
+                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró un garage activo con el ID: " + id));
     }
 
-    private GarageResponseDTO mapearAResponseDTO(Garage g) {
-        GarageResponseDTO dto = new GarageResponseDTO();
-        dto.setId(g.getId());
-        dto.setNumeroGarage(g.getNumeroGarage());
-        dto.setLecturaLuz(g.getLecturaLuz());
+    private void validarNumeroGarageUnico(int numeroGarage, Integer idExcluir) {
+        boolean existe = garageRepository.findAllIncludingInactive().stream()
+                .filter(g -> Boolean.TRUE.equals(g.getActivo()))
+                .anyMatch(g -> g.getNumeroGarage() == numeroGarage
+                        && (idExcluir == null || g.getId() != idExcluir));
 
-        if (g.getZona() != null) {
-            dto.setZona(g.getZona().getLetra());
+        if (existe) {
+            throw new BusinessException("Ya existe un garaje registrado con el número: " + numeroGarage, HttpStatus.BAD_REQUEST);
         }
-
-        if (g.getSocioPropietario() != null) {
-            dto.setSocioPropietarioDni(g.getSocioPropietario().getDni());
-            dto.setSocioPropietarioNombre(g.getSocioPropietario().getNombre() + " " + g.getSocioPropietario().getApellido());
-        } else {
-            dto.setSocioPropietarioDni("Libre");
-        }
-
-        return dto;
     }
 }

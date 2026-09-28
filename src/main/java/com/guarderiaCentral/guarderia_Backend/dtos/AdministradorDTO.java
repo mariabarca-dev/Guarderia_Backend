@@ -21,7 +21,7 @@ public class AdministradorDTO extends UsuarioDTO {
     /**
      * Constructor completo que delega todos los atributos al constructor de la clase padre.
      */
-    public AdministradorDTO(int id, String nombre, String apellido, String direccion,
+    public AdministradorDTO(Integer id, String nombre, String apellido, String direccion,
                             String telefono, String nombreUsuario, String clave, Rol rol, Boolean activo) {
         super(id, nombre, apellido, direccion, telefono, nombreUsuario, clave, rol, activo);
     }

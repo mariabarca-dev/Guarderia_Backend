@@ -20,7 +20,7 @@ public class Zona {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
     @Column(name = "letra", nullable = false, unique = true, length = 10)
     private String letra;

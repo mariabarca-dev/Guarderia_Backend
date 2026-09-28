@@ -20,7 +20,7 @@ public class AsignacionEmpleadoZona {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "empleado_id", nullable = false)

@@ -1,89 +1,154 @@
 package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 
-import com.guarderiaCentral.guarderia_Backend.dtos.GarageResponseDTO;
-import com.guarderiaCentral.guarderia_Backend.dtos.ReporteDisponibilidadZonaDTO;
-import com.guarderiaCentral.guarderia_Backend.repositories.dtos.GarageRequestDTO;
+import com.guarderiaCentral.guarderia_Backend.repositories.GarageRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.GarageResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.GarageUpdate;
 import com.guarderiaCentral.guarderia_Backend.services.GarageService;
-
-import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
+/**
+ * Controlador RESTful para la gestión y administración de Garages en la guardería central.
+ * Proporciona endpoints para consulta y mantenimiento de las instalaciones físicas (garages).
+ *
+ * Cumple con las restricciones de seguridad basadas en roles expuestas en la matriz del sistema:
+ * - SOCIO y EMPLEADO: Acceso de lectura/consulta (GET) sobre la entidad Garage.
+ * - ADMINISTRADOR: Control total (CRUD - GET/POST/PUT/DELETE) sobre la entidad Garage.
+ * - SYSADMIN: Sin acceso a la entidad de negocio Garage.
+ *
+ *
+ * @version 1.0
+ */
 @RestController
-@RequestMapping("/api/v1/garages")
+@RequestMapping("/api/garages")
+@RequiredArgsConstructor
 public class GarageRestController {
+
+    private static final Logger logger = LoggerFactory.getLogger(GarageRestController.class);
 
     private final GarageService garageService;
 
-    public GarageRestController(GarageService garageService) {
-        this.garageService = garageService;
-    }
-
+    /**
+     * Obtiene el listado de todos los garages activos registrados en el sistema.
+     * Permitido para roles: ADMINISTRADOR, EMPLEADO, SOCIO.
+     *
+     * @return ResponseEntity conteniendo la lista de {@link GarageResponse} y código HTTP 200 OK.
+     */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
-    public ResponseEntity<List<GarageResponseDTO>> listarGarajes(Authentication authentication) {
-        String username = authentication.getName();
-        boolean esSocio = poseeRol(authentication, "ROLE_SOCIO");
-        // Asume que si es socio, el username coincide con el identificador del socio o se recupera del principal
-        String dniSocio = esSocio ? username : null;
-
-        return ResponseEntity.ok(garageService.listarGarages(username, esSocio, dniSocio));
+    public ResponseEntity<List<GarageResponse>> obtenerTodos() {
+        logger.info("REST Request para listar todos los garages activos.");
+        List<GarageResponse> lista = garageService.listarTodos();
+        return ResponseEntity.ok(lista);
     }
 
+    /**
+     * Busca y retorna un garage activo según su identificador único.
+     * Permitido para roles: ADMINISTRADOR, EMPLEADO, SOCIO.
+     *
+     * @param id Identificador único del garage.
+     * @return ResponseEntity con la información de {@link GarageResponse} y código HTTP 200 OK.
+     */
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
+    public ResponseEntity<GarageResponse> obtenerPorId(@PathVariable Integer id) {
+        logger.info("REST Request para obtener el garage con ID: {}", id);
+        GarageResponse response = garageService.buscarPorId(id);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Busca y retorna la información de un garage activo a partir de su número asignado.
+     * Permitido para roles: ADMINISTRADOR, EMPLEADO, SOCIO.
+     *
+     * @param numeroGarage Número identificador del garage dentro del establecimiento.
+     * @return ResponseEntity con la información de {@link GarageResponse} y código HTTP 200 OK.
+     */
     @GetMapping("/numero/{numeroGarage}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
-    public ResponseEntity<GarageResponseDTO> buscarPorNumero(@PathVariable Integer numeroGarage,
-                                                             Authentication authentication) {
-        String username = authentication.getName();
-        boolean esSocio = poseeRol(authentication, "ROLE_SOCIO");
-        String dniSocio = esSocio ? username : null;
-
-        return ResponseEntity.ok(garageService.buscarPorNumero(numeroGarage, username, esSocio, dniSocio));
+    public ResponseEntity<GarageResponse> obtenerPorNumero(@PathVariable int numeroGarage) {
+        logger.info("REST Request para consultar el garage por número: {}", numeroGarage);
+        GarageResponse response = garageService.buscarPorNumeroGarage(numeroGarage);
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO')")
-    public ResponseEntity<GarageResponseDTO> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(garageService.buscarPorId(id));
-    }
-
+    /**
+     * Registra un nuevo garage en el sistema.
+     * La sintaxis y estructura son verificadas automáticamente mediante {@code @Valid}.
+     * Permitido para rol: ADMINISTRADOR.
+     *
+     * @param request Objeto con la información requerida para el alta del garage ({@link GarageRequest}).
+     * @return ResponseEntity con el {@link GarageResponse} creado y código HTTP 201 Created.
+     */
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<GarageResponseDTO> registrarGarage(@Valid @RequestBody GarageRequestDTO requestDTO) {
-        GarageResponseDTO nuevo = garageService.registrarGarage(requestDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
+    public ResponseEntity<GarageResponse> crear(@Valid @RequestBody GarageRequest request) {
+        logger.info("REST Request para dar de alta un nuevo garage con número: {}", request.getNumeroGarage());
+        GarageResponse nuevoGarage = garageService.crear(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoGarage);
     }
 
+    /**
+     * Actualiza la información de un garage existente en el sistema.
+     * La estructura del cuerpo de la petición es verificada con {@code @Valid}.
+     * Permitido para rol: ADMINISTRADOR.
+     *
+     * @param id Identificador único del garage a modificar.
+     * @param update Objeto con los datos actualizados del garage ({@link GarageUpdate}).
+     * @return ResponseEntity con el {@link GarageResponse} actualizado y código HTTP 200 OK.
+     */
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<GarageResponseDTO> actualizarGarage(@PathVariable Long id,
-                                                              @Valid @RequestBody GarageRequestDTO requestDTO) {
-        GarageResponseDTO actualizado = garageService.actualizarGarage(id, requestDTO);
-        return ResponseEntity.ok(actualizado);
+    public ResponseEntity<GarageResponse> actualizar(
+            @PathVariable Integer id,
+            @Valid @RequestBody GarageUpdate update) {
+        logger.info("REST Request para actualizar el garage con ID: {}", id);
+        GarageResponse garageActualizado = garageService.actualizar(id, update);
+        return ResponseEntity.ok(garageActualizado);
     }
 
-    @DeleteMapping("/numero/{numeroGarage}")
+    /**
+     * Desactiva (borrado lógico) un garage según su identificador único.
+     * Permitido para rol: ADMINISTRADOR.
+     *
+     * @param id Identificador único del garage a dar de baja.
+     * @return ResponseEntity con código HTTP 204 No Content.
+     */
+    @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<Void> eliminarGarage(@PathVariable Integer numeroGarage) {
-        garageService.eliminarGarage(numeroGarage);
+    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
+        logger.info("REST Request para dar de baja lógicamente el garage con ID: {}", id);
+        garageService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/reportes/disponibilidad")
+    /**
+     * Obtiene un reporte con la información de disponibilidad de los garages del sistema.
+     * Exclusivo para personal operativo y administrativo.
+     * Permitido para roles: ADMINISTRADOR, EMPLEADO.
+     *
+     * @return ResponseEntity con la lista de estados de disponibilidad y código HTTP 200 OK.
+     */
+    @GetMapping("/disponibilidad")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO')")
-    public ResponseEntity<List<ReporteDisponibilidadZonaDTO>> consultarDisponibilidad() {
-        return ResponseEntity.ok(garageService.consultarDisponibilidadGarages());
-    }
-
-    private boolean poseeRol(Authentication authentication, String rol) {
-        return authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch(r -> r.equals(rol));
+    public ResponseEntity<List<String>> consultarDisponibilidad() {
+        logger.info("REST Request para obtener el reporte global de disponibilidad de garages.");
+        List<String> reporte = garageService.consultarDisponibilidadGarages();
+        return ResponseEntity.ok(reporte);
     }
 }

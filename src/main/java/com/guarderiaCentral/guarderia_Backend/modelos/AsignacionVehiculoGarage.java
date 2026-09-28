@@ -22,7 +22,7 @@ public class AsignacionVehiculoGarage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vehiculo_id", nullable = false, unique = true)

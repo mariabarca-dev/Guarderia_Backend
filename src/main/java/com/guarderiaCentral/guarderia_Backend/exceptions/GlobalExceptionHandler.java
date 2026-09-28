@@ -1,62 +1,37 @@
 package com.guarderiaCentral.guarderia_Backend.exceptions;
 
-import java.time.LocalDateTime;
-import java.util.stream.Collectors;
-import javax.servlet.http.HttpServletRequest;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-/**
- * Manejador global de excepciones para todos los controladores REST.
- * Captura las excepciones de negocio y de validación de Bean Validation para formatear
- * una respuesta JSON estándar con el estado HTTP adecuado.
- */
+import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
+
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     /**
-     * Maneja todas las excepciones derivadas de {@link BusinessException}.
+     * Maneja todas las excepciones del tipo BusinessException y sus subclases (como GarageYaOcupadoException).
      *
-     * @param ex Excepción de negocio capturada.
-     * @param request Solicitud HTTP en curso.
-     * @return {@link ResponseEntity} con la estructura {@link ErrorResponseDTO} y el estado HTTP adecuado.
+     * @param ex Excepción capturada.
+     * @param request Información de la solicitud HTTP actual.
+     * @return Respuesta estructurada {@link ErrorResponseDTO} con el código HTTP adecuado.
      */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponseDTO> handleBusinessException(BusinessException ex, HttpServletRequest request) {
-        ErrorResponseDTO response = new ErrorResponseDTO(
-                LocalDateTime.now(),
+        log.error("Excepción de negocio capturada: {} - Path: {}", ex.getMessage(), request.getRequestURI());
+
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 ex.getStatus().value(),
                 ex.getStatus().getReasonPhrase(),
                 ex.getMessage(),
-                request.getRequestURI()
+                request.getRequestURI(),
+                LocalDateTime.now()
         );
-        return new ResponseEntity<>(response, ex.getStatus());
-    }
 
-    /**
-     * Captura las fallas de validación de Bean Validation (@Valid en RequestDTOs).
-     *
-     * @param ex Excepción de argumentos no válidos.
-     * @param request Solicitud HTTP en curso.
-     * @return {@link ResponseEntity} con el detalle de las reglas violadas.
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponseDTO> handleValidationException(MethodArgumentNotValidException ex, HttpServletRequest request) {
-        String mensaje = ex.getBindingResult().getFieldErrors().stream()
-                .map(err -> err.getField() + ": " + err.getDefaultMessage())
-                .collect(Collectors.joining(", "));
-
-        ErrorResponseDTO response = new ErrorResponseDTO(
-                LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                mensaje,
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorResponse, ex.getStatus());
     }
 }
