@@ -1,8 +1,8 @@
 package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionVehiculoGarageRequest;
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionVehiculoGarageResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionVehiculoGarageUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageUpdate;
 import com.guarderiaCentral.guarderia_Backend.services.AsignacionVehiculoGarageService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

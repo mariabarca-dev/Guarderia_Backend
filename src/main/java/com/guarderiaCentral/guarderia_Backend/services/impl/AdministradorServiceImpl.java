@@ -7,7 +7,7 @@ import com.guarderiaCentral.guarderia_Backend.modelos.Administrador;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.AdministradorUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorUpdate;
 import com.guarderiaCentral.guarderia_Backend.services.AdministradorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -5,7 +5,7 @@ import com.guarderiaCentral.guarderia_Backend.exceptions.CredencialesInvalidasEx
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import com.guarderiaCentral.guarderia_Backend.modelos.Usuario;
-import com.guarderiaCentral.guarderia_Backend.repositories.UsuarioRepository;
+import com.guarderiaCentral.guarderia_Backend.repositories.usuarios.UsuarioRepository;
 import com.guarderiaCentral.guarderia_Backend.services.UsuarioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

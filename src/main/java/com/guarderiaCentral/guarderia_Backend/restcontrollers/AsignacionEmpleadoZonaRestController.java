@@ -1,9 +1,8 @@
 package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaRepository;
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaRequest;
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZonas.AsignacionEmpleadoZonaRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZonas.AsignacionEmpleadoZonaResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZonas.AsignacionEmpleadoZonaUpdate;
 import com.guarderiaCentral.guarderia_Backend.services.AsignacionEmpleadoZonaService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;

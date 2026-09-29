@@ -3,11 +3,11 @@ package com.guarderiaCentral.guarderia_Backend.services;
 import com.guarderiaCentral.guarderia_Backend.exceptions.CodigoEmpleadoDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.EmpleadoRequest;
-import com.guarderiaCentral.guarderia_Backend.repositories.EmpleadoResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.EmpleadoUpdate;
-import com.guarderiaCentral.guarderia_Backend.repositories.VehiculoResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZonas.AsignacionEmpleadoZonaResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoResponse;
 
 import java.util.List;
 

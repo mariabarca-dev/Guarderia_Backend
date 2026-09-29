@@ -1,8 +1,8 @@
 package com.guarderiaCentral.guarderia_Backend.services;
 
-import com.guarderiaCentral.guarderia_Backend.repositories.PropiedadGarageRequest;
-import com.guarderiaCentral.guarderia_Backend.repositories.PropiedadGarageResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.PropiedadGarageUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageUpdate;
 
 import java.util.List;
 

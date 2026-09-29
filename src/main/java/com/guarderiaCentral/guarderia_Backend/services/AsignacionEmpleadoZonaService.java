@@ -1,8 +1,8 @@
 package com.guarderiaCentral.guarderia_Backend.services;
 
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaRequest;
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionEmpleadoZonaUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZonas.AsignacionEmpleadoZonaResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZonas.AsignacionEmpleadoZonaRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZonas.AsignacionEmpleadoZonaUpdate;
 
 import java.util.List;
 

@@ -1,7 +1,5 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.administradores;
-
 import com.guarderiaCentral.guarderia_Backend.modelos.Administrador;
-import com.guarderiaCentral.guarderia_Backend.repositories.AdministradorUpdate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -11,6 +9,7 @@ import java.util.Optional;
 
 /**
  * Repositorio Spring Data JPA para la entidad Administrador.
+ *
  * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barcat

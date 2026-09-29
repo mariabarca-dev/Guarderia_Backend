@@ -1,9 +1,9 @@
 package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 
 import com.guarderiaCentral.guarderia_Backend.dtos.GarageDTO;
-import com.guarderiaCentral.guarderia_Backend.repositories.PropiedadGarageRequest;
-import com.guarderiaCentral.guarderia_Backend.repositories.PropiedadGarageResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.PropiedadGarageUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageUpdate;
 import com.guarderiaCentral.guarderia_Backend.services.PropiedadGarageService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

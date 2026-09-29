@@ -1,10 +1,10 @@
 package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 
-import com.guarderiaCentral.guarderia_Backend.repositories.GarageResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.SocioRequest;
-import com.guarderiaCentral.guarderia_Backend.repositories.SocioResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.SocioUpdate;
-import com.guarderiaCentral.guarderia_Backend.repositories.VehiculoResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoResponse;
 import com.guarderiaCentral.guarderia_Backend.services.SocioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

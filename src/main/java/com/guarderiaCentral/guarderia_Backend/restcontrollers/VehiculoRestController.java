@@ -1,8 +1,8 @@
 package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 
-import com.guarderiaCentral.guarderia_Backend.repositories.VehiculoRequest;
-import com.guarderiaCentral.guarderia_Backend.repositories.VehiculoResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.VehiculoUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoUpdate;
 import com.guarderiaCentral.guarderia_Backend.services.VehiculoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
