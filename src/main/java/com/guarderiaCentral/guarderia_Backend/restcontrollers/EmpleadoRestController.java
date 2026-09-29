@@ -2,9 +2,9 @@ package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 
 import com.guarderiaCentral.guarderia_Backend.dtos.VehiculoDTO;
 import com.guarderiaCentral.guarderia_Backend.dtos.ZonaDTO;
-import com.guarderiaCentral.guarderia_Backend.repositories.EmpleadoRequest;
-import com.guarderiaCentral.guarderia_Backend.repositories.EmpleadoResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.EmpleadoUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoUpdate;
 import com.guarderiaCentral.guarderia_Backend.services.EmpleadoService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

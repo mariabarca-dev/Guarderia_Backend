@@ -4,9 +4,9 @@ import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.GarageYaOcupadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.ZonaSinCapacidadException;
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionVehiculoGarageRequest;
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionVehiculoGarageResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.AsignacionVehiculoGarageUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageUpdate;
 
 import java.util.List;
 

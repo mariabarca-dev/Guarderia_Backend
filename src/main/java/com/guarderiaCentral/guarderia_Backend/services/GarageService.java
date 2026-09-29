@@ -3,9 +3,9 @@ package com.guarderiaCentral.guarderia_Backend.services;
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.ZonaSinCapacidadException;
-import com.guarderiaCentral.guarderia_Backend.repositories.GarageRequest;
-import com.guarderiaCentral.guarderia_Backend.repositories.GarageResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.GarageUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageUpdate;
 
 import java.util.List;
 

@@ -1,8 +1,8 @@
 package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 
-import com.guarderiaCentral.guarderia_Backend.repositories.ZonaRequest;
-import com.guarderiaCentral.guarderia_Backend.repositories.ZonaResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.ZonaUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaUpdate;
 import com.guarderiaCentral.guarderia_Backend.services.ZonaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

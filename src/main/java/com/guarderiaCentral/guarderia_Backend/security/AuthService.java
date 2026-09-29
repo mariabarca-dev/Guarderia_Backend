@@ -1,7 +1,7 @@
 package com.guarderiaCentral.guarderia_Backend.security;
 
 import com.guarderiaCentral.guarderia_Backend.modelos.Usuario;
-import com.guarderiaCentral.guarderia_Backend.repositories.UsuarioRepository;
+import com.guarderiaCentral.guarderia_Backend.repositories.usuarios.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;

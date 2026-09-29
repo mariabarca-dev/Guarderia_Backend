@@ -2,7 +2,7 @@ package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.AdministradorUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorUpdate;
 import com.guarderiaCentral.guarderia_Backend.services.AdministradorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +67,10 @@ public class AdministradorRestController {
     @PreAuthorize("hasRole('SYSADMIN')")
     public ResponseEntity<List<AdministradorResponse>> listarTodos() {
         log.info("REST Request para obtener el listado de administradores activos.");
-        List<AdministradorResponse> administradores = administradorService.listarTodos();
+        //List<AdministradorResponse> administradores = administradorService.listarTodos();
+        List<AdministradorResponse> administradores = administradorService.listarActivos();
+
+
         return ResponseEntity.ok(administradores);
     }
 

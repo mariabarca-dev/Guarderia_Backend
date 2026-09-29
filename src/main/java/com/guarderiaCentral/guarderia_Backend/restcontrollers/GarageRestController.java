@@ -1,8 +1,8 @@
 package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 
-import com.guarderiaCentral.guarderia_Backend.repositories.GarageRequest;
-import com.guarderiaCentral.guarderia_Backend.repositories.GarageResponse;
-import com.guarderiaCentral.guarderia_Backend.repositories.GarageUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageUpdate;
 import com.guarderiaCentral.guarderia_Backend.services.GarageService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
