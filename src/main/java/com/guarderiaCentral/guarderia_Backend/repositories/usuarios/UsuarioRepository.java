@@ -51,6 +51,14 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
     Optional<Usuario> findByNombreUsuarioAndActivoTrue(String nombreUsuario);
 
     /**
+     * Indica si existe un usuario con ese nombre de usuario, esté activo o dado de baja.
+     *
+     * @param nombreUsuario nombre de usuario a buscar
+     * @return true si ya existe un usuario con ese nombre de usuario
+     */
+    boolean existsByNombreUsuario(String nombreUsuario);
+
+    /**
      * Busca todos los usuarios activos del sistema sin importar su rol específico (Consulta manual alternativa).
      *
      * @return Lista de usuarios activos.
