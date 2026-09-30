@@ -9,7 +9,8 @@ import java.time.LocalDate;
 
 /**
  * Entidad asociativa que representa la relación 1 a 1 entre Vehiculo y Garage,
- * incluyendo la fecha de asignación.
+ * incluyendo la fecha de asignación. La unicidad se garantiza entre asignaciones
+ * activas desde la capa de servicio, para no bloquear reasignaciones tras un borrado lógico.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -25,11 +26,11 @@ public class AsignacionVehiculoGarage {
     private Integer id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vehiculo_id", nullable = false, unique = true)
+    @JoinColumn(name = "vehiculo_id", nullable = false)
     private Vehiculo vehiculo;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "garage_id", nullable = false, unique = true)
+    @JoinColumn(name = "garage_id", nullable = false)
     private Garage garage;
 
     @Column(name = "fecha_asignacion_garage", nullable = false)

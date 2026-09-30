@@ -9,7 +9,8 @@ import java.time.LocalDate;
 
 /**
  * Entidad asociativa que representa la propiedad de un Garage por parte de un Socio,
- * incluyendo la fecha de compra.
+ * incluyendo la fecha de compra. Un garage tiene un solo propietario activo; esa regla
+ * se valida en la capa de servicio para no bloquear nuevas ventas tras un borrado lógico.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -29,7 +30,7 @@ public class PropiedadGarage {
     private Socio socio;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "garage_id", nullable = false, unique = true)
+    @JoinColumn(name = "garage_id", nullable = false)
     private Garage garage;
 
     @Column(name = "fecha_compra_garage", nullable = false)

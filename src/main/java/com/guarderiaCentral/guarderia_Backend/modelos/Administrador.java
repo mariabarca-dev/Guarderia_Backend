@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-
+//chequeo euge
 /**
  * Entidad que representa a un Administrador del sistema, heredando de Usuario.
  *

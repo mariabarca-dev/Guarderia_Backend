@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
  * Excepción lanzada cuando se intenta asignar un vehículo a un garaje que ya se encuentra ocupado.
  * <p>
  * Extiende de {@link BusinessException} para integrarse con el manejador global
- * {@code @RestControllerAdvice} y asociar un estado HTTP 400 (BAD REQUEST) o 409 (CONFLICT).
+ * {@code @RestControllerAdvice}. Por defecto asocia el estado HTTP 409 (CONFLICT).
  * </p>
  *
  * @author Guardería Central

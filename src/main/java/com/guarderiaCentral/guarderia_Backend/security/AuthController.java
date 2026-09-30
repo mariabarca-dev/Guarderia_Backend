@@ -1,10 +1,14 @@
 package com.guarderiaCentral.guarderia_Backend.security;
 
+import com.guarderiaCentral.guarderia_Backend.exceptions.CredencialesInvalidasException;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,14 +17,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-
 /**
  * Controlador REST para la autenticación de usuarios en el sistema de la Guardería Central.
  * Expone el endpoint público de inicio de sesión (/api/auth/login).
  *
- * @author Desarrollador Backend
+ * @author Guardería Central
+ * @version 2.0
  */
 @Slf4j
 @RestController
@@ -32,30 +34,33 @@ public class AuthController {
     private final JwtProvider jwtProvider;
 
     /**
-     * Endpoint para autenticar un usuario en el sistema mediante sus credenciales.
-     * Valida el nombre de usuario y contraseña contra el AuthenticationManager y emite un Token JWT firmado.
+     * Autentica un usuario mediante sus credenciales y emite un token JWT firmado que incluye su rol.
      * Coincide con la regla de seguridad abierta: .requestMatchers("/api/auth/**").permitAll()
      *
      * @param loginRequest objeto JSON que contiene el nombre de usuario y la clave
      * @return una respuesta HTTP con el token JWT de acceso generado
+     * @throws CredencialesInvalidasException si el usuario o la clave son incorrectos
      */
     @PostMapping("/login")
     public ResponseEntity<JwtResponseDTO> authenticateUser(@Valid @RequestBody LoginRequestDTO loginRequest) {
         log.info("Procesando solicitud de inicio de sesión para el usuario: {}", loginRequest.getUsername());
 
-        // Autentica las credenciales mediante Spring Security
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
-                        loginRequest.getPassword()
-                )
-        );
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getUsername(),
+                            loginRequest.getPassword()));
+        } catch (BadCredentialsException e) {
+            log.warn("Credenciales inválidas para el usuario: {}", loginRequest.getUsername());
+            throw new CredencialesInvalidasException();
+        }
 
-        // Establece la autenticación en el contexto de seguridad actual
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // Genera el token JWT incluyendo el rol extraído de la autenticación
-        String jwt = jwtProvider.generateToken(authentication);
+        String rol = authentication.getAuthorities().iterator().next()
+                .getAuthority().replace("ROLE_", "");
+        String jwt = jwtProvider.generateToken(authentication.getName(), rol);
 
         log.info("Autenticación exitosa. Token JWT generado para el usuario: {}", loginRequest.getUsername());
 

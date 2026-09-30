@@ -42,7 +42,9 @@ public class Zona {
     private Boolean activo = true;
 
     /**
-     * Asegura que la letra se almacene siempre en mayúsculas.
+     * Asigna la letra de la zona normalizándola: elimina espacios sobrantes y la guarda en mayúsculas.
+     *
+     * @param letra letra identificadora de la zona (puede ser null)
      */
     public void setLetra(String letra) {
         this.letra = (letra != null) ? letra.trim().toUpperCase() : null;

@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
  * Extiende de {@link BusinessException} asignando por defecto el estado HTTP
  * {@link HttpStatus#UNAUTHORIZED} (401 Unauthorized).
  * </p>
-
+ *
  * @author Cátedra Guardería Central
  * @version 2.0
  */
