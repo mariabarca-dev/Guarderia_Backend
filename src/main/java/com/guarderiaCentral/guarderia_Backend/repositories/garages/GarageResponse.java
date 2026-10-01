@@ -5,8 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Objeto de respuesta para exponer la información pública de un Garage,
- * incluyendo el ID de su zona relacionada.
+ * Objeto de respuesta para exponer la información pública de un Garage.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */

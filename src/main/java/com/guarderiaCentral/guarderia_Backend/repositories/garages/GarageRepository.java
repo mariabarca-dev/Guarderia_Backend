@@ -11,7 +11,8 @@ import java.util.Optional;
 
 /**
  * Repositorio Spring Data JPA para la entidad Garage.
- * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
+ * Por el @SQLRestriction de la entidad, los métodos heredados como findAll() y findById()
+ * solo devuelven registros activos.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -19,35 +20,22 @@ import java.util.Optional;
 public interface GarageRepository extends JpaRepository<Garage, Integer> {
 
     /**
-     * Busca todos los garages cuyo estado activo sea true (Convención Spring Data).
+     * Busca un garage por su número único, incluyendo registros inactivos (baja lógica).
+     * Utilizado en el flujo de guardado inteligente para detectar reactivaciones.
      *
-     * @return Lista de garages activos.
+     * @.param numeroGarage Número de garage a buscar.
+     * @return Optional con la entidad Garage si existe (activa o inactiva).
      */
-    List<Garage> findAllByActivoTrue();
-
-    /**
-     * Busca un garage por su ID asegurando que se encuentre activo (Convención Spring Data).
-     *
-     * @param id ID del garage.
-     * @return Optional con el garage encontrado si está activo.
-     */
-    Optional<Garage> findByIdAndActivoTrue(Integer id);
-
-    /**
-     * Verifica la existencia de un garage activo por su ID.
-     *
-     * @param id ID del garage.
-     * @return true si existe y está activo, false en caso contrario.
-     */
-    boolean existsByIdAndActivoTrue(Integer id);
+    @Query(value = "SELECT * FROM garages WHERE numero_garage = ?1", nativeQuery = true)
+    Optional<Garage> findByNumeroGarageIncludingInactive(int numeroGarage);
 
     /**
      * Método explícito para uso administrativo que devuelve todos los registros,
-     * incluyendo aquellos inactivos (borrado lógico).
+     * incluyendo aquellos inactivos (borrado lógico), mediante una consulta nativa.
      *
      * @return Lista completa de garages (activos e inactivos).
      */
-    @Query("SELECT g FROM Garage g")
+    @Query(value = "SELECT * FROM garages", nativeQuery = true)
     List<Garage> findAllIncludingInactive();
 
     /**
