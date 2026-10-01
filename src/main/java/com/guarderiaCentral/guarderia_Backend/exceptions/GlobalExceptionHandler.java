@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -15,12 +15,13 @@ import java.util.stream.Collectors;
 /**
  * Manejador global de excepciones de la API REST de la Guardería Central.
  * <p>
- * Captura las excepciones de la jerarquía {@link BusinessException} y las convierte en una
- * respuesta JSON estructurada ({@link ErrorResponse}) con el código HTTP asociado a cada una.
+ * Captura las excepciones de la jerarquía {@link BusinessException}, los errores de validación
+ * ({@code @Valid}) y los cuerpos de solicitud ilegibles, y los convierte en una respuesta JSON
+ * estructurada ({@link ErrorResponse}) con el código HTTP correspondiente.
  * </p>
  *
  * @author Guardería Central
- * @version 2.0
+ * @version 2.1
  */
 @Slf4j
 @RestControllerAdvice
@@ -49,7 +50,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Maneja los errores de validación de los DTOs (@Valid) para devolverlos con el formato ErrorResponse.
+     * Maneja los errores de validación de los Request (@Valid) para devolverlos con el formato ErrorResponse.
      *
      * @param ex      Excepción de validación capturada.
      * @param request Información de la solicitud HTTP actual.
@@ -68,6 +69,29 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 "Errores de validación: " + errores,
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Maneja los cuerpos de solicitud ilegibles: JSON mal formado, fechas con formato inválido
+     * o valores que no existen en un enum.
+     *
+     * @param ex      Excepción de lectura del cuerpo capturada.
+     * @param request Información de la solicitud HTTP actual.
+     * @return Respuesta estructurada {@link ErrorResponse} con estado 400 (BAD_REQUEST).
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadableBody(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        log.warn("Cuerpo de solicitud ilegible: {} - Path: {}", ex.getMessage(), request.getRequestURI());
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "El cuerpo de la solicitud es inválido o tiene un formato incorrecto.",
                 request.getRequestURI()
         );
 

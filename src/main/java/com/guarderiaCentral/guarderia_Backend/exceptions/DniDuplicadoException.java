@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
  * Excepción personalizada para manejar intentos de registro o modificación de socios
  * con un DNI que ya se encuentra registrado en el sistema.
  * <p>
- * Extiende de {@link BusinessException} asignando por defecto el estado HTTP
+ * Extiende de {@link BusinessException} asignando siempre el estado HTTP
  * {@link HttpStatus#CONFLICT} (409 Conflict).
  * </p>
  *

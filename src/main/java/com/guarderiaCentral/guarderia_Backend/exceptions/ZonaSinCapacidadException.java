@@ -6,10 +6,12 @@ import org.springframework.http.HttpStatus;
  * Excepción de negocio lanzada cuando una zona ha alcanzado su capacidad máxima
  * de vehículos y no es posible realizar una nueva asignación o registro en la misma.
  * <p>
- * Extiende de {@link BusinessException} con un estado HTTP 400 (BAD_REQUEST).
+ * Extiende de {@link BusinessException} asignando siempre el estado HTTP
+ * {@link HttpStatus#CONFLICT} (409 Conflict).
  * </p>
  *
- * @author GuarderiaCentral
+ * @author Cátedra Guardería Central
+ * @version 2.0
  */
 public class ZonaSinCapacidadException extends BusinessException {
 
@@ -17,17 +19,19 @@ public class ZonaSinCapacidadException extends BusinessException {
 
     /**
      * Constructor por defecto que establece un mensaje estándar de capacidad agotada.
+     * Siempre asocia la excepción al estado HTTP 409 (CONFLICT).
      */
     public ZonaSinCapacidadException() {
-        super("La zona seleccionada ha alcanzado su capacidad máxima y no admite más vehículos.", HttpStatus.BAD_REQUEST);
+        super("La zona seleccionada ha alcanzado su capacidad máxima y no admite más vehículos.", HttpStatus.CONFLICT);
     }
 
     /**
      * Constructor que permite especificar un mensaje de error personalizado.
+     * Siempre asocia la excepción al estado HTTP 409 (CONFLICT).
      *
      * @param mensaje Detalle del motivo por el cual se lanza la excepción.
      */
     public ZonaSinCapacidadException(String mensaje) {
-        super(mensaje, HttpStatus.BAD_REQUEST);
+        super(mensaje, HttpStatus.CONFLICT);
     }
 }

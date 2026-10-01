@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
  * Excepción personalizada para manejar intentos fallidos de inicio de sesión
  * debido a credenciales inválidas (usuario no encontrado o contraseña incorrecta).
  * <p>
- * Extiende de {@link BusinessException} asignando por defecto el estado HTTP
+ * Extiende de {@link BusinessException} asignando siempre el estado HTTP
  * {@link HttpStatus#UNAUTHORIZED} (401 Unauthorized).
  * </p>
  *

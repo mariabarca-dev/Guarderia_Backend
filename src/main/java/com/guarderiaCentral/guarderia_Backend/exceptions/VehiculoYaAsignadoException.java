@@ -34,13 +34,5 @@ public class VehiculoYaAsignadoException extends BusinessException {
         super(mensaje, HttpStatus.CONFLICT);
     }
 
-    /**
-     * Constructor avanzado que permite definir un mensaje personalizado y un estado HTTP específico.
-     *
-     * @param mensaje Detalle explicativo de la razón de la excepción.
-     * @param status Estado HTTP a retornar en la respuesta REST de la API.
-     */
-    public VehiculoYaAsignadoException(String mensaje, HttpStatus status) {
-        super(mensaje, status);
-    }
+
 }
