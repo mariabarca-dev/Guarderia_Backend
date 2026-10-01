@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ErrorResponseDTO {
+public class ErrorResponse {
 
     private LocalDateTime timestamp;
     private int status;
