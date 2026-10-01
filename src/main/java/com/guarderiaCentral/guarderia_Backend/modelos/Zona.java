@@ -2,18 +2,21 @@ package com.guarderiaCentral.guarderia_Backend.modelos;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 
 /**
- * Entidad que representa una Zona dentro de la guardería,
- * la cual agrupa garages con características y tipo de vehículo específicos.
+ * Entidad que representa una Zona dentro de la guardería.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
 @Entity
 @Table(name = "zonas")
-@Data
+@SQLRestriction("activo = true")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Zona {

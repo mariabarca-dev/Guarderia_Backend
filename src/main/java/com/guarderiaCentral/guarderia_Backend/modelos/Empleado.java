@@ -4,10 +4,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.Setter;
 
 /**
  * Entidad que representa a un Empleado del sistema, heredando de Usuario.
@@ -17,10 +16,9 @@ import lombok.ToString;
 @Entity
 @Table(name = "empleados")
 @PrimaryKeyJoinColumn(name = "usuario_id")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
 public class Empleado extends Usuario {
 
     @Column(name = "codigo", nullable = false, unique = true, length = 50)

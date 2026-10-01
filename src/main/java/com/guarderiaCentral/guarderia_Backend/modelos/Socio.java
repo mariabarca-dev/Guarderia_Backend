@@ -4,10 +4,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.Setter;
 
 import java.time.LocalDate;
 
@@ -19,10 +18,9 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "socios")
 @PrimaryKeyJoinColumn(name = "usuario_id")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
 public class Socio extends Usuario {
 
     @Column(name = "dni", nullable = false, unique = true, length = 20)

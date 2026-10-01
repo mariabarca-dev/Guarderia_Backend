@@ -2,18 +2,21 @@ package com.guarderiaCentral.guarderia_Backend.modelos;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 
 /**
- * Entidad asociativa que representa la relación N a N entre Empleado y Zona,
- * incluyendo la cantidad de vehículos a cargo.
+ * Entidad asociativa que representa la relación entre Empleado y Zona.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
 @Entity
 @Table(name = "asignaciones_empleado_zona")
-@Data
+@SQLRestriction("activo = true")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class AsignacionEmpleadoZona {
