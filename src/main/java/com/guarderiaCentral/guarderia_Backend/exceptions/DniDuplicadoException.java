@@ -22,7 +22,7 @@ public class DniDuplicadoException extends BusinessException {
      * y el estado HTTP 409 (CONFLICT).
      */
     public DniDuplicadoException() {
-        super("Error: El DNI del socio ingresado ya se encuentra registrado en el sistema.", HttpStatus.CONFLICT);
+        super("El DNI del socio ingresado ya se encuentra registrado en el sistema.", HttpStatus.CONFLICT);
     }
 
     /**

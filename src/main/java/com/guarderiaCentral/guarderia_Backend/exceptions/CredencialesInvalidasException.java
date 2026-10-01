@@ -22,7 +22,7 @@ public class CredencialesInvalidasException extends BusinessException {
      * y el estado HTTP 401 (UNAUTHORIZED).
      */
     public CredencialesInvalidasException() {
-        super("Error: Usuario o contraseña incorrectos.", HttpStatus.UNAUTHORIZED);
+        super("Usuario o contraseña incorrectos.", HttpStatus.UNAUTHORIZED);
     }
 
     /**

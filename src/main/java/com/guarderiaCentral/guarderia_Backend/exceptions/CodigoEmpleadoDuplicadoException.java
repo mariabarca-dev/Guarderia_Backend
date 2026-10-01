@@ -22,7 +22,7 @@ public class CodigoEmpleadoDuplicadoException extends BusinessException {
      * y el estado HTTP 409 (CONFLICT).
      */
     public CodigoEmpleadoDuplicadoException() {
-        super("Error: El código de empleado ingresado ya existe en el sistema.", HttpStatus.CONFLICT);
+        super("El código de empleado ingresado ya existe en el sistema.", HttpStatus.CONFLICT);
     }
 
     /**
