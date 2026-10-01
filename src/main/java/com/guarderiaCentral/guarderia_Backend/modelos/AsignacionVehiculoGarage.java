@@ -2,20 +2,23 @@ package com.guarderiaCentral.guarderia_Backend.modelos;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 
 /**
- * Entidad asociativa que representa la relación 1 a 1 entre Vehiculo y Garage,
- * incluyendo la fecha de asignación.
+ * Entidad asociativa que representa la relación entre Vehiculo y Garage.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
 @Entity
 @Table(name = "asignaciones_vehiculo_garage")
-@Data
+@SQLRestriction("activo = true")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class AsignacionVehiculoGarage {
@@ -24,12 +27,12 @@ public class AsignacionVehiculoGarage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vehiculo_id", nullable = false, unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vehiculo_id", nullable = false)
     private Vehiculo vehiculo;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "garage_id", nullable = false, unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "garage_id", nullable = false)
     private Garage garage;
 
     @Column(name = "fecha_asignacion_garage", nullable = false)

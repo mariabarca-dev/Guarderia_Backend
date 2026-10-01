@@ -2,18 +2,21 @@ package com.guarderiaCentral.guarderia_Backend.modelos;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 
 /**
- * Entidad que representa una Zona dentro de la guardería,
- * la cual agrupa garages con características y tipo de vehículo específicos.
+ * Entidad que representa una Zona dentro de la guardería.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
 @Entity
 @Table(name = "zonas")
-@Data
+@SQLRestriction("activo = true")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Zona {
@@ -42,7 +45,9 @@ public class Zona {
     private Boolean activo = true;
 
     /**
-     * Asegura que la letra se almacene siempre en mayúsculas.
+     * Asigna la letra de la zona normalizándola: elimina espacios sobrantes y la guarda en mayúsculas.
+     *
+     * @param letra letra identificadora de la zona (puede ser null)
      */
     public void setLetra(String letra) {
         this.letra = (letra != null) ? letra.trim().toUpperCase() : null;

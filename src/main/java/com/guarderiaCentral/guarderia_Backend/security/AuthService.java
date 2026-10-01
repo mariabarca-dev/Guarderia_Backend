@@ -19,7 +19,7 @@ import java.util.List;
  * Servicio de autenticación y gestión de detalles de usuario para Spring Security.
  * Implementa UserDetailsService para la carga de credenciales desde MySQL mediante JPA.
  *
- * @author Desarrollador Backend
+ * @author Guarderia central
  */
 @Slf4j
 @Service

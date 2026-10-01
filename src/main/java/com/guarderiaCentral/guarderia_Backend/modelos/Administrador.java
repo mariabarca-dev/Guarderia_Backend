@@ -3,10 +3,9 @@ package com.guarderiaCentral.guarderia_Backend.modelos;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.Setter;
 
 /**
  * Entidad que representa a un Administrador del sistema, heredando de Usuario.
@@ -16,11 +15,9 @@ import lombok.ToString;
 @Entity
 @Table(name = "administradores")
 @PrimaryKeyJoinColumn(name = "usuario_id")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
 public class Administrador extends Usuario {
-
-    // Hereda todos los atributos de Usuario (id, nombre, apellido, direccion, telefono, nombreUsuario, clave, rol, activo)
+    // Hereda todos los atributos de Usuario
 }

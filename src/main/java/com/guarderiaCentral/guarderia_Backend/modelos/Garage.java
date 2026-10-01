@@ -2,18 +2,21 @@ package com.guarderiaCentral.guarderia_Backend.modelos;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 
 /**
  * Entidad que representa un Garage dentro de una Zona.
- * Nota: La propiedad y fecha de compra con el socio se gestionan a través de PropiedadGarage.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
 @Entity
 @Table(name = "garages")
-@Data
+@SQLRestriction("activo = true")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Garage {
@@ -22,7 +25,7 @@ public class Garage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "numero_garage", nullable = false)
+    @Column(name = "numero_garage", nullable = false, unique = true)
     private int numeroGarage;
 
     @Column(name = "lectura_luz", nullable = false)

@@ -3,10 +3,10 @@ package com.guarderiaCentral.guarderia_Backend.exceptions;
 import org.springframework.http.HttpStatus;
 
 /**
- * Excepción personalizada para manejar intentos de registro o modificación de usuarios
- * (Socios, Empleados o Administradores) con un DNI que ya se encuentra registrado en el sistema.
+ * Excepción personalizada para manejar intentos de registro o modificación de socios
+ * con un DNI que ya se encuentra registrado en el sistema.
  * <p>
- * Extiende de {@link BusinessException} asignando por defecto el estado HTTP
+ * Extiende de {@link BusinessException} asignando siempre el estado HTTP
  * {@link HttpStatus#CONFLICT} (409 Conflict).
  * </p>
  *
@@ -18,11 +18,11 @@ public class DniDuplicadoException extends BusinessException {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Constructor por defecto que asigna un mensaje estándar de duplicidad de DNI
+     * Constructor por defecto que asigna un mensaje estándar de duplicidad de DNI de socio
      * y el estado HTTP 409 (CONFLICT).
      */
     public DniDuplicadoException() {
-        super("Error: El DNI ingresado ya se encuentra registrado en el sistema.", HttpStatus.CONFLICT);
+        super("El DNI del socio ingresado ya se encuentra registrado en el sistema.", HttpStatus.CONFLICT);
     }
 
     /**

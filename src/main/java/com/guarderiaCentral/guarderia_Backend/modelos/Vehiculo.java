@@ -2,18 +2,21 @@ package com.guarderiaCentral.guarderia_Backend.modelos;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 
 /**
- * Entidad que representa un Vehículo registrado perteneciente a un Socio
- * y gestionado/registrado por un Empleado responsable.
+ * Entidad que representa un Vehículo registrado perteneciente a un Socio.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
 @Entity
 @Table(name = "vehiculos")
-@Data
+@SQLRestriction("activo = true")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Vehiculo {
@@ -25,10 +28,6 @@ public class Vehiculo {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "socio_id", nullable = false)
     private Socio socio;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "empleado_id", nullable = false)
-    private Empleado empleado;
 
     @Column(name = "nombre", length = 100)
     private String nombre;

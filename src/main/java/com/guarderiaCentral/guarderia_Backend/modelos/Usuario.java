@@ -2,8 +2,10 @@ package com.guarderiaCentral.guarderia_Backend.modelos;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.io.Serializable;
 
@@ -16,7 +18,9 @@ import java.io.Serializable;
 @Entity
 @Table(name = "usuarios")
 @Inheritance(strategy = InheritanceType.JOINED)
-@Data
+@SQLRestriction("activo = true")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public abstract class Usuario implements Serializable {
