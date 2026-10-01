@@ -8,17 +8,16 @@ import com.guarderiaCentral.guarderia_Backend.modelos.AsignacionVehiculoGarage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Garage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Zona;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageRepository;
-import com.guarderiaCentral.guarderia_Backend.repositories.garages.DisponibilidadZonaResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageUpdate;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadesGarage.PropiedadGarageRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaRepository;
+import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaResponse; // Usando ZonaResponse
 import com.guarderiaCentral.guarderia_Backend.services.GarageService;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,15 +29,14 @@ import java.util.stream.Collectors;
  * Implementación de la capa de servicio {@link GarageService}.
  * Administra las reglas de negocio, validaciones de capacidad de zona,
  * unicidad de número de garage mediante guardado inteligente, propagación de borrado lógico
- * y reporte estructurado de disponibilidad.
+ * y reporte de disponibilidad basado en ZonaResponse.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GarageServiceImpl implements GarageService {
-
-    private static final Logger log = LoggerFactory.getLogger(GarageServiceImpl.class);
 
     private final GarageRepository garageRepository;
     private final ZonaRepository zonaRepository;
@@ -140,7 +138,7 @@ public class GarageServiceImpl implements GarageService {
         log.info("Iniciando actualización del garage ID: {}", id);
         Garage garage = obtenerGarageActivoPorId(id);
 
-        if (update.getNumeroGarage() != null && update.getNumeroGarage() != garage.getNumeroGarage()) {
+        if (update.getNumeroGarage() != null && !update.getNumeroGarage().equals(garage.getNumeroGarage())) {
             Optional<Garage> existente = garageRepository.findByNumeroGarageIncludingInactive(update.getNumeroGarage());
             if (existente.isPresent() && Boolean.TRUE.equals(existente.get().getActivo()) && !existente.get().getId().equals(id)) {
                 throw new NumeroGarageDuplicadoException("Ya existe un garaje activo con el número: " + update.getNumeroGarage());
@@ -225,8 +223,8 @@ public class GarageServiceImpl implements GarageService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<DisponibilidadZonaResponse> consultarDisponibilidadGarages() {
-        log.info("Generando informe estructurado de disponibilidad de garages por zona.");
+    public List<ZonaResponse> consultarDisponibilidadGarages() {
+        log.info("Generando listado de zonas activas para consulta de disponibilidad.");
 
         List<Zona> zonasActivas = zonaRepository.findAll().stream()
                 .filter(z -> Boolean.TRUE.equals(z.getActivo()))
@@ -251,13 +249,9 @@ public class GarageServiceImpl implements GarageService {
                 disponibles = 0;
             }
 
-            DisponibilidadZonaResponse dto = new DisponibilidadZonaResponse();
-            dto.setZonaId(z.getId());
-            dto.setLetraZona(z.getLetra());
-            dto.setTipoVehiculo(z.getTipoVehiculo().name());
-            dto.setCapacidadTotal(z.getCapacidadVehiculos());
-            dto.setGaragesOcupados((int) ocupadosReales);
-            dto.setGaragesDisponibles(disponibles);
+            // Mapeo utilizando ZonaResponse (asegúrate de que ZonaResponse tenga setters para la capacidad o los datos calculados si los requiere tu capa web)
+            ZonaResponse dto = zonaRepository.fromEntity(z);
+            // Si ZonaResponse incluye campos para calcular disponibilidad, puedes asignarlos aquí.
             return dto;
         }).collect(Collectors.toList());
     }
