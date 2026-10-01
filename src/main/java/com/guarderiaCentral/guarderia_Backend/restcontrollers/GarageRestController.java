@@ -3,6 +3,7 @@ package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaResponse;
 import com.guarderiaCentral.guarderia_Backend.services.GarageService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -30,7 +31,6 @@ import java.util.List;
  * - SOCIO y EMPLEADO: Acceso de lectura/consulta (GET) sobre la entidad Garage.
  * - ADMINISTRADOR: Control total (CRUD - GET/POST/PUT/DELETE) sobre la entidad Garage.
  * - SYSADMIN: Sin acceso a la entidad de negocio Garage.
- *
  *
  * @version 1.0
  */
@@ -73,21 +73,6 @@ public class GarageRestController {
     }
 
     /**
-     * Busca y retorna la información de un garage activo a partir de su número asignado.
-     * Permitido para roles: ADMINISTRADOR, EMPLEADO, SOCIO.
-     *
-     * @param numeroGarage Número identificador del garage dentro del establecimiento.
-     * @return ResponseEntity con la información de {@link GarageResponse} y código HTTP 200 OK.
-     */
-    @GetMapping("/numero/{numeroGarage}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
-    public ResponseEntity<GarageResponse> obtenerPorNumero(@PathVariable int numeroGarage) {
-        logger.info("REST Request para consultar el garage por número: {}", numeroGarage);
-        GarageResponse response = garageService.buscarPorNumeroGarage(numeroGarage);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
      * Registra un nuevo garage en el sistema.
      * La sintaxis y estructura son verificadas automáticamente mediante {@code @Valid}.
      * Permitido para rol: ADMINISTRADOR.
@@ -98,7 +83,7 @@ public class GarageRestController {
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<GarageResponse> crear(@Valid @RequestBody GarageRequest request) {
-        logger.info("REST Request para dar de alta un nuevo garage con número: {}", request.getNumeroGarage());
+        logger.info("REST Request para dar de alta un nuevo garage.");
         GarageResponse nuevoGarage = garageService.crear(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoGarage);
     }
@@ -138,17 +123,16 @@ public class GarageRestController {
     }
 
     /**
-     * Obtiene un reporte con la información de disponibilidad de los garages del sistema.
-     * Exclusivo para personal operativo y administrativo.
+     * Obtiene un reporte detallado con la información de disponibilidad y ocupación de los garages organizados por zona.
      * Permitido para roles: ADMINISTRADOR, EMPLEADO.
      *
-     * @return ResponseEntity con la lista de estados de disponibilidad y código HTTP 200 OK.
+     * @return ResponseEntity con la lista de {@link ZonaResponse} y código HTTP 200 OK.
      */
     @GetMapping("/disponibilidad")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO')")
-    public ResponseEntity<List<String>> consultarDisponibilidad() {
-        logger.info("REST Request para obtener el reporte global de disponibilidad de garages.");
-        List<String> reporte = garageService.consultarDisponibilidadGarages();
+    public ResponseEntity<List<ZonaResponse>> consultarDisponibilidad() {
+        logger.info("REST Request para obtener el reporte global de disponibilidad de garages por zona.");
+        List<ZonaResponse> reporte = garageService.consultarDisponibilidadGarages();
         return ResponseEntity.ok(reporte);
     }
 }
