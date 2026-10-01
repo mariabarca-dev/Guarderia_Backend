@@ -25,7 +25,7 @@ public class Garage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "numero_garage", nullable = false)
+    @Column(name = "numero_garage", nullable = false, unique = true)
     private int numeroGarage;
 
     @Column(name = "lectura_luz", nullable = false)
