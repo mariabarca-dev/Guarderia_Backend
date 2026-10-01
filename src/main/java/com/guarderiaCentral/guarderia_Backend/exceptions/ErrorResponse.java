@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 
 /**
  * Estructura estándar de respuesta para errores devueltos por la API REST.
+ * @author Cátedra Guardería Central
+ * @version 2.0
+ *
  */
 @Data
 @NoArgsConstructor

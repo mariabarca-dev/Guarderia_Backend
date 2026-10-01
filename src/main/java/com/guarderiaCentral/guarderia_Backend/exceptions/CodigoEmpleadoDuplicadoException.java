@@ -26,10 +26,10 @@ public class CodigoEmpleadoDuplicadoException extends BusinessException {
     }
 
     /**
-     * Constructor que permite especificar un mensaje descriptivo personalizado
-     * manteniendo el estado HTTP 409 (CONFLICT).
+     * Constructor que permite definir un mensaje de error personalizado.
+     * Siempre asocia la excepción con un código HTTP 409 CONFLICT.
      *
-     * @param message Mensaje descriptivo del error de duplicidad.
+     * @param message Mensaje descriptivo del error.
      */
     public CodigoEmpleadoDuplicadoException(String message) {
         super(message, HttpStatus.CONFLICT);
