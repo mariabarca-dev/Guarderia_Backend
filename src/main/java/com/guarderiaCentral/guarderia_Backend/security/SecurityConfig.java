@@ -1,6 +1,7 @@
 package com.guarderiaCentral.guarderia_Backend.security;
 
 import com.guarderiaCentral.guarderia_Backend.config.AppEnvironmentConfig;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,7 +25,7 @@ import java.util.List;
  * seguridad por métodos (@PreAuthorize), CORS y beans de autenticación.
  *
  * @author Guardería Central
- * @version 2.0
+ * @version 2.1
  */
 @Configuration
 @EnableWebSecurity
@@ -47,6 +48,8 @@ public class SecurityConfig {
 
     /**
      * Define la cadena de filtros: sin sesión, login público y el resto de las rutas autenticadas.
+     * Cuando una solicitud llega sin token o con un token inválido o vencido, responde 401
+     * (Unauthorized) con un cuerpo JSON; si el rol no alcanza para el recurso, responde 403.
      *
      * @param http constructor de la configuración HTTP de seguridad
      * @return la cadena de filtros de seguridad
@@ -62,6 +65,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.setCharacterEncoding("UTF-8");
+                    response.getWriter().write(
+                            "{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Token ausente, inválido o vencido.\"}");
+                }))
                 .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -17,12 +17,13 @@ import java.util.Date;
  * El token incluye el rol del usuario como claim para poder reconstruir sus permisos.
  *
  * @author Guardería Central
- * @version 2.0
+ * @version 2.1
  */
 @Component
 public class JwtProvider {
 
-    private static final String CLAIM_ROL = "rol";
+    /** Nombre del claim del token donde se guarda el rol del usuario. */
+    public static final String CLAIM_ROL = "rol";
 
     private final AppEnvironmentConfig envConfig;
 
@@ -39,7 +40,16 @@ public class JwtProvider {
         return Keys.hmacShaKeyFor(envConfig.getJwtSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    private Claims getClaims(String token) {
+    /**
+     * Valida la firma y la expiración del token y devuelve sus claims.
+     * Permite leer el usuario y el rol con un único parseo del token.
+     *
+     * @param token token JWT a parsear
+     * @return los claims del token
+     * @throws JwtException si el token está mal formado, tiene firma inválida o está vencido
+     * @throws IllegalArgumentException si el token es nulo o está vacío
+     */
+    public Claims parseToken(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
@@ -75,7 +85,7 @@ public class JwtProvider {
      */
     public boolean validateToken(String token) {
         try {
-            getClaims(token);
+            parseToken(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
@@ -89,7 +99,7 @@ public class JwtProvider {
      * @return el nombre de usuario (subject)
      */
     public String getUsernameFromToken(String token) {
-        return getClaims(token).getSubject();
+        return parseToken(token).getSubject();
     }
 
     /**
@@ -99,6 +109,6 @@ public class JwtProvider {
      * @return el nombre del rol del usuario
      */
     public String getRolFromToken(String token) {
-        return getClaims(token).get(CLAIM_ROL, String.class);
+        return parseToken(token).get(CLAIM_ROL, String.class);
     }
 }

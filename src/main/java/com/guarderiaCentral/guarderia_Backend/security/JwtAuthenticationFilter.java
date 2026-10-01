@@ -1,9 +1,12 @@
 package com.guarderiaCentral.guarderia_Backend.security;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,10 +18,12 @@ import java.util.List;
 /**
  * Filtro que valida el token JWT de cada solicitud y reconstruye la autenticación
  * del usuario, incluyendo su rol como GrantedAuthority para que funcione @PreAuthorize.
+ * El token se parsea una sola vez por solicitud.
  *
  * @author Guardería Central
- * @version 2.0
+ * @version 2.1
  */
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
@@ -35,6 +40,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     /**
      * Lee el encabezado Authorization, valida el token y, si es válido, registra en el
      * contexto de seguridad al usuario con la autoridad ROLE_ correspondiente a su rol.
+     * Si el token es inválido o está vencido, la solicitud continúa sin autenticar y
+     * la configuración de seguridad responde 401.
      *
      * @param request solicitud HTTP entrante
      * @param response respuesta HTTP
@@ -49,12 +56,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            if (jwtProvider.validateToken(token)) {
-                String username = jwtProvider.getUsernameFromToken(token);
-                String rol = jwtProvider.getRolFromToken(token);
+            try {
+                Claims claims = jwtProvider.parseToken(token);
+                String rol = claims.get(JwtProvider.CLAIM_ROL, String.class);
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                        username, null, List.of(new SimpleGrantedAuthority("ROLE_" + rol)));
+                        claims.getSubject(), null, List.of(new SimpleGrantedAuthority("ROLE_" + rol)));
                 SecurityContextHolder.getContext().setAuthentication(auth);
+            } catch (JwtException | IllegalArgumentException e) {
+                log.debug("Token rechazado: {} - Path: {}", e.getMessage(), request.getRequestURI());
             }
         }
         filterChain.doFilter(request, response);
