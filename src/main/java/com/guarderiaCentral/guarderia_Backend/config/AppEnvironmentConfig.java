@@ -4,6 +4,8 @@ import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+//chequeo euge
+
 /**
  * Propiedades de entorno de la aplicación, leídas desde application.properties
  * y desde el archivo externo entorno/config.properties (no versionado).
