@@ -42,7 +42,7 @@ public class AuthController {
      * @throws CredencialesInvalidasException si el usuario o la clave son incorrectos
      */
     @PostMapping("/login")
-    public ResponseEntity<JwtResponseDTO> authenticateUser(@Valid @RequestBody LoginRequestDTO loginRequest) {
+    public ResponseEntity<JwtResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         log.info("Procesando solicitud de inicio de sesión para el usuario: {}", loginRequest.getUsername());
 
         Authentication authentication;
@@ -64,14 +64,14 @@ public class AuthController {
 
         log.info("Autenticación exitosa. Token JWT generado para el usuario: {}", loginRequest.getUsername());
 
-        return ResponseEntity.ok(new JwtResponseDTO(jwt));
+        return ResponseEntity.ok(new JwtResponse(jwt));
     }
 
     /**
      * DTO interno para recibir la solicitud de inicio de sesión.
      */
     @Data
-    public static class LoginRequestDTO {
+    public static class LoginRequest {
         @NotBlank(message = "El nombre de usuario no puede estar vacío")
         private String username;
 
@@ -84,7 +84,7 @@ public class AuthController {
      */
     @Data
     @RequiredArgsConstructor
-    public static class JwtResponseDTO {
+    public static class JwtResponse {
         private final String accessToken;
         private final String tokenType = "Bearer";
     }
