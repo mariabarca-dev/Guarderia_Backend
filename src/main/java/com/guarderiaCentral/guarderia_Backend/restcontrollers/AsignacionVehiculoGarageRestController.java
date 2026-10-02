@@ -27,7 +27,6 @@ import java.util.List;
  * Proporciona endpoints REST limpios para operaciones CRUD sobre la relación asociativa 1 a 1 de asignación,
  * respetando la matriz de seguridad mediante Spring Security y anotaciones @PreAuthorize.
  *
- *
  * @version 1.0
  */
 @RestController
