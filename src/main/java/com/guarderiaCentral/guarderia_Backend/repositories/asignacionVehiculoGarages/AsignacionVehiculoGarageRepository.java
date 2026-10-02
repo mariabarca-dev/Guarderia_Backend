@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-
+//chequeo euge
 /**
  * Repositorio Spring Data JPA para la entidad AsignacionVehiculoGarage.
  * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
