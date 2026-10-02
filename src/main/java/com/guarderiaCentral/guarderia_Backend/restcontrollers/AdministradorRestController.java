@@ -4,6 +4,7 @@ import com.guarderiaCentral.guarderia_Backend.repositories.administradores.Admin
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorUpdate;
 import com.guarderiaCentral.guarderia_Backend.services.AdministradorService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -18,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.validation.Valid;
 import java.util.List;
 
 /**
@@ -39,11 +39,11 @@ public class AdministradorRestController {
     private final AdministradorService administradorService;
 
     /**
-     * Registra un nuevo administrador en el sistema.
+     * Registra un nuevo administrador en el sistema o reactiva uno inactivo existente.
      * <p>
      * Requiere el rol exclusivo <b>SYSADMIN</b>.
      * </p>
-
+     *
      * @param request DTO con los datos para la creación del administrador.
      * @return {@link ResponseEntity} conteniendo el {@link AdministradorResponse} y el código HTTP 201 Created.
      */
@@ -51,7 +51,7 @@ public class AdministradorRestController {
     @PreAuthorize("hasRole('SYSADMIN')")
     public ResponseEntity<AdministradorResponse> registrarAdministrador(@Valid @RequestBody AdministradorRequest request) {
         log.info("REST Request para registrar un nuevo Administrador con usuario: {}", request.getNombreUsuario());
-        AdministradorResponse nuevoAdmin = administradorService.registrarAdministrador(request);
+        AdministradorResponse nuevoAdmin = administradorService.crear(request);
         return new ResponseEntity<>(nuevoAdmin, HttpStatus.CREATED);
     }
 
@@ -60,17 +60,30 @@ public class AdministradorRestController {
      * <p>
      * Accesible por el rol <b>SYSADMIN</b>.
      * </p>
-
-     * @return {@link ResponseEntity} con la lista de {@link AdministradorResponse} y el código HTTP 200 OK.
+     *
+     * @return {@link ResponseEntity} con la lista de {@link AdministradorResponse} activos y código HTTP 200 OK.
      */
     @GetMapping
     @PreAuthorize("hasRole('SYSADMIN')")
     public ResponseEntity<List<AdministradorResponse>> listarTodos() {
         log.info("REST Request para obtener el listado de administradores activos.");
-        //List<AdministradorResponse> administradores = administradorService.listarTodos();
-        List<AdministradorResponse> administradores = administradorService.listarActivos();
+        List<AdministradorResponse> administradores = administradorService.listarTodos();
+        return ResponseEntity.ok(administradores);
+    }
 
-
+    /**
+     * Obtiene el listado completo de administradores incluyendo registros inactivos.
+     * <p>
+     * Accesible exclusivamente por el rol <b>SYSADMIN</b>.
+     * </p>
+     *
+     * @return {@link ResponseEntity} con la lista de {@link AdministradorResponse} y código HTTP 200 OK.
+     */
+    @GetMapping("/inactivos")
+    @PreAuthorize("hasRole('SYSADMIN')")
+    public ResponseEntity<List<AdministradorResponse>> listarTodosIncluyendoInactivos() {
+        log.info("REST Request para obtener el listado de administradores incluyendo inactivos.");
+        List<AdministradorResponse> administradores = administradorService.listarTodosIncluyendoInactivas();
         return ResponseEntity.ok(administradores);
     }
 
@@ -79,7 +92,7 @@ public class AdministradorRestController {
      * <p>
      * Accesible por el rol <b>SYSADMIN</b>.
      * </p>
-
+     *
      * @param id Identificador único del administrador a consultar.
      * @return {@link ResponseEntity} con el {@link AdministradorResponse} encontrado y código HTTP 200 OK.
      */
@@ -96,8 +109,8 @@ public class AdministradorRestController {
      * <p>
      * Requiere el rol exclusivo <b>SYSADMIN</b>.
      * </p>
-
-     * @param id Identificador único del administrador a actualizar.
+     *
+     * @param id     Identificador único del administrador a actualizar.
      * @param update DTO con la información actualizada.
      * @return {@link ResponseEntity} con el {@link AdministradorResponse} actualizado y código HTTP 200 OK.
      */
@@ -107,7 +120,7 @@ public class AdministradorRestController {
             @PathVariable Integer id,
             @Valid @RequestBody AdministradorUpdate update) {
         log.info("REST Request para actualizar el administrador con ID: {}", id);
-        AdministradorResponse adminActualizado = administradorService.actualizarAdministrador(id, update);
+        AdministradorResponse adminActualizado = administradorService.actualizar(id, update);
         return ResponseEntity.ok(adminActualizado);
     }
 
@@ -116,7 +129,7 @@ public class AdministradorRestController {
      * <p>
      * Requiere el rol exclusivo <b>SYSADMIN</b>.
      * </p>
-
+     *
      * @param id Identificador único del administrador a desactivar.
      * @return {@link ResponseEntity} con el código HTTP 204 No Content.
      */
@@ -124,7 +137,7 @@ public class AdministradorRestController {
     @PreAuthorize("hasRole('SYSADMIN')")
     public ResponseEntity<Void> eliminarAdministrador(@PathVariable Integer id) {
         log.info("REST Request para realizar el borrado lógico del administrador con ID: {}", id);
-        administradorService.eliminarAdministrador(id);
+        administradorService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 }
