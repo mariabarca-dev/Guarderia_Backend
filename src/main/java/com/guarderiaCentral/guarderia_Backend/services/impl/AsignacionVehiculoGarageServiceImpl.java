@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 /**
  * Implementación de la lógica de negocio para la gestión de asignaciones entre Vehículos y Garajes.
- * Garantiza integridad referencial, borrado lógico y cumplimiento de reglas de dominio.
+ * Garantiza la integridad referencial, el borrado lógico y el cumplimiento de las reglas de dominio.
  */
 @Slf4j
 @Service
@@ -47,7 +47,7 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
     @Override
     @Transactional
     public AsignacionVehiculoGarageResponse crearAsignacion(AsignacionVehiculoGarageRequest request) {
-        log.info("Iniciando solicitud de asignación -> Vehículo ID: {}, Garage ID: {}",
+        log.info("Iniciando solicitud de asignación -> Vehículo ID: {}, Garaje ID: {}",
                 request.getVehiculoId(), request.getGarageId());
 
         if (request.getVehiculoId() == null || request.getGarageId() == null) {
@@ -82,12 +82,12 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
                         && a.getVehiculo().getId().equals(vehiculo.getId()));
 
         if (vehiculoYaAsignado) {
-            log.warn("El vehículo ID: {} ya posee una asignación activa en el sistema", vehiculo.getId());
+            log.warn("El vehículo ID: {} ya dispone de una asignación activa en el sistema", vehiculo.getId());
             throw new BusinessException("Error de negocio: El vehículo con matrícula " + vehiculo.getMatricula()
                     + " ya está asignado a un garaje en el sistema.", HttpStatus.CONFLICT);
         }
 
-        // 4. REGLA DE NEGOCIO: El vehículo debe pertenecer al socio dueño del garaje (vía PropiedadGarage)
+        // 4. REGLA DE NEGOCIO: El vehículo debe pertenecer al socio propietario del garaje (vía PropiedadGarage)
         Optional<PropiedadGarage> propiedadOpt = propiedadGarageRepository.findAll().stream()
                 .filter(p -> Boolean.TRUE.equals(p.getActivo())
                         && p.getGarage() != null
@@ -106,14 +106,14 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
         // 5. REGLA DE NEGOCIO: Compatibilidad de tipo de vehículo con el tipo permitido en la Zona
         Zona zona = garage.getZona();
         if (zona == null) {
-            log.error("El garaje ID {} no tiene una zona asociada", garage.getId());
+            log.error("El garaje ID {} no tiene ninguna zona asociada", garage.getId());
             throw new BusinessException("Error de negocio: El garaje especificado no está asociado a ninguna zona.", HttpStatus.BAD_REQUEST);
         }
 
         if (vehiculo.getTipo() != zona.getTipoVehiculo()) {
             log.warn("Incompatibilidad de tipo -> Vehículo: {}, Zona: {}", vehiculo.getTipo(), zona.getTipoVehiculo());
             throw new BusinessException("Error de negocio: El vehículo de tipo " + vehiculo.getTipo()
-                    + " no es compatible con la zona asignada a " + zona.getTipoVehiculo() + ".", HttpStatus.BAD_REQUEST);
+                    + " no es compatible con la zona asignada de " + zona.getTipoVehiculo() + ".", HttpStatus.BAD_REQUEST);
         }
 
         // 6. REGLA DE NEGOCIO: Excepción específica de capacidad máxima en la Zona
@@ -121,7 +121,7 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
         int vehiculosActuales = contarVehiculosActivosEnZona(zona);
 
         if (vehiculosActuales >= capacidadMaxima) {
-            log.error("Capacidad de zona superada en zona ID {}. Límite: {}, Actuales: {}",
+            log.error("Capacidad de zona superada en la zona ID {}. Límite: {}, Actuales: {}",
                     zona.getId(), capacidadMaxima, vehiculosActuales);
             throw new ZonaSinCapacidadException("Error: La zona '" + zona.getLetra()
                     + "' ha alcanzado su capacidad máxima permitida de " + capacidadMaxima + " vehículos.");
@@ -158,7 +158,7 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
     @Override
     @Transactional(readOnly = true)
     public List<AsignacionVehiculoGarageResponse> listarTodasIncluyendoInactivas() {
-        log.info("Consultando todas las asignaciones incluyendo inactivas para auditoría");
+        log.info("Consultando todas las asignaciones incluyendo las inactivas para auditoría");
         return asignacionRepository.findAllIncludingInactive().stream()
                 .map(asignacionRepository::fromEntity)
                 .collect(Collectors.toList());
@@ -173,7 +173,7 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
         log.info("Buscando asignación activa ID: {}", id);
         AsignacionVehiculoGarage asignacion = asignacionRepository.findById(id)
                 .filter(AsignacionVehiculoGarage::getActivo)
-                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró la asignación activa con ID: " + id));
+                .orElseThrow(() -> new RegistroNoEncontradoException("No se ha encontrado la asignación activa con ID: " + id));
 
         return asignacionRepository.fromEntity(asignacion);
     }
@@ -190,7 +190,7 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
                         && a.getGarage() != null
                         && a.getGarage().getId().equals(idGarage))
                 .findFirst()
-                .orElseThrow(() -> new RegistroNoEncontradoException("No existe una asignación activa para el garaje ID: " + idGarage));
+                .orElseThrow(() -> new RegistroNoEncontradoException("No existe ninguna asignación activa para el garaje ID: " + idGarage));
 
         return asignacionRepository.fromEntity(asignacion);
     }
@@ -207,7 +207,7 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
                         && a.getVehiculo() != null
                         && a.getVehiculo().getId().equals(idVehiculo))
                 .findFirst()
-                .orElseThrow(() -> new RegistroNoEncontradoException("No existe una asignación activa para el vehículo ID: " + idVehiculo));
+                .orElseThrow(() -> new RegistroNoEncontradoException("No existe ninguna asignación activa para el vehículo ID: " + idVehiculo));
 
         return asignacionRepository.fromEntity(asignacion);
     }
@@ -237,11 +237,11 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
     @Override
     @Transactional
     public void eliminarAsignacion(Integer id) {
-        log.info("Ejecutando borrado lógico de asignación ID: {}", id);
+        log.info("Ejecutando el borrado lógico de la asignación ID: {}", id);
 
         AsignacionVehiculoGarage asignacion = asignacionRepository.findById(id)
                 .filter(AsignacionVehiculoGarage::getActivo)
-                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró la asignación activa a eliminar con ID: " + id));
+                .orElseThrow(() -> new RegistroNoEncontradoException("No se ha encontrado la asignación activa a eliminar con ID: " + id));
 
         asignacion.setActivo(false);
         asignacionRepository.save(asignacion);
@@ -250,7 +250,7 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
     }
 
     /**
-     * Cuenta la cantidad de vehículos actualmente asignados y activos en la zona provista.
+     * Cuenta la cantidad de vehículos actualmente asignados y activos en la zona suministrada.
      */
     private int contarVehiculosActivosEnZona(Zona zona) {
         return (int) asignacionRepository.findAll().stream()

@@ -24,8 +24,8 @@ public interface AsignacionVehiculoGarageService {
      * @param request DTO de entrada con los IDs del vehículo, garaje y fecha de asignación.
      * @return DTO de respuesta con la asignación registrada.
      * @throws RegistroNoEncontradoException Si el vehículo o el garaje no existen o están inactivos.
-     * @throws GarageYaOcupadoException      Si el garaje ya posee una asignación activa.
-     * @throws ZonaSinCapacidadException     Si la zona asociada al garaje alcanzó su capacidad máxima.
+     * @throws GarageYaOcupadoException      Si el garaje ya tiene una asignación activa.
+     * @throws ZonaSinCapacidadException     Si la zona asociada al garaje ha alcanzado su capacidad máxima.
      * @throws BusinessException             Si el vehículo ya está asignado, no pertenece al dueño del garaje
      *                                       o su tipo no es compatible con la zona.
      */
@@ -39,7 +39,7 @@ public interface AsignacionVehiculoGarageService {
     List<AsignacionVehiculoGarageResponse> listarTodas();
 
     /**
-     * Recupera todas las asignaciones de vehículos a garajes, incluyendo inactivas (uso administrativo).
+     * Recupera todas las asignaciones de vehículos a garajes, incluyendo las inactivas (uso administrativo).
      *
      * @return Lista completa de DTOs de respuesta de asignaciones.
      */
@@ -50,7 +50,7 @@ public interface AsignacionVehiculoGarageService {
      *
      * @param id Identificador de la asignación.
      * @return DTO de respuesta con la asignación encontrada.
-     * @throws RegistroNoEncontradoException Si no se encuentra una asignación activa con el ID provisto.
+     * @throws RegistroNoEncontradoException Si no se encuentra ninguna asignación activa con el ID proporcionado.
      */
     AsignacionVehiculoGarageResponse buscarPorId(Integer id);
 
@@ -59,7 +59,7 @@ public interface AsignacionVehiculoGarageService {
      *
      * @param idGarage Identificador del garaje.
      * @return DTO de respuesta de la asignación.
-     * @throws RegistroNoEncontradoException Si el garaje no tiene asignación activa.
+     * @throws RegistroNoEncontradoException Si el garaje no tiene ninguna asignación activa.
      */
     AsignacionVehiculoGarageResponse buscarPorGarage(Integer idGarage);
 
@@ -68,7 +68,7 @@ public interface AsignacionVehiculoGarageService {
      *
      * @param idVehiculo Identificador del vehículo.
      * @return DTO de respuesta de la asignación.
-     * @throws RegistroNoEncontradoException Si el vehículo no tiene asignación activa.
+     * @throws RegistroNoEncontradoException Si el vehículo no tiene ninguna asignación activa.
      */
     AsignacionVehiculoGarageResponse buscarPorVehiculo(Integer idVehiculo);
 
@@ -87,7 +87,7 @@ public interface AsignacionVehiculoGarageService {
      * Ejecuta el borrado lógico de una asignación cambiando su estado a inactivo (activo = false).
      *
      * @param id Identificador de la asignación a desactivar.
-     * @throws RegistroNoEncontradoException Si no existe una asignación activa con dicho ID.
+     * @throws RegistroNoEncontradoException Si no existe ninguna asignación activa con este ID.
      */
     void eliminarAsignacion(Integer id);
 }

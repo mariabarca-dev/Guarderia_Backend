@@ -44,11 +44,11 @@ public interface AsignacionVehiculoGarageRepository extends JpaRepository<Asigna
 
     /**
      * Método explícito para uso administrativo que devuelve todos los registros,
-     * incluyendo aquellos inactivos (borrado lógico).
+     * incluyendo aquellos inactivos (borrado lógico), utilizando consulta nativa para saltar el @SQLRestriction.
      *
      * @return Lista completa de asignaciones (activas e inactivas).
      */
-    @Query("SELECT a FROM AsignacionVehiculoGarage a")
+    @Query(value = "SELECT * FROM asignaciones_vehiculo_garage", nativeQuery = true)
     List<AsignacionVehiculoGarage> findAllIncludingInactive();
 
     /**
