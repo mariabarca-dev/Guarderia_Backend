@@ -1,8 +1,10 @@
 package com.guarderiaCentral.guarderia_Backend.services;
 
+import com.guarderiaCentral.guarderia_Backend.exceptions.DependenciasActivasException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
+import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
-import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioUpdate;
@@ -12,17 +14,20 @@ import java.util.List;
 
 /**
  * Interfaz de servicio que define los contratos de negocio para la gestión de Socios.
+ *
+ * @author Guardería Central
  */
 public interface SocioService {
 
     /**
-     * Registra un nuevo socio en el sistema.
+     * Registra un nuevo socio en el sistema o reactiva uno inactivo existente.
      *
      * @param request DTO con los datos requeridos para el alta del socio.
-     * @return DTO de respuesta con la información del socio registrado.
-     * @throws DniDuplicadoException Si ya existe un usuario/socio registrado con el mismo DNI.
+     * @return DTO de respuesta con la información del socio registrado o reactivado.
+     * @throws DniDuplicadoException            Si ya existe un socio activo con el mismo DNI.
+     * @throws NombreUsuarioDuplicadoException Si el nombre de usuario ya pertenece a otra cuenta.
      */
-    SocioResponse registrarSocio(SocioRequest request);
+    SocioResponse crear(SocioRequest request);
 
     /**
      * Busca un socio activo por su ID.
@@ -50,24 +55,33 @@ public interface SocioService {
     List<SocioResponse> listarTodos();
 
     /**
+     * Recupera la lista completa de socios, incluyendo aquellos con borrado lógico (inactivos).
+     *
+     * @return Lista de DTOs de respuesta de todos los socios.
+     */
+    List<SocioResponse> listarTodosIncluyendoInactivos();
+
+    /**
      * Actualiza la información de un socio existente.
      *
-     * @param id Identificador del socio a actualizar.
+     * @param id     Identificador del socio a actualizar.
      * @param update DTO con los nuevos datos del socio.
      * @return DTO de respuesta con la información actualizada.
-     * @throws RegistroNoEncontradoException Si el socio no existe o no se encuentra activo.
-     * @throws DniDuplicadoException Si el nuevo DNI ya pertenece a otro usuario.
+     * @throws RegistroNoEncontradoException    Si el socio no existe o no se encuentra activo.
+     * @throws DniDuplicadoException            Si el nuevo DNI ya pertenece a otro socio activo.
+     * @throws NombreUsuarioDuplicadoException Si el nuevo nombre de usuario ya está en uso.
      */
-    SocioResponse actualizarSocio(Integer id, SocioUpdate update);
+    SocioResponse actualizar(Integer id, SocioUpdate update);
 
     /**
      * Realiza el borrado lógico de un socio desactivando su registro.
-     * Define explícitamente la propagación o bloqueo ante entidades asociadas.
+     * Aplica bloqueo si el socio posee vehículos activos o propiedades de garage vigentes.
      *
      * @param id Identificador único del socio a desactivar.
      * @throws RegistroNoEncontradoException Si no se encuentra el socio activo.
+     * @throws DependenciasActivasException Si el socio tiene vehículos activos o garajes a su nombre.
      */
-    void eliminarSocio(Integer id);
+    void eliminar(Integer id);
 
     /**
      * Obtiene los vehículos asociados a un socio específico.
@@ -79,20 +93,20 @@ public interface SocioService {
     List<VehiculoResponse> listarVehiculosPorSocio(Integer socioId);
 
     /**
-     * Obtiene los garages asociados en propiedad a un socio específico.
+     * Obtiene los garajes asociados en propiedad a un socio específico.
      *
      * @param socioId Identificador único del socio.
-     * @return Lista de DTOs de garages pertenecientes al socio.
+     * @return Lista de DTOs de propiedades de garaje pertenecientes al socio.
      * @throws RegistroNoEncontradoException Si el socio no existe o no está activo.
      */
-    List<GarageResponse> listarGarajesPorSocio(Integer socioId);
+    List<PropiedadGarageResponse> listarGarajesPorSocio(Integer socioId);
 
     /**
-     * Obtiene una descripción del estado del garage asignado o en propiedad del socio.
+     * Obtiene la propiedad de garaje activa asignada a un socio específico.
      *
      * @param socioId Identificador único del socio.
-     * @return Cadena de texto con el resumen o estado del garage.
-     * @throws RegistroNoEncontradoException Si el socio no existe o no está activo.
+     * @return DTO {@link PropiedadGarageResponse} con la información del garaje del socio.
+     * @throws RegistroNoEncontradoException Si el socio no existe, está inactivo o no posee garaje.
      */
-    String obtenerEstadoGarageSocio(Integer socioId);
+    PropiedadGarageResponse obtenerEstadoGarageSocio(Integer socioId);
 }
