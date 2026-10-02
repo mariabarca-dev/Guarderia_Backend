@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-//chequeo euge
+
 /**
  * Repositorio Spring Data JPA para la entidad AsignacionVehiculoGarage.
  * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
@@ -44,11 +44,11 @@ public interface AsignacionVehiculoGarageRepository extends JpaRepository<Asigna
 
     /**
      * Método explícito para uso administrativo que devuelve todos los registros,
-     * incluyendo aquellos inactivos (borrado lógico).
+     * incluyendo aquellos inactivos (borrado lógico), utilizando consulta nativa para saltar el @SQLRestriction.
      *
      * @return Lista completa de asignaciones (activas e inactivas).
      */
-    @Query("SELECT a FROM AsignacionVehiculoGarage a")
+    @Query(value = "SELECT * FROM asignaciones_vehiculo_garage", nativeQuery = true)
     List<AsignacionVehiculoGarage> findAllIncludingInactive();
 
     /**

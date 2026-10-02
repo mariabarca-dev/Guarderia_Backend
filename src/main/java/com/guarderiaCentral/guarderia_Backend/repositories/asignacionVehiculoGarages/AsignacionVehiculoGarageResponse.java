@@ -16,7 +16,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AsignacionVehiculoGarageResponse {
-/// prueva hector
+
     private Integer id;
     private Integer vehiculoId;
     private Integer garageId;
