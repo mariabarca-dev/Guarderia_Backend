@@ -68,8 +68,7 @@ public class SocioServiceImpl implements SocioService {
         }
 
         // 3. Verificar si el nombreUsuario pertenece a otro usuario en toda la jerarquía (activos e inactivos)
-        boolean existeNombreUsuario = usuarioRepository.findAllIncludingInactive().stream()
-                .anyMatch(u -> u.getNombreUsuario() != null && u.getNombreUsuario().equalsIgnoreCase(request.getNombreUsuario()));
+        Optional<Integer> duenoNombreUsuarioOpt = usuarioRepository.buscarIdPorNombreUsuarioIncluyendoInactivos(request.getNombreUsuario());
 
         // 4. Buscar socio por DNI incluyendo inactivos para guardado inteligente / reactivación
         Optional<Socio> socioInactivoOpt = socioRepository.findByDniIncludingInactive(request.getDni());
@@ -83,7 +82,7 @@ public class SocioServiceImpl implements SocioService {
             }
 
             // Validar que el nombreUsuario ingresado no pertenezca a otra cuenta diferente
-            if (existeNombreUsuario && !existente.getNombreUsuario().equalsIgnoreCase(request.getNombreUsuario())) {
+            if (duenoNombreUsuarioOpt.isPresent() && !duenoNombreUsuarioOpt.get().equals(existente.getId())) {
                 throw new NombreUsuarioDuplicadoException("El nombre de usuario '" + request.getNombreUsuario() + "' ya se encuentra registrado.");
             }
 
@@ -109,7 +108,7 @@ public class SocioServiceImpl implements SocioService {
             return socioRepository.fromEntity(reactivado);
         }
 
-        if (existeNombreUsuario) {
+        if (duenoNombreUsuarioOpt.isPresent()) {
             log.error("Error al registrar socio: Nombre de usuario '{}' ya existe.", request.getNombreUsuario());
             throw new NombreUsuarioDuplicadoException("El nombre de usuario '" + request.getNombreUsuario() + "' ya se encuentra en uso.");
         }
@@ -193,21 +192,16 @@ public class SocioServiceImpl implements SocioService {
                 });
 
         if (update.getDni() != null && !update.getDni().equalsIgnoreCase(socioExistente.getDni())) {
-            socioRepository.findByDniAndActivoTrue(update.getDni())
-                    .ifPresent(u -> {
-                        if (!u.getId().equals(id)) {
-                            log.error("El DNI {} ya se encuentra en uso por otro socio (ID: {})", update.getDni(), u.getId());
-                            throw new DniDuplicadoException("El DNI " + update.getDni() + " ya está asignado a otro socio.");
-                        }
-                    });
+            Optional<Socio> dniExistenteOpt = socioRepository.findByDniIncludingInactive(update.getDni());
+            if (dniExistenteOpt.isPresent() && !dniExistenteOpt.get().getId().equals(id)) {
+                log.error("El DNI {} ya se encuentra en uso por otro socio (ID: {})", update.getDni(), dniExistenteOpt.get().getId());
+                throw new DniDuplicadoException("El DNI " + update.getDni() + " ya está asignado a otro socio.");
+            }
         }
 
         if (update.getNombreUsuario() != null && !update.getNombreUsuario().equalsIgnoreCase(socioExistente.getNombreUsuario())) {
-            boolean existeNombreUsuario = usuarioRepository.findAllIncludingInactive().stream()
-                    .anyMatch(u -> u.getNombreUsuario() != null
-                            && u.getNombreUsuario().equalsIgnoreCase(update.getNombreUsuario())
-                            && !u.getId().equals(id));
-            if (existeNombreUsuario) {
+            Optional<Integer> duenoOpt = usuarioRepository.buscarIdPorNombreUsuarioIncluyendoInactivos(update.getNombreUsuario());
+            if (duenoOpt.isPresent() && !duenoOpt.get().equals(id)) {
                 throw new NombreUsuarioDuplicadoException("El nombre de usuario '" + update.getNombreUsuario() + "' ya se encuentra registrado.");
             }
         }
