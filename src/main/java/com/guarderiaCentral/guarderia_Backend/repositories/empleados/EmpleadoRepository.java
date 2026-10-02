@@ -10,7 +10,8 @@ import java.util.Optional;
 
 /**
  * Repositorio Spring Data JPA para la entidad Empleado.
- * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
+ * Filtra por defecto los registros activos mediante la convención de Spring Data o la anotación @SQLRestriction en Usuario,
+ * e integra los métodos default de mapeo para DTOs.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -18,14 +19,14 @@ import java.util.Optional;
 public interface EmpleadoRepository extends JpaRepository<Empleado, Integer> {
 
     /**
-     * Busca todos los empleados cuyo estado activo sea true (Convención Spring Data).
+     * Busca todos los empleados cuyo estado activo sea true.
      *
      * @return Lista de empleados activos.
      */
     List<Empleado> findAllByActivoTrue();
 
     /**
-     * Busca un empleado por su ID asegurando que se encuentre activo (Convención Spring Data).
+     * Busca un empleado activo por su ID.
      *
      * @param id ID del empleado.
      * @return Optional con el empleado encontrado si está activo.
@@ -57,7 +58,7 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Integer> {
     boolean existsByNombreUsuarioAndActivoTrue(String nombreUsuario);
 
     /**
-     * Busca un empleado por su código único asegurando que esté activo.
+     * Busca un empleado activo por su código único.
      *
      * @param codigo Código único del empleado.
      * @return Optional con el empleado encontrado.
@@ -65,7 +66,7 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Integer> {
     Optional<Empleado> findByCodigoAndActivoTrue(String codigo);
 
     /**
-     * Busca un empleado por su nombre de usuario asegurando que esté activo.
+     * Busca un empleado activo por su nombre de usuario.
      *
      * @param nombreUsuario Nombre de usuario único.
      * @return Optional con el empleado encontrado.
@@ -73,12 +74,22 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Integer> {
     Optional<Empleado> findByNombreUsuarioAndActivoTrue(String nombreUsuario);
 
     /**
-     * Método explícito para uso administrativo que devuelve todos los registros,
-     * incluyendo aquellos inactivos (borrado lógico).
+     * Búsqueda por identificador único de empleado incluyendo registros inactivos.
+     * Realiza un JOIN nativo con la tabla raíz usuarios debido a la estrategia JOINED.
      *
-     * @return Lista completa de empleados (activos e inactivos).
+     * @param id ID del empleado.
+     * @return Optional con la entidad Empleado (activa o inactiva).
      */
-    @Query("SELECT e FROM Empleado e")
+    @Query(value = "SELECT u.*, e.* FROM usuarios u JOIN empleados e ON e.usuario_id = u.id WHERE u.id = ?1", nativeQuery = true)
+    Optional<Empleado> findByIdIncludingInactive(Integer id);
+
+    /**
+     * Devuelve la lista completa de empleados (activos e inactivos).
+     * Realiza un JOIN nativo con la tabla raíz usuarios debido a la estrategia JOINED.
+     *
+     * @return Lista completa de empleados.
+     */
+    @Query(value = "SELECT u.*, e.* FROM usuarios u JOIN empleados e ON e.usuario_id = u.id", nativeQuery = true)
     List<Empleado> findAllIncludingInactive();
 
     /**
