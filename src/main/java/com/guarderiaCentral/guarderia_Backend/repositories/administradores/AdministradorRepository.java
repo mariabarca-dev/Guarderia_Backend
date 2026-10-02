@@ -1,4 +1,5 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.administradores;
+
 import com.guarderiaCentral.guarderia_Backend.modelos.Administrador;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -10,7 +11,8 @@ import java.util.Optional;
 /**
  * Repositorio Spring Data JPA para la entidad Administrador.
  *
- * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
+ * Filtra por defecto los registros activos mediante la anotación @SQLRestriction en la entidad raíz Usuario
+ * y encapsula los métodos default de mapeo de DTOs.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barcat
  */
@@ -18,14 +20,14 @@ import java.util.Optional;
 public interface AdministradorRepository extends JpaRepository<Administrador, Integer> {
 
     /**
-     * Busca todos los administradores cuyo estado activo sea true (Convención Spring Data).
+     * Busca todos los administradores activos (filtrados por @SQLRestriction).
      *
      * @return Lista de administradores activos.
      */
     List<Administrador> findAllByActivoTrue();
 
     /**
-     * Busca un administrador por su ID asegurando que se encuentre activo (Convención Spring Data).
+     * Busca un administrador activo por su ID.
      *
      * @param id ID del administrador.
      * @return Optional con el administrador encontrado si está activo.
@@ -49,12 +51,22 @@ public interface AdministradorRepository extends JpaRepository<Administrador, In
     Optional<Administrador> findByNombreUsuarioAndActivoTrue(String nombreUsuario);
 
     /**
-     * Método explícito para uso administrativo que devuelve todos los registros,
-     * incluyendo aquellos inactivos (borrado lógico).
+     * Búsqueda por identificador único de administrador incluyendo registros inactivos.
+     * Realiza un JOIN nativo con la tabla raíz usuarios.
      *
-     * @return Lista completa de administradores (activos e inactivos).
+     * @param id ID del administrador.
+     * @return Optional con la entidad Administrador (activa o inactiva).
      */
-    @Query("SELECT a FROM Administrador a")
+    @Query(value = "SELECT u.*, a.* FROM usuarios u JOIN administradores a ON a.usuario_id = u.id WHERE u.id = ?1", nativeQuery = true)
+    Optional<Administrador> findByIdIncludingInactive(Integer id);
+
+    /**
+     * Devuelve la lista completa de administradores (activos e inactivos).
+     * Realiza un JOIN nativo con la tabla raíz usuarios.
+     *
+     * @return Lista completa de administradores.
+     */
+    @Query(value = "SELECT u.*, a.* FROM usuarios u JOIN administradores a ON a.usuario_id = u.id", nativeQuery = true)
     List<Administrador> findAllIncludingInactive();
 
     /**
