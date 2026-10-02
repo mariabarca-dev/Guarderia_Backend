@@ -1,11 +1,23 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
-import com.guarderiaCentral.guarderia_Backend.dtos.UsuarioDTO;
 import com.guarderiaCentral.guarderia_Backend.exceptions.CredencialesInvalidasException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
+import com.guarderiaCentral.guarderia_Backend.exceptions.SysAdminProtegidoException;
 import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import com.guarderiaCentral.guarderia_Backend.modelos.Usuario;
+import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioUpdate;
 import com.guarderiaCentral.guarderia_Backend.repositories.usuarios.UsuarioRepository;
+import com.guarderiaCentral.guarderia_Backend.services.AdministradorService;
+import com.guarderiaCentral.guarderia_Backend.services.EmpleadoService;
+import com.guarderiaCentral.guarderia_Backend.services.SocioService;
 import com.guarderiaCentral.guarderia_Backend.services.UsuarioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,14 +26,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
- * Implementación de {@link UsuarioService} para la gestión de usuarios del sistema.
- * Maneja la seguridad mediante {@link PasswordEncoder}, consultas vía {@link UsuarioRepository}
- * y la persistencia del borrado lógico.
+ * Implementación de {@link UsuarioService} para la autenticación y administración centralizada de cuentas.
+ * Delega la lógica de negocio y guardado inteligente en {@link SocioService}, {@link EmpleadoService}
+ * y {@link AdministradorService} para garantizar un único camino de validación por tipo de cuenta.
  *
  * @author GuarderiaCentral
+ * @version 1.0
  */
 @Slf4j
 @Service
@@ -30,6 +42,9 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SocioService socioService;
+    private final EmpleadoService empleadoService;
+    private final AdministradorService administradorService;
 
     /**
      * {@inheritDoc}
@@ -70,33 +85,14 @@ public class UsuarioServiceImpl implements UsuarioService {
      */
     @Override
     @Transactional(readOnly = true)
-    public UsuarioDTO buscarPorNombreUsuario(String nombreUsuario) throws RegistroNoEncontradoException {
-        log.info("Buscando usuario activo por nombreUsuario: {}", nombreUsuario);
-
-        Usuario u = usuarioRepository.findByNombreUsuarioAndActivoTrue(nombreUsuario)
-                .orElseThrow(() -> {
-                    log.warn("No se encontró el usuario activo: {}", nombreUsuario);
-                    return new RegistroNoEncontradoException("No se encontró el usuario: " + nombreUsuario);
-                });
-
-        return mapToDTO(u);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public UsuarioDTO buscarUsuarioPorId(Integer id) throws RegistroNoEncontradoException {
+    public Usuario buscarPorId(Integer id) throws RegistroNoEncontradoException {
         log.info("Buscando usuario activo con ID: {}", id);
-
-        Usuario u = usuarioRepository.findByIdAndActivoTrue(id)
+        return usuarioRepository.findById(id)
+                .filter(Usuario::getActivo)
                 .orElseThrow(() -> {
                     log.warn("No se encontró el usuario activo con ID: {}", id);
                     return new RegistroNoEncontradoException("No se encontró el usuario con ID: " + id);
                 });
-
-        return mapToDTO(u);
     }
 
     /**
@@ -104,71 +100,102 @@ public class UsuarioServiceImpl implements UsuarioService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<UsuarioDTO> listarTodos() {
+    public List<Usuario> listarTodos() {
         log.info("Listando todos los usuarios activos.");
-        return usuarioRepository.findAllByActivoTrue().stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
+        return usuarioRepository.findAll();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    @Transactional
-    public void actualizarUsuario(UsuarioDTO dto) throws RegistroNoEncontradoException {
-        log.info("Actualizando datos del usuario con ID: {}", dto.getId());
-
-        Usuario existente = usuarioRepository.findByIdAndActivoTrue(dto.getId())
-                .orElseThrow(() -> {
-                    log.warn("No se puede actualizar. Usuario con ID {} no encontrado o inactivo.", dto.getId());
-                    return new RegistroNoEncontradoException("No se encontró el usuario con ID: " + dto.getId());
-                });
-
-        existente.setNombreUsuario(dto.getNombreUsuario());
-        existente.setEmail(dto.getEmail());
-
-        // Si el DTO incluye modificación de contraseña, se encripta antes de guardar
-        if (dto.getClave() != null && !dto.getClave().isBlank()) {
-            existente.setClave(passwordEncoder.encode(dto.getClave()));
-        }
-
-        usuarioRepository.save(existente);
-        log.info("Usuario con ID {} actualizado correctamente.", dto.getId());
+    @Transactional(readOnly = true)
+    public List<Usuario> listarTodosIncluyendoInactivos() {
+        log.info("Listando todos los usuarios (incluyendo inactivos).");
+        return usuarioRepository.listarTodosIncluyendoInactivos();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    // --- Métodos delegados para gestión de Socios ---
+
     @Override
     @Transactional
-    public void eliminarUsuario(Integer id) throws RegistroNoEncontradoException {
-        log.info("Ejecutando borrado lógico para el usuario con ID: {}", id);
+    public SocioResponse crearSocio(SocioRequest request) {
+        log.info("UsuarioService delegando creación de socio a SocioService.");
+        return socioService.crear(request);
+    }
 
-        Usuario u = usuarioRepository.findByIdAndActivoTrue(id)
-                .orElseThrow(() -> {
-                    log.warn("No se puede eliminar. Usuario con ID {} no encontrado o ya inactivo.", id);
-                    return new RegistroNoEncontradoException("No se encontró el usuario con ID: " + id);
-                });
+    @Override
+    @Transactional
+    public SocioResponse actualizarSocio(Integer id, SocioUpdate update) {
+        log.info("UsuarioService delegando actualización de socio ID {} a SocioService.", id);
+        return socioService.actualizar(id, update);
+    }
 
-        u.setActivo(false);
-        usuarioRepository.save(u);
-        log.info("Borrado lógico realizado con éxito para el usuario con ID: {}", id);
+    @Override
+    @Transactional
+    public void eliminarSocio(Integer id) {
+        log.info("UsuarioService delegando eliminación de socio ID {} a SocioService.", id);
+        socioService.eliminar(id);
+    }
+
+    // --- Métodos delegados para gestión de Empleados ---
+
+    @Override
+    @Transactional
+    public EmpleadoResponse crearEmpleado(EmpleadoRequest request) {
+        log.info("UsuarioService delegando creación de empleado a EmpleadoService.");
+        return empleadoService.crear(request);
+    }
+
+    @Override
+    @Transactional
+    public EmpleadoResponse actualizarEmpleado(Integer id, EmpleadoUpdate update) {
+        log.info("UsuarioService delegando actualización de empleado ID {} a EmpleadoService.", id);
+        return empleadoService.actualizar(id, update);
+    }
+
+    @Override
+    @Transactional
+    public void eliminarEmpleado(Integer id) {
+        log.info("UsuarioService delegando eliminación de empleado ID {} a EmpleadoService.", id);
+        empleadoService.eliminar(id);
+    }
+
+    // --- Métodos delegados para gestión de Administradores ---
+
+    @Override
+    @Transactional
+    public AdministradorResponse crearAdministrador(AdministradorRequest request) {
+        log.info("UsuarioService delegando creación de administrador a AdministradorService.");
+        return administradorService.crear(request);
+    }
+
+    @Override
+    @Transactional
+    public AdministradorResponse actualizarAdministrador(Integer id, AdministradorUpdate update) throws SysAdminProtegidoException {
+        log.info("UsuarioService delegando actualización de administrador ID {} a AdministradorService.", id);
+        validarNoEsSysAdmin(id);
+        return administradorService.actualizar(id, update);
+    }
+
+    @Override
+    @Transactional
+    public void eliminarAdministrador(Integer id) throws SysAdminProtegidoException {
+        log.info("UsuarioService delegando eliminación de administrador ID {} a AdministradorService.", id);
+        validarNoEsSysAdmin(id);
+        administradorService.eliminar(id);
     }
 
     /**
-     * Convierte una entidad {@link Usuario} a su DTO correspondiente sin lógica en la clase DTO.
+     * Valida que la cuenta objetivo no tenga rol SYSADMIN para proteger cuentas del sistema.
      *
-     * @param usuario Entidad a convertir.
-     * @return Objeto {@link UsuarioDTO}.
+     * @param id Identificador único del usuario.
+     * @throws SysAdminProtegidoException Si el usuario objetivo es SYSADMIN.
      */
-    private UsuarioDTO mapToDTO(Usuario usuario) {
-        return new UsuarioDTO(
-                usuario.getId(),
-                usuario.getNombreUsuario(),
-                null, // No se retorna la clave por motivos de seguridad
-                usuario.getEmail(),
-                usuario.getRol() != null ? usuario.getRol().name() : null
-        );
+    private void validarNoEsSysAdmin(Integer id) {
+        Usuario u = buscarPorId(id);
+        if (u.getRol() == Rol.SYSADMIN) {
+            throw new SysAdminProtegidoException("No se permite realizar esta operación sobre un usuario con rol SYSADMIN.");
+        }
     }
 }
