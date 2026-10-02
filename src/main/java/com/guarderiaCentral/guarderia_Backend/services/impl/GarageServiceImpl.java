@@ -12,7 +12,7 @@ import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageReposit
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageUpdate;
-import com.guarderiaCentral.guarderia_Backend.repositories.propiedadesGarage.PropiedadGarageRepository;
+import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaResponse; // Usando ZonaResponse
 import com.guarderiaCentral.guarderia_Backend.services.GarageService;
