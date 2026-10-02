@@ -1,13 +1,15 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
-import com.guarderiaCentral.guarderia_Backend.dtos.AdministradorDTO;
-import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
+import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
+import com.guarderiaCentral.guarderia_Backend.exceptions.SysAdminProtegidoException;
 import com.guarderiaCentral.guarderia_Backend.modelos.Administrador;
+import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.usuarios.UsuarioRepository;
 import com.guarderiaCentral.guarderia_Backend.services.AdministradorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,11 +18,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * Implementación de la lógica de negocio para la entidad Administrador.
- * Maneja persistencia JPA, validaciones de unicidad y borrado lógico.
+ * Maneja persistencia JPA, guardado inteligente (reactivación), protección de SYSADMIN
+ * y borrado lógico.
+ *
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barcat
  */
 @Slf4j
 @Service
@@ -28,29 +34,57 @@ import java.util.stream.Collectors;
 public class AdministradorServiceImpl implements AdministradorService {
 
     private final AdministradorRepository administradorRepository;
+    private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
 
     /**
      * {@inheritDoc}
      */
     @Override
-    @Transactional(readOnly = true)
-    public List<AdministradorDTO> listarActivos() {
-        log.info("Listando todos los administradores activos.");
-        return administradorRepository.findByActivoTrue().stream()
-                .map(AdministradorResponse::fromEntity)
-                .map(response -> {
-                    AdministradorDTO dto = new AdministradorDTO();
-                    dto.setId(response.getId());
-                    dto.setNombreUsuario(response.getNombreUsuario());
-                    dto.setDni(response.getDni());
-                    dto.setNombre(response.getNombre());
-                    dto.setApellido(response.getApellido());
-                    dto.setEmail(response.getEmail());
-                    dto.setTelefono(response.getTelefono());
-                    return dto;
-                })
-                .collect(Collectors.toList());
+    @Transactional
+    public AdministradorResponse crear(AdministradorRequest request) {
+        log.info("Iniciando creación de administrador con nombreUsuario: {}", request.getNombreUsuario());
+
+        // Verificar si el nombreUsuario ya pertenece a otro registro (activo o inactivo) en toda la jerarquía
+        Optional<Integer> duenoOpt = usuarioRepository.findOwnerIdByNombreUsuario(request.getNombreUsuario());
+
+        if (duenoOpt.isPresent()) {
+            Integer duenoId = duenoOpt.get();
+            Optional<Administrador> inactivoOpt = administradorRepository.findByIdIncludingInactive(duenoId);
+
+            if (inactivoOpt.isPresent()) {
+                Administrador inactivo = inactivoOpt.get();
+                if (Boolean.FALSE.equals(inactivo.getActivo())) {
+                    log.info("Reactivando administrador inactivo con ID: {}", inactivo.getId());
+
+                    AdministradorUpdate update = new AdministradorUpdate();
+                    update.setNombre(request.getNombre());
+                    update.setApellido(request.getApellido());
+                    update.setDireccion(request.getDireccion());
+                    update.setTelefono(request.getTelefono());
+                    update.setNombreUsuario(request.getNombreUsuario());
+                    if (request.getClave() != null && !request.getClave().isBlank()) {
+                        update.setClave(passwordEncoder.encode(request.getClave()));
+                    }
+                    update.setRol(request.getRol());
+
+                    administradorRepository.updateEntity(inactivo, update);
+                    inactivo.setActivo(true);
+                    Administrador reactivado = administradorRepository.save(inactivo);
+                    return administradorRepository.fromEntity(reactivado);
+                }
+            }
+            throw new NombreUsuarioDuplicadoException("El nombre de usuario '" + request.getNombreUsuario() + "' ya se encuentra registrado.");
+        }
+
+        Administrador administrador = administradorRepository.toEntity(request);
+        administrador.setClave(passwordEncoder.encode(request.getClave()));
+        administrador.setActivo(true);
+
+        Administrador guardado = administradorRepository.save(administrador);
+        log.info("Administrador creado exitosamente con ID: {}", guardado.getId());
+
+        return administradorRepository.fromEntity(guardado);
     }
 
     /**
@@ -58,34 +92,38 @@ public class AdministradorServiceImpl implements AdministradorService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<AdministradorResponse> listarTodosAdmin() {
-        log.info("Listando todos los administradores (incluyendo inactivos) por solicitud administrativa.");
-        return administradorRepository.findAllIncludingInactive().stream()
-                .map(AdministradorResponse::fromEntity)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public AdministradorDTO buscarPorId(Integer id) {
-        log.info("Buscando administrador con ID: {}", id);
+    public AdministradorResponse buscarPorId(Integer id) {
+        log.info("Buscando administrador activo con ID: {}", id);
         Administrador admin = administradorRepository.findById(id)
                 .filter(Administrador::getActivo)
                 .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el administrador activo con ID: " + id));
 
-        AdministradorResponse response = AdministradorResponse.fromEntity(admin);
-        AdministradorDTO dto = new AdministradorDTO();
-        dto.setId(response.getId());
-        dto.setNombreUsuario(response.getNombreUsuario());
-        dto.setDni(response.getDni());
-        dto.setNombre(response.getNombre());
-        dto.setApellido(response.getApellido());
-        dto.setEmail(response.getEmail());
-        dto.setTelefono(response.getTelefono());
-        return dto;
+        return administradorRepository.fromEntity(admin);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<AdministradorResponse> listarTodos() {
+        log.info("Listando todos los administradores activos.");
+        return administradorRepository.findAll().stream()
+                .filter(Administrador::getActivo)
+                .map(administradorRepository::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<AdministradorResponse> listarTodosIncluyendoInactivas() {
+        log.info("Listando todos los administradores (incluyendo inactivos).");
+        return administradorRepository.findAllIncludingInactive().stream()
+                .map(administradorRepository::fromEntity)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -93,45 +131,33 @@ public class AdministradorServiceImpl implements AdministradorService {
      */
     @Override
     @Transactional
-    public AdministradorResponse registrarAdministrador(AdministradorRequest request) {
-        log.info("Registrando nuevo administrador con DNI: {}", request.getDni());
-
-        if (administradorRepository.existsByDni(request.getDni())) {
-            throw new DniDuplicadoException("Ya existe un administrador registrado con el DNI: " + request.getDni());
-        }
-
-        Administrador admin = request.toEntity();
-        // Encriptar password usando el PasswordEncoder inyectado por seguridad
-        admin.setPassword(passwordEncoder.encode(request.getPassword()));
-        admin.setActivo(true);
-
-        Administrador savedAdmin = administradorRepository.save(admin);
-        log.info("Administrador registrado exitosamente con ID: {}", savedAdmin.getId());
-
-        return AdministradorResponse.fromEntity(savedAdmin);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Transactional
-    public AdministradorResponse actualizarAdministrador(Integer id, AdministradorUpdate update) {
+    public AdministradorResponse actualizar(Integer id, AdministradorUpdate update) {
         log.info("Actualizando administrador con ID: {}", id);
 
         Administrador admin = administradorRepository.findById(id)
                 .filter(Administrador::getActivo)
                 .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el administrador activo con ID: " + id));
 
-        update.updateEntity(admin);
-        if (update.getPassword() != null && !update.getPassword().isEmpty()) {
-            admin.setPassword(passwordEncoder.encode(update.getPassword()));
+        if (admin.getRol() == Rol.SYSADMIN) {
+            throw new SysAdminProtegidoException("No se permite realizar esta operación sobre un usuario con rol SYSADMIN.");
         }
 
-        Administrador updatedAdmin = administradorRepository.save(admin);
-        log.info("Administrador con ID: {} actualizado exitosamente.", id);
+        if (update.getNombreUsuario() != null && !update.getNombreUsuario().equals(admin.getNombreUsuario())) {
+            Optional<Integer> duenoOpt = usuarioRepository.findOwnerIdByNombreUsuario(update.getNombreUsuario());
+            if (duenoOpt.isPresent() && !duenoOpt.get().equals(id)) {
+                throw new NombreUsuarioDuplicadoException("El nombre de usuario '" + update.getNombreUsuario() + "' ya se encuentra registrado.");
+            }
+        }
 
-        return AdministradorResponse.fromEntity(updatedAdmin);
+        if (update.getClave() != null && !update.getClave().isBlank()) {
+            update.setClave(passwordEncoder.encode(update.getClave()));
+        }
+
+        administradorRepository.updateEntity(admin, update);
+        Administrador actualizado = administradorRepository.save(admin);
+        log.info("Administrador con ID: {} actualizado exitosamente.", actualizado.getId());
+
+        return administradorRepository.fromEntity(actualizado);
     }
 
     /**
@@ -139,12 +165,16 @@ public class AdministradorServiceImpl implements AdministradorService {
      */
     @Override
     @Transactional
-    public void eliminarAdministrador(Integer id) {
+    public void eliminar(Integer id) {
         log.info("Ejecutando borrado lógico para el administrador con ID: {}", id);
 
         Administrador admin = administradorRepository.findById(id)
                 .filter(Administrador::getActivo)
                 .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el administrador activo con ID: " + id));
+
+        if (admin.getRol() == Rol.SYSADMIN) {
+            throw new SysAdminProtegidoException("No se permite realizar esta operación sobre un usuario con rol SYSADMIN.");
+        }
 
         admin.setActivo(false);
         administradorRepository.save(admin);
