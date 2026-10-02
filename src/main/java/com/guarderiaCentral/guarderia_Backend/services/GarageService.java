@@ -1,42 +1,46 @@
 package com.guarderiaCentral.guarderia_Backend.services;
 
-import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
+import com.guarderiaCentral.guarderia_Backend.exceptions.DependenciasActivasException;
+import com.guarderiaCentral.guarderia_Backend.exceptions.NumeroGarageDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.ZonaSinCapacidadException;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaResponse;
 
 import java.util.List;
 
 /**
- * Interfaz de servicio que define la lógica de negocio para la gestión de Garages.
- * Proporciona métodos para registrar, listar, buscar, actualizar, realizar borrado lógico
+ * Interfaz de servicio que define la lógica de negocio para la gestión de Garajes.
+ * Proporciona métodos para crear, listar, buscar, actualizar, realizar borrado lógico
  * y consultar el reporte de disponibilidad de garajes por zona.
+ *
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
 public interface GarageService {
 
     /**
-     * Registra un nuevo garage en el sistema verificando la capacidad disponible en la zona
-     * y la unicidad del número de garage.
+     * Registra un nuevo garaje en el sistema o reactiva uno inactivo existente,
+     * verificando la capacidad disponible en la zona y la unicidad del número de garaje.
      *
-     * @param request DTO con la información requerida para dar de alta un garage.
-     * @return {@link GarageResponse} con la información del garage registrado.
-     * @throws RegistroNoEncontradoException Si la zona indicada en la solicitud no existe o está inactiva.
-     * @throws ZonaSinCapacidadException     Si la zona ha alcanzado su capacidad máxima permitida de garajes.
-     * @throws BusinessException             Si ya existe un garage activo con el número especificado.
+     * @param request DTO con la información requerida para dar de alta un garaje.
+     * @return {@link GarageResponse} con la información del garaje registrado.
+     * @throws RegistroNoEncontradoException    Si la zona indicada en la solicitud no existe o está inactiva.
+     * @throws ZonaSinCapacidadException        Si la zona ha alcanzado su capacidad máxima permitida de garajes.
+     * @throws NumeroGarageDuplicadoException   Si ya existe un garaje activo con el número especificado.
      */
-    GarageResponse registrarGarage(GarageRequest request);
+    GarageResponse crear(GarageRequest request);
 
     /**
-     * Obtiene el listado de todos los garages activos en el sistema.
+     * Obtiene el listado de todos los garajes activos en el sistema.
      *
-     * @return Lista de {@link GarageResponse} con los garages activos.
+     * @return Lista de {@link GarageResponse} con los garajes activos.
      */
     List<GarageResponse> listarTodos();
 
     /**
-     * Obtiene el listado completo de garages, incluyendo aquellos con borrado lógico.
+     * Obtiene el listado completo de garajes, incluyendo aquellos con borrado lógico.
      * Uso exclusivo para tareas administrativas.
      *
      * @return Lista de {@link GarageResponse} incluyendo registros inactivos.
@@ -44,39 +48,41 @@ public interface GarageService {
     List<GarageResponse> listarTodosIncluyendoInactivos();
 
     /**
-     * Busca un garage activo por su identificador único.
+     * Busca un garaje activo por su identificador único.
      *
-     * @param id Identificador único del garage.
-     * @return {@link GarageResponse} con los datos del garage encontrado.
-     * @throws RegistroNoEncontradoException Si no existe un garage activo con el ID proporcionado.
+     * @param id Identificador único del garaje.
+     * @return {@link GarageResponse} con los datos del garaje encontrado.
+     * @throws RegistroNoEncontradoException Si no existe un garaje activo con el ID proporcionado.
      */
     GarageResponse buscarPorId(Integer id);
 
     /**
-     * Actualiza la información de un garage existente.
+     * Actualiza la información de un garaje existente.
      *
-     * @param id      Identificador del garage a actualizar.
-     * @param update  DTO con los campos a modificar.
-     * @return {@link GarageResponse} con los datos actualizados del garage.
-     * @throws RegistroNoEncontradoException Si el garage o la zona especificada no existen o están inactivos.
-     * @throws BusinessException             Si el nuevo número de garage ya pertenece a otro registro activo.
+     * @param id     Identificador del garaje a actualizar.
+     * @param update DTO con los campos a modificar.
+     * @return {@link GarageResponse} con los datos actualizados del garaje.
+     * @throws RegistroNoEncontradoException    Si el garaje o la zona especificada no existen o están inactivos.
+     * @throws NumeroGarageDuplicadoException   Si el nuevo número de garaje ya pertenece a otro registro activo.
      */
-    GarageResponse actualizarGarage(Integer id, GarageUpdate update);
+    GarageResponse actualizar(Integer id, GarageUpdate update);
 
     /**
-     * Realiza el borrado lógico de un garage (cambiando su estado activo a false)
-     * y propaga en cascada la inactivación a las asignaciones de vehículos vigentes.
+     * Realiza el borrado lógico de un garaje validando que no tenga dependencias activas
+     * (vehículo asignado o propiedad vigente) y propaga en cascada la inactividad
+     * a las asignaciones de vehículos vigentes.
      *
-     * @param id Identificador único del garage a eliminar.
-     * @throws RegistroNoEncontradoException Si no se encuentra un garage activo con el ID indicado.
+     * @param id Identificador único del garaje a eliminar.
+     * @throws RegistroNoEncontradoException    Si no se encuentra un garaje activo con el ID indicado.
+     * @throws DependenciasActivasException     Si el garaje posee un vehículo asignado o propiedad activa.
      */
-    void eliminarGarage(Integer id);
+    void eliminar(Integer id);
 
     /**
-     * Genera un reporte detallado de disponibilidad de garages organizados por zona,
-     * calculando la ocupación actual en base a los vehículos asignados.
+     * Genera un reporte detallado de disponibilidad de garajes organizados por zona,
+     * calculando la ocupación actual de acuerdo con los vehículos asignados.
      *
-     * @return Lista de cadenas de texto con el informe de disponibilidad por zona.
+     * @return Lista de objetos {@link ZonaResponse} con el informe de disponibilidad por zona.
      */
-    List<String> consultarDisponibilidadGarages();
+    List<ZonaResponse> consultarDisponibilidadGarages();
 }

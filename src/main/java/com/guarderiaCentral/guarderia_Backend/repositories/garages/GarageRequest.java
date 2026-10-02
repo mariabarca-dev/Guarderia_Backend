@@ -8,8 +8,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Objeto de solicitud para la creación o registro de un Garage.
- * Contiene Bean Validation y el ID de la zona asociada, respetando las reglas de negocio
- * donde la propiedad y fecha de compra no forman parte de esta entidad.
+ * Contiene Bean Validation y el ID de la zona asociada.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
