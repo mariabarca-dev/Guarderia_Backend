@@ -16,7 +16,7 @@ import java.util.Optional;
  */
 @Repository
 public interface ZonaRepository extends JpaRepository<Zona, Integer> {
-
+   //// prueva hector
     /**
      * Busca todas las zonas cuyo estado activo sea true (Convención Spring Data).
      *
