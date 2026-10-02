@@ -57,7 +57,7 @@ public class EmpleadoServiceImpl implements EmpleadoService {
     public EmpleadoResponse crear(EmpleadoRequest request) {
         log.info("Iniciando creación de nuevo empleado con código: {} y nombreUsuario: {}", request.getCodigo(), request.getNombreUsuario());
 
-        // 1. Validar unicidad global del nombreUsuario en toda la jerarquía de usuarios
+        // 1. Validar unicidad global del nombreUsuario en toda la jerarquía de usuarios (activos e inactivos)
         validarNombreUsuarioUnico(request.getNombreUsuario(), null);
 
         // 2. Verificar duplicados o presencia en inactivos por el código único de empleado
@@ -278,11 +278,8 @@ public class EmpleadoServiceImpl implements EmpleadoService {
     }
 
     private void validarNombreUsuarioUnico(String nombreUsuario, Integer idExcluir) {
-        boolean existe = usuarioRepository.findAllIncludingInactive().stream()
-                .anyMatch(u -> u.getNombreUsuario() != null
-                        && u.getNombreUsuario().equalsIgnoreCase(nombreUsuario)
-                        && (idExcluir == null || !u.getId().equals(idExcluir)));
-        if (existe) {
+        Optional<Integer> duenoOpt = usuarioRepository.buscarIdPorNombreUsuarioIncluyendoInactivos(nombreUsuario);
+        if (duenoOpt.isPresent() && (idExcluir == null || !duenoOpt.get().equals(idExcluir))) {
             throw new NombreUsuarioDuplicadoException("El nombre de usuario '" + nombreUsuario + "' ya se encuentra registrado.");
         }
     }

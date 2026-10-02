@@ -46,7 +46,7 @@ public class AdministradorServiceImpl implements AdministradorService {
         log.info("Iniciando creación de administrador con nombreUsuario: {}", request.getNombreUsuario());
 
         // Verificar si el nombreUsuario ya pertenece a otro registro (activo o inactivo) en toda la jerarquía
-        Optional<Integer> duenoOpt = usuarioRepository.findOwnerIdByNombreUsuario(request.getNombreUsuario());
+        Optional<Integer> duenoOpt = usuarioRepository.buscarIdPorNombreUsuarioIncluyendoInactivos(request.getNombreUsuario());
 
         if (duenoOpt.isPresent()) {
             Integer duenoId = duenoOpt.get();
@@ -143,7 +143,7 @@ public class AdministradorServiceImpl implements AdministradorService {
         }
 
         if (update.getNombreUsuario() != null && !update.getNombreUsuario().equals(admin.getNombreUsuario())) {
-            Optional<Integer> duenoOpt = usuarioRepository.findOwnerIdByNombreUsuario(update.getNombreUsuario());
+            Optional<Integer> duenoOpt = usuarioRepository.buscarIdPorNombreUsuarioIncluyendoInactivos(update.getNombreUsuario());
             if (duenoOpt.isPresent() && !duenoOpt.get().equals(id)) {
                 throw new NombreUsuarioDuplicadoException("El nombre de usuario '" + update.getNombreUsuario() + "' ya se encuentra registrado.");
             }
