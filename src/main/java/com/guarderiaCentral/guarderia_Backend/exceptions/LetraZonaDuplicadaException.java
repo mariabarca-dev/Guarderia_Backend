@@ -1,7 +1,7 @@
 package com.guarderiaCentral.guarderia_Backend.exceptions;
 
 import org.springframework.http.HttpStatus;
-
+//prueba comit 01/10
 /**
  * Excepción personalizada para manejar intentos de registro o actualización de zonas
  * con una letra de zona que ya existe en el sistema.
