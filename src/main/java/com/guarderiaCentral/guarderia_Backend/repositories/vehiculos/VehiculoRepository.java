@@ -1,6 +1,5 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.vehiculos;
 
-import com.guarderiaCentral.guarderia_Backend.modelos.Empleado;
 import com.guarderiaCentral.guarderia_Backend.modelos.Socio;
 import com.guarderiaCentral.guarderia_Backend.modelos.Vehiculo;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -59,12 +58,22 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
     Optional<Vehiculo> findByMatriculaAndActivoTrue(String matricula);
 
     /**
+     * Busca un vehículo por su matrícula permitiendo encontrar registros inactivos (borrado lógico)
+     * para el flujo de guardado inteligente / reactivación.
+     *
+     * @param matricula Matrícula del vehículo.
+     * @return Optional con el vehículo encontrado (activo o inactivo).
+     */
+    @Query(value = "SELECT * FROM vehiculos WHERE matricula = ?1", nativeQuery = true)
+    Optional<Vehiculo> findByMatriculaIncludingInactive(String matricula);
+
+    /**
      * Método explícito para uso administrativo que devuelve todos los registros,
-     * incluyendo aquellos inactivos (borrado lógico).
+     * incluyendo aquellos inactivos (borrado lógico) mediante consulta nativa.
      *
      * @return Lista completa de vehículos (activos e inactivos).
      */
-    @Query("SELECT v FROM Vehiculo v")
+    @Query(value = "SELECT * FROM vehiculos", nativeQuery = true)
     List<Vehiculo> findAllIncludingInactive();
 
     /**
@@ -84,12 +93,6 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
             Socio socio = new Socio();
             socio.setId(request.getSocioId());
             vehiculo.setSocio(socio);
-        }
-
-        if (request.getEmpleadoId() != null) {
-            Empleado empleado = new Empleado();
-            empleado.setId(request.getEmpleadoId());
-            vehiculo.setEmpleado(empleado);
         }
 
         vehiculo.setNombre(request.getNombre());
@@ -116,11 +119,6 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
             Socio socio = new Socio();
             socio.setId(update.getSocioId());
             vehiculo.setSocio(socio);
-        }
-        if (update.getEmpleadoId() != null) {
-            Empleado empleado = new Empleado();
-            empleado.setId(update.getEmpleadoId());
-            vehiculo.setEmpleado(empleado);
         }
         if (update.getNombre() != null) {
             vehiculo.setNombre(update.getNombre());
@@ -153,9 +151,6 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
         response.setId(vehiculo.getId());
         if (vehiculo.getSocio() != null) {
             response.setSocioId(vehiculo.getSocio().getId());
-        }
-        if (vehiculo.getEmpleado() != null) {
-            response.setEmpleadoId(vehiculo.getEmpleado().getId());
         }
         response.setNombre(vehiculo.getNombre());
         response.setMatricula(vehiculo.getMatricula());
