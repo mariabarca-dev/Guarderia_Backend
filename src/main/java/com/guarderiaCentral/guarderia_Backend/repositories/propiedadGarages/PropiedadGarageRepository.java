@@ -44,11 +44,11 @@ public interface PropiedadGarageRepository extends JpaRepository<PropiedadGarage
 
     /**
      * Método explícito para uso administrativo que devuelve todos los registros,
-     * incluyendo aquellos inactivos (borrado lógico).
+     * incluyendo aquellos inactivos (borrado lógico), utilizando consulta nativa para sortear el @SQLRestriction.
      *
      * @return Lista completa de propiedades de garage (activas e inactivas).
      */
-    @Query("SELECT p FROM PropiedadGarage p")
+    @Query(value = "SELECT * FROM propiedades_garage", nativeQuery = true)
     List<PropiedadGarage> findAllIncludingInactive();
 
     /**
