@@ -9,26 +9,28 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repositorio Spring Data JPA para la entidad Socio.
- * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
+ * Repositorio Spring Data JPA para la entidad {@link Socio}.
+ * Gestiona la persistencia, consultas específicas por DNI y nombre de usuario,
+ * consultas nativas con JOIN para herencia JOINED y métodos por defecto para conversión de DTOs.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
+ * @version 1.0
  */
 @Repository
 public interface SocioRepository extends JpaRepository<Socio, Integer> {
 
     /**
-     * Busca todos los socios cuyo estado activo sea true (Convención Spring Data).
+     * Busca todos los socios cuyo estado activo sea true.
      *
      * @return Lista de socios activos.
      */
     List<Socio> findAllByActivoTrue();
 
     /**
-     * Busca un socio por su ID asegurando que se encuentre activo (Convención Spring Data).
+     * Busca un socio por su ID asegurando que se encuentre activo.
      *
      * @param id ID del socio.
-     * @return Optional con el socio encontrado si está activo.
+     * @return {@link Optional} con el socio encontrado si está activo.
      */
     Optional<Socio> findByIdAndActivoTrue(Integer id);
 
@@ -60,7 +62,7 @@ public interface SocioRepository extends JpaRepository<Socio, Integer> {
      * Busca un socio por su DNI único asegurando que esté activo.
      *
      * @param dni DNI del socio.
-     * @return Optional con el socio encontrado.
+     * @return {@link Optional} con el socio encontrado.
      */
     Optional<Socio> findByDniAndActivoTrue(String dni);
 
@@ -68,17 +70,37 @@ public interface SocioRepository extends JpaRepository<Socio, Integer> {
      * Busca un socio por su nombre de usuario asegurando que esté activo.
      *
      * @param nombreUsuario Nombre de usuario único.
-     * @return Optional con el socio encontrado.
+     * @return {@link Optional} con el socio encontrado.
      */
     Optional<Socio> findByNombreUsuarioAndActivoTrue(String nombreUsuario);
 
     /**
-     * Método explícito para uso administrativo que devuelve todos los registros,
-     * incluyendo aquellos inactivos (borrado lógico).
+     * Búsqueda por identificador único de socio incluyendo registros inactivos.
+     * Realiza un JOIN nativo con la tabla raíz usuarios debido a la estrategia JOINED.
      *
-     * @return Lista completa de socios (activos e inactivos).
+     * @param id ID del socio.
+     * @return {@link Optional} con la entidad Socio (activa o inactiva).
      */
-    @Query("SELECT s FROM Socio s")
+    @Query(value = "SELECT u.*, s.* FROM usuarios u JOIN socios s ON s.usuario_id = u.id WHERE u.id = ?1", nativeQuery = true)
+    Optional<Socio> findByIdIncludingInactive(Integer id);
+
+    /**
+     * Busca un socio por su DNI único incluyendo registros inactivos (borrado lógico).
+     * Realiza un JOIN nativo con la tabla raíz usuarios debido a la estrategia JOINED.
+     *
+     * @param dni DNI del socio.
+     * @return {@link Optional} con la entidad Socio (activa o inactiva).
+     */
+    @Query(value = "SELECT u.*, s.* FROM usuarios u JOIN socios s ON s.usuario_id = u.id WHERE s.dni = ?1", nativeQuery = true)
+    Optional<Socio> findByDniIncludingInactive(String dni);
+
+    /**
+     * Devuelve la lista completa de socios (activos e inactivos).
+     * Realiza un JOIN nativo con la tabla raíz usuarios debido a la estrategia JOINED.
+     *
+     * @return Lista completa de socios.
+     */
+    @Query(value = "SELECT u.*, s.* FROM usuarios u JOIN socios s ON s.usuario_id = u.id", nativeQuery = true)
     List<Socio> findAllIncludingInactive();
 
     /**

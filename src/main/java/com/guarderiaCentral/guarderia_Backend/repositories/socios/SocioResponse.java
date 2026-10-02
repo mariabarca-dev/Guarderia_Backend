@@ -11,6 +11,7 @@ import java.time.LocalDate;
  * Objeto de respuesta para exponer la información pública de un Socio.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
+ * @version 1.0
  */
 @Data
 @NoArgsConstructor

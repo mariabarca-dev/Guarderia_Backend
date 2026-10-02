@@ -12,6 +12,7 @@ import java.time.LocalDate;
  * Objeto de solicitud para la actualización de los datos de un Socio.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
+ * @version 1.0
  */
 @Data
 @NoArgsConstructor
