@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Interfaz de servicio que define el contrato de operaciones de negocio para la entidad Vehiculo.
  *
- * @author GuarderiaCentral
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
 public interface VehiculoService {
 

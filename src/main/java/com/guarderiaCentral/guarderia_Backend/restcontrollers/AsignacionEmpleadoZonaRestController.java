@@ -26,7 +26,7 @@ import java.util.List;
  * Controlador RESTful para la gestión de las asignaciones de empleados a zonas (AsignacionEmpleadoZona).
  * Proporciona endpoints para realizar operaciones CRUD respetando la seguridad y permisos asignados por rol.
  *
- *
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  * @version 1.0
  */
 @RestController
@@ -53,7 +53,7 @@ public class AsignacionEmpleadoZonaRestController {
     }
 
     /**
-     * Obtiene la lista completa de asignaciones, incluyendo registros inactivosa (borrado lógico).
+     * Obtiene la lista completa de asignaciones, incluyendo registros inactivos (borrado lógico).
      * Uso exclusivo administrativo para auditar el sistema.
      * Permitido para rol: ADMINISTRADOR.
      *
@@ -95,8 +95,8 @@ public class AsignacionEmpleadoZonaRestController {
     public ResponseEntity<AsignacionEmpleadoZonaResponse> crear(
             @Valid @RequestBody AsignacionEmpleadoZonaRequest request) {
         logger.info("REST Request para crear una nueva asignación entre empleado ID: {} y zona ID: {}",
-                request.getIdEmpleado(), request.getIdZona());
-        AsignacionEmpleadoZonaResponse nuevaAsignacion = asignacionService.crear(request);
+                request.getEmpleadoId(), request.getZonaId());
+        AsignacionEmpleadoZonaResponse nuevaAsignacion = asignacionService.crearAsignacion(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaAsignacion);
     }
 
@@ -115,7 +115,7 @@ public class AsignacionEmpleadoZonaRestController {
             @PathVariable Integer id,
             @Valid @RequestBody AsignacionEmpleadoZonaUpdate update) {
         logger.info("REST Request para actualizar la asignación con ID: {}", id);
-        AsignacionEmpleadoZonaResponse asignacionActualizada = asignacionService.actualizar(id, update);
+        AsignacionEmpleadoZonaResponse asignacionActualizada = asignacionService.actualizarAsignacion(id, update);
         return ResponseEntity.ok(asignacionActualizada);
     }
 
@@ -130,7 +130,7 @@ public class AsignacionEmpleadoZonaRestController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         logger.info("REST Request para eliminar (borrado lógico) la asignación con ID: {}", id);
-        asignacionService.eliminar(id);
+        asignacionService.eliminarAsignacion(id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -8,6 +8,8 @@ import java.util.List;
 
 /**
  * Interfaz de servicio para la gestión de Asignación de Empleados a Zonas.
+ *
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
 public interface AsignacionEmpleadoZonaService {
 

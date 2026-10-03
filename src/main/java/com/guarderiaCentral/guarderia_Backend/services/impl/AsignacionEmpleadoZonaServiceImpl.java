@@ -21,7 +21,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Implementación del servicio para la gestión de Asignación de Empleados a Zonas.
+ * Implementación de la lógica de negocio para la entidad {@link AsignacionEmpleadoZona}.
+ *
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
 @Slf4j
 @Service
@@ -32,47 +34,38 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
     private final EmpleadoRepository empleadoRepository;
     private final ZonaRepository zonaRepository;
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional
     public AsignacionEmpleadoZonaResponse crearAsignacion(AsignacionEmpleadoZonaRequest request) {
         log.info("Iniciando creación de asignación para empleado ID: {} en zona ID: {}",
                 request.getEmpleadoId(), request.getZonaId());
 
-        Empleado empleado = empleadoRepository.findById(request.getEmpleadoId())
-                .filter(Empleado::getActivo)
-                .orElseThrow(() -> new RegistroNoEncontradoException("El empleado especificado no existe o está inactivo."));
+        Empleado empleado = empleadoRepository.findByIdAndActivoTrue(request.getEmpleadoId())
+                .orElseThrow(() -> new RegistroNoEncontradoException("El empleado con ID " + request.getEmpleadoId() + " no existe o está inactivo."));
 
-        Zona zona = zonaRepository.findById(request.getZonaId())
-                .filter(Zona::getActivo)
-                .orElseThrow(() -> new RegistroNoEncontradoException("La zona especificada no existe o está inactiva."));
+        Zona zona = zonaRepository.findByIdAndActivoTrue(request.getZonaId())
+                .orElseThrow(() -> new RegistroNoEncontradoException("La zona con ID " + request.getZonaId() + " no existe o está inactiva."));
 
         if (request.getCantVehiculosACargo() < 0) {
             throw new IllegalArgumentException("La cantidad de vehículos a cargo no puede ser negativa.");
         }
 
         // Validar si ya existe una asignación activa para este empleado en esta zona
-        boolean yaAsignado = asignacionRepository.findAll().stream()
-                .anyMatch(a -> Boolean.TRUE.equals(a.getActivo())
-                        && a.getEmpleado() != null && a.getEmpleado().getId().equals(empleado.getId())
+        boolean yaAsignado = asignacionRepository.findAllByActivoTrue().stream()
+                .anyMatch(a -> a.getEmpleado() != null && a.getEmpleado().getId().equals(empleado.getId())
                         && a.getZona() != null && a.getZona().getId().equals(zona.getId()));
 
         if (yaAsignado) {
             throw new IllegalArgumentException("El empleado ya se encuentra asignado a la zona seleccionada.");
         }
 
-        // Calcular vehículos actuales gestionados en la zona por las asignaciones activas
-        int vehiculosActuales = asignacionRepository.findAll().stream()
-                .filter(a -> Boolean.TRUE.equals(a.getActivo())
-                        && a.getZona() != null
-                        && a.getZona().getId().equals(zona.getId()))
+        // Validar capacidad de la zona considerando las asignaciones activas actuales
+        int vehiculosActuales = asignacionRepository.findAllByZonaIdAndActivoTrue(zona.getId()).stream()
                 .mapToInt(AsignacionEmpleadoZona::getCantVehiculosACargo)
                 .sum();
 
         if ((vehiculosActuales + request.getCantVehiculosACargo()) > zona.getCapacidadVehiculos()) {
-            log.warn("Capacidad excedida para la zona ID: {}. Capacidad máxima: {}, Ocupados/Asignados: {}, Intentando agregar: {}",
+            log.warn("Capacidad excedida para la zona ID: {}. Capacidad máxima: {}, Ocupados: {}, Intentando agregar: {}",
                     zona.getId(), zona.getCapacidadVehiculos(), vehiculosActuales, request.getCantVehiculosACargo());
             throw new ZonaSinCapacidadException("La zona " + zona.getLetra() +
                     " no tiene capacidad suficiente para gestionar " + request.getCantVehiculosACargo() + " vehículos más.");
@@ -85,53 +78,38 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
         return asignacionRepository.fromEntity(guardada);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional(readOnly = true)
     public List<AsignacionEmpleadoZonaResponse> listarTodas() {
-        log.info("Listando todas las asignaciones de empleado a zona activas");
-        return asignacionRepository.findAll().stream()
-                .filter(a -> Boolean.TRUE.equals(a.getActivo()))
+        log.debug("Listando todas las asignaciones de empleado a zona activas");
+        return asignacionRepository.findAllByActivoTrue().stream()
                 .map(asignacionRepository::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional(readOnly = true)
     public List<AsignacionEmpleadoZonaResponse> listarTodasIncluyendoInactivas() {
-        log.info("Listando todas las asignaciones (incluyendo inactivas)");
-        return asignacionRepository.findAll().stream()
+        log.info("Listando todas las asignaciones (incluyendo inactivas) por solicitud administrativa.");
+        return asignacionRepository.findAllIncludingInactive().stream()
                 .map(asignacionRepository::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional(readOnly = true)
     public AsignacionEmpleadoZonaResponse buscarPorId(Integer id) {
-        log.info("Buscando asignación por ID: {}", id);
-        AsignacionEmpleadoZona asignacion = asignacionRepository.findById(id)
-                .filter(a -> Boolean.TRUE.equals(a.getActivo()))
+        log.debug("Buscando asignación por ID: {}", id);
+        AsignacionEmpleadoZona asignacion = asignacionRepository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> new RegistroNoEncontradoException("La asignación con ID " + id + " no fue encontrada."));
         return asignacionRepository.fromEntity(asignacion);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional
     public AsignacionEmpleadoZonaResponse actualizarAsignacion(Integer id, AsignacionEmpleadoZonaUpdate update) {
-        log.info("Actualizando asignación con ID: {}", id);
-        AsignacionEmpleadoZona asignacion = asignacionRepository.findById(id)
-                .filter(a -> Boolean.TRUE.equals(a.getActivo()))
+        log.info("Iniciando actualización de asignación con ID: {}", id);
+        AsignacionEmpleadoZona asignacion = asignacionRepository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> new RegistroNoEncontradoException("La asignación con ID " + id + " no fue encontrada."));
 
         if (update.getCantVehiculosACargo() != null) {
@@ -139,13 +117,9 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
                 throw new IllegalArgumentException("La cantidad de vehículos a cargo no puede ser negativa.");
             }
 
-            // Validar capacidad considerando el cambio
             Zona zona = asignacion.getZona();
-            int vehiculosActualesOtros = asignacionRepository.findAll().stream()
-                    .filter(a -> Boolean.TRUE.equals(a.getActivo())
-                            && a.getZona() != null
-                            && a.getZona().getId().equals(zona.getId())
-                            && !a.getId().equals(asignacion.getId()))
+            int vehiculosActualesOtros = asignacionRepository.findAllByZonaIdAndActivoTrue(zona.getId()).stream()
+                    .filter(a -> !a.getId().equals(asignacion.getId()))
                     .mapToInt(AsignacionEmpleadoZona::getCantVehiculosACargo)
                     .sum();
 
@@ -155,12 +129,14 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
             }
         }
 
-        // Resolver nuevas relaciones si se envían en el update
         Empleado empleadoNuevo = (update.getEmpleadoId() != null)
-                ? empleadoRepository.findById(update.getEmpleadoId()).orElse(null)
+                ? empleadoRepository.findByIdAndActivoTrue(update.getEmpleadoId())
+                .orElseThrow(() -> new RegistroNoEncontradoException("Empleado nuevo no encontrado o inactivo."))
                 : null;
+
         Zona zonaNueva = (update.getZonaId() != null)
-                ? zonaRepository.findById(update.getZonaId()).orElse(null)
+                ? zonaRepository.findByIdAndActivoTrue(update.getZonaId())
+                .orElseThrow(() -> new RegistroNoEncontradoException("Zona nueva no encontrada o inactiva."))
                 : null;
 
         asignacionRepository.updateEntity(asignacion, update, empleadoNuevo, zonaNueva);
@@ -170,15 +146,11 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
         return asignacionRepository.fromEntity(actualizada);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional
     public void eliminarAsignacion(Integer id) {
         log.info("Ejecutando borrado lógico para asignación con ID: {}", id);
-        AsignacionEmpleadoZona asignacion = asignacionRepository.findById(id)
-                .filter(a -> Boolean.TRUE.equals(a.getActivo()))
+        AsignacionEmpleadoZona asignacion = asignacionRepository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> new RegistroNoEncontradoException("La asignación con ID " + id + " no fue encontrada."));
 
         asignacion.setActivo(false);
