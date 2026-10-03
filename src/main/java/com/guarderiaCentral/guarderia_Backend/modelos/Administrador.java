@@ -6,7 +6,7 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-//check euge
+//check euge 2
 /**
  * Entidad que representa a un Administrador del sistema, heredando de Usuario.
  *
