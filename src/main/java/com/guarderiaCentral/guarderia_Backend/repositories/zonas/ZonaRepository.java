@@ -3,6 +3,7 @@ package com.guarderiaCentral.guarderia_Backend.repositories.zonas;
 import com.guarderiaCentral.guarderia_Backend.modelos.Zona;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,7 +17,7 @@ import java.util.Optional;
  */
 @Repository
 public interface ZonaRepository extends JpaRepository<Zona, Integer> {
-   //// prueva hector
+
     /**
      * Busca todas las zonas cuyo estado activo sea true (Convención Spring Data).
      *
@@ -57,12 +58,22 @@ public interface ZonaRepository extends JpaRepository<Zona, Integer> {
     Optional<Zona> findByLetraAndActivoTrue(String letra);
 
     /**
+     * Busca una zona por su letra identificatoria incluyendo registros inactivos (borrado lógico).
+     * Utilizado para el proceso de guardado inteligente / reactivación.
+     *
+     * @param letra Letra de la zona.
+     * @return Optional con la zona encontrada (activa o inactiva).
+     */
+    @Query(value = "SELECT * FROM zonas WHERE letra = :letra", nativeQuery = true)
+    Optional<Zona> findByLetraIncludingInactive(@Param("letra") String letra);
+
+    /**
      * Método explícito para uso administrativo que devuelve todos los registros,
      * incluyendo aquellos inactivos (borrado lógico).
      *
      * @return Lista completa de zonas (activas e inactivas).
      */
-    @Query("SELECT z FROM Zona z")
+    @Query(value = "SELECT * FROM zonas", nativeQuery = true)
     List<Zona> findAllIncludingInactive();
 
     /**
