@@ -26,7 +26,8 @@ import java.util.stream.Collectors;
  * Maneja persistencia, validación de matrículas, relaciones con socios, borrado lógico
  * y filtros según responsabilidades de zonas.
  *
- * @author GuarderiaCentral
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
+ *
  */
 @Slf4j
 @Service
