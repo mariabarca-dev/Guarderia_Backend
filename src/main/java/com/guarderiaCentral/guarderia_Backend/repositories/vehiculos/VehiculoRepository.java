@@ -2,8 +2,10 @@ package com.guarderiaCentral.guarderia_Backend.repositories.vehiculos;
 
 import com.guarderiaCentral.guarderia_Backend.modelos.Socio;
 import com.guarderiaCentral.guarderia_Backend.modelos.Vehiculo;
+import com.guarderiaCentral.guarderia_Backend.modelos.TipoVehiculo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -160,4 +162,30 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
         response.setActivo(vehiculo.getActivo());
         return response;
     }
+
+
+    /**
+     * Busca y retorna una lista de todos los vehículos activos asociados a un socio específico.
+     *
+     * @param socioId Identificador único del socio cuyos vehículos se desean consultar.
+     * @return Una lista de objetos {@link Vehiculo} que pertenecen al socio y se encuentran activos (borrado lógico en true).
+     */
+    List<Vehiculo> findAllBySocioIdAndActivoTrue(Integer socioId);
+
+    /**
+     * Busca todos los vehículos activos filtrados por su tipo.
+     *
+     * @param tipo Tipo de vehículo (ej.MOTORHOME,CARAVANA,TRAILER ).
+     * @return Lista de vehículos que coinciden con el tipo.
+     */
+    List<Vehiculo> findAllByTipoAndActivoTrue(TipoVehiculo tipo);
+
+    /**
+     * Busca todos los vehículos activos cuyas asignaciones de garaje pertenezcan a una lista de IDs de zonas.
+     *
+     * @param zonaIds Lista de identificadores de zonas.
+     * @return Lista de vehículos activos en esas zonas.
+     */
+    @Query("SELECT v FROM Vehiculo v JOIN AsignacionVehiculoGarage a ON v.id = a.vehiculo.id JOIN a.garage g WHERE g.zona.id IN :zonaIds AND v.activo = true")
+    List<Vehiculo> findAllByZonaIdInAndActivoTrue(@Param("zonaIds") List<Integer> zonaIds);
 }
