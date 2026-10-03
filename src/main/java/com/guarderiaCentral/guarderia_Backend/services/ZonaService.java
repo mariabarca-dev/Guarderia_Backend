@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Interfaz que define las operaciones del servicio de negocio para la gestión de Zonas.
  *
- * @author Cátedra Guardería Central
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
 public interface ZonaService {
 
