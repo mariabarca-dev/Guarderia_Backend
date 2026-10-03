@@ -15,6 +15,7 @@ import java.time.LocalDate;
  * Contiene los campos heredados de usuario y los específicos de socio, junto con Bean Validation.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
+ * @version 1.0
  */
 @Data
 @NoArgsConstructor

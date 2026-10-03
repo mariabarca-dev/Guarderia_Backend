@@ -3,15 +3,16 @@ package com.guarderiaCentral.guarderia_Backend.repositories.usuarios;
 import com.guarderiaCentral.guarderia_Backend.modelos.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
- * Repositorio de solo lectura para la entidad base Usuario.
- * Utilizado principalmente para consultas transversales como la autenticación (Login).
- * Las operaciones de escritura y gestión específica se realizan en los repositorios de las subclases.
+ * Repositorio de Spring Data JPA para la entidad base abstracta Usuario.
+ * Utilizado para consultas transversales de autenticación y validación de unicitad de usuarios
+ * en la tabla raíz 'usuarios' independientemente de su subclase concreta.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -19,58 +20,48 @@ import java.util.Optional;
 public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     /**
-     * Busca todos los usuarios activos del sistema sin importar su rol específico (Convención Spring Data).
-     *
-     * @return Lista de usuarios activos.
-     */
-    List<Usuario> findAllByActivoTrue();
-
-    /**
-     * Busca un usuario por su ID asegurando que se encuentre activo (Convención Spring Data).
-     *
-     * @param id ID del usuario.
-     * @return Optional con el usuario encontrado si está activo.
-     */
-    Optional<Usuario> findByIdAndActivoTrue(Integer id);
-
-    /**
-     * Verifica la existencia de un usuario activo por su ID.
-     *
-     * @param id ID del usuario.
-     * @return true si existe y está activo, false en caso contrario.
-     */
-    boolean existsByIdAndActivoTrue(Integer id);
-
-    /**
-     * Busca un usuario por su nombre de usuario asegurando que esté activo.
-     * Esencial para el sistema de seguridad y login (AuthService).
+     * Busca un usuario activo por su nombre de usuario.
+     * Requerido principalmente por AuthService para el proceso de autenticación.
      *
      * @param nombreUsuario Nombre de usuario único.
-     * @return Optional con el usuario (puede ser Socio, Empleado o Administrador gracias al polimorfismo).
+     * @return {@link Optional} con el usuario encontrado si está activo.
      */
     Optional<Usuario> findByNombreUsuarioAndActivoTrue(String nombreUsuario);
 
     /**
-     * Indica si existe un usuario con ese nombre de usuario, esté activo o dado de baja.
+     * Indica si existe un usuario activo con el nombre de usuario especificado.
      *
-     * @param nombreUsuario nombre de usuario a buscar
-     * @return true si ya existe un usuario con ese nombre de usuario
+     * @param nombreUsuario Nombre de usuario a buscar.
+     * @return true si ya existe un usuario activo con ese nombre de usuario.
      */
     boolean existsByNombreUsuario(String nombreUsuario);
 
     /**
-     * Busca todos los usuarios activos del sistema sin importar su rol específico (Consulta manual alternativa).
+     * Consulta nativa para verificar si un nombre de usuario ya existe en la tabla raíz 'usuarios',
+     * considerando registros tanto activos como inactivos.
      *
-     * @return Lista de usuarios activos.
+     * @param nombreUsuario Nombre de usuario a verificar.
+     * @return {@link Optional} con el ID del usuario si el nombre de usuario ya está registrado en el sistema.
      */
-    @Query("SELECT u FROM Usuario u WHERE u.activo = true")
-    List<Usuario> findAllActive();
+    @Query(value = "SELECT id FROM usuarios WHERE nombre_usuario = :nombreUsuario", nativeQuery = true)
+    Optional<Integer> buscarIdPorNombreUsuarioIncluyendoInactivos(@Param("nombreUsuario") String nombreUsuario);
 
     /**
-     * Búsqueda general para administración que incluye inactivos.
+     * Consulta nativa para obtener la lista completa de todos los usuarios registrados
+     * en la tabla raíz 'usuarios', incluyendo activos e inactivos (borrado lógico).
      *
-     * @return Lista completa de usuarios.
+     * @return Lista con todos los usuarios del sistema sin aplicar el filtro de borrado lógico.
      */
-    @Query("SELECT u FROM Usuario u")
-    List<Usuario> findAllIncludingInactive();
+    @Query(value = "SELECT * FROM usuarios", nativeQuery = true)
+    List<Usuario> listarTodosIncluyendoInactivos();
+
+    /**
+     * Consulta nativa para buscar un usuario por su identificador en la tabla raíz 'usuarios',
+     * permitiendo recuperar registros activos e inactivos.
+     *
+     * @param id Identificador único del usuario.
+     * @return {@link Optional} con el usuario encontrado.
+     */
+    @Query(value = "SELECT * FROM usuarios WHERE id = :id", nativeQuery = true)
+    Optional<Usuario> buscarPorIdIncluyendoInactivos(@Param("id") Integer id);
 }

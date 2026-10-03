@@ -1,14 +1,14 @@
 package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 
-import com.guarderiaCentral.guarderia_Backend.dtos.VehiculoDTO;
-import com.guarderiaCentral.guarderia_Backend.dtos.ZonaDTO;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZonas.AsignacionEmpleadoZonaResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoResponse;
 import com.guarderiaCentral.guarderia_Backend.services.EmpleadoService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,146 +21,143 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.validation.Valid;
 import java.util.List;
 
 /**
- * Controlador RESTful para la gestión y administración de cuentas de Empleados.
- * Proporciona endpoints para la gestión de usuarios de tipo Empleado por parte del SYSADMIN,
- * así como endpoints de consulta de zonas y vehículos bajo responsabilidad del empleado.
+ * Controlador RESTful para la gestión y administración de Empleados.
+ * Proporciona endpoints para el CRUD de empleados (permitido para el rol ADMINISTRADOR)
+ * y la consulta de zonas y vehículos asignados al empleado.
  *
- *
+ * @author Cátedra Guardería Central
  * @version 1.0
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/empleados")
 @RequiredArgsConstructor
 public class EmpleadoRestController {
 
-    private static final Logger logger = LoggerFactory.getLogger(EmpleadoRestController.class);
-
     private final EmpleadoService empleadoService;
 
     /**
      * Obtiene el listado de todos los empleados activos en el sistema.
-     * Permitido para rol: SYSADMIN.
+     * Permitido para los roles: ADMINISTRADOR, EMPLEADO, SOCIO.
      *
-     * @return ResponseEntity conteniendo la lista de {@link EmpleadoResponse} y código HTTP 200 OK.
+     * @return {@link ResponseEntity} con la lista de {@link EmpleadoResponse} y código HTTP 200 OK.
      */
     @GetMapping
-    @PreAuthorize("hasRole('SYSADMIN')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
     public ResponseEntity<List<EmpleadoResponse>> obtenerTodos() {
-        logger.info("REST Request para listar todos los empleados activos.");
+        log.info("Petición REST para listar todos los empleados activos.");
         List<EmpleadoResponse> lista = empleadoService.listarTodos();
         return ResponseEntity.ok(lista);
     }
 
     /**
-     * Obtiene el listado de todos los empleados, incluyendo aquellos dados de baja lógicamente (activo = false).
-     * Permitido para rol: SYSADMIN.
+     * Obtiene el listado completo de empleados, incluyendo aquellos dados de baja lógicamente (activo = false).
+     * Permitido exclusivamente para el rol: ADMINISTRADOR.
      *
-     * @return ResponseEntity conteniendo la lista completa de {@link EmpleadoResponse} y código HTTP 200 OK.
+     * @return {@link ResponseEntity} con la lista de {@link EmpleadoResponse} y código HTTP 200 OK.
      */
-    @GetMapping("/admin/todos")
-    @PreAuthorize("hasRole('SYSADMIN')")
+    @GetMapping("/inactivos")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<EmpleadoResponse>> obtenerTodosIncluyendoInactivos() {
-        logger.info("REST Request para listar todos los empleados (incluyendo inactivos).");
-        List<EmpleadoResponse> lista = empleadoService.listarTodosIncluyendoInactivos();
+        log.info("Petición REST para listar todos los empleados (incluyendo inactivos).");
+        List<EmpleadoResponse> lista = empleadoService.listarTodosIncluyendoInactivas();
         return ResponseEntity.ok(lista);
     }
 
     /**
      * Busca y retorna un empleado activo según su ID.
-     * Permitido para rol: SYSADMIN.
+     * Permitido para los roles: ADMINISTRADOR, EMPLEADO, SOCIO.
      *
      * @param id Identificador único del empleado.
-     * @return ResponseEntity con la información de {@link EmpleadoResponse} y código HTTP 200 OK.
+     * @return {@link ResponseEntity} con la información de {@link EmpleadoResponse} y código HTTP 200 OK.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('SYSADMIN')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
     public ResponseEntity<EmpleadoResponse> obtenerPorId(@PathVariable Integer id) {
-        logger.info("REST Request para buscar el empleado con ID: {}", id);
+        log.info("Petición REST para buscar el empleado con ID: {}", id);
         EmpleadoResponse response = empleadoService.buscarPorId(id);
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Registra un nuevo empleado en el sistema.
-     * La validación estructural y de sintaxis se realiza automáticamente mediante la anotación {@code @Valid}.
-     * Permitido para rol: SYSADMIN.
+     * Registra un nuevo empleado en el sistema o reactiva uno previamente inactivo.
+     * La validación sintáctica se realiza automáticamente con {@code @Valid}.
+     * Permitido para el rol: ADMINISTRADOR.
      *
      * @param request Objeto con la información requerida para el alta del empleado ({@link EmpleadoRequest}).
-     * @return ResponseEntity con el {@link EmpleadoResponse} creado y código HTTP 201 Created.
+     * @return {@link ResponseEntity} con el {@link EmpleadoResponse} creado/reactivado y código HTTP 201 Created.
      */
     @PostMapping
-    @PreAuthorize("hasRole('SYSADMIN')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<EmpleadoResponse> crear(@Valid @RequestBody EmpleadoRequest request) {
-        logger.info("REST Request para dar de alta un nuevo empleado con código: {}", request.getCodigo());
+        log.info("Petición REST para dar de alta un nuevo empleado con código: {}", request.getCodigo());
         EmpleadoResponse nuevoEmpleado = empleadoService.crear(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoEmpleado);
     }
 
     /**
      * Actualiza la información de un empleado existente.
-     * La validación se ejecuta automáticamente con {@code @Valid}.
-     * Permitido para rol: SYSADMIN.
+     * Permitido para el rol: ADMINISTRADOR.
      *
      * @param id Identificador único del empleado a modificar.
      * @param update Objeto con los datos actualizados del empleado ({@link EmpleadoUpdate}).
-     * @return ResponseEntity con el {@link EmpleadoResponse} actualizado y código HTTP 200 OK.
+     * @return {@link ResponseEntity} con el {@link EmpleadoResponse} actualizado y código HTTP 200 OK.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SYSADMIN')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<EmpleadoResponse> actualizar(
             @PathVariable Integer id,
             @Valid @RequestBody EmpleadoUpdate update) {
-        logger.info("REST Request para actualizar el empleado con ID: {}", id);
+        log.info("Petición REST para actualizar el empleado con ID: {}", id);
         EmpleadoResponse empleadoActualizado = empleadoService.actualizar(id, update);
         return ResponseEntity.ok(empleadoActualizado);
     }
 
     /**
-     * Desactiva (borrado lógico) la cuenta de un empleado.
-     * Permitido para rol: SYSADMIN.
+     * Realiza la baja lógica (activo = false) de un empleado.
+     * Permitido para el rol: ADMINISTRADOR.
      *
-     * @param id Identificador único del empleado a dar de baja.
-     * @return ResponseEntity con código HTTP 204 No Content.
+     * @param id Identificador único del empleado a desactivar.
+     * @return {@link ResponseEntity} con código HTTP 204 No Content.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SYSADMIN')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
-        logger.info("REST Request para dar de baja lógicamente al empleado con ID: {}", id);
+        log.info("Petición REST para dar de baja lógicamente al empleado con ID: {}", id);
         empleadoService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 
     /**
-     * Obtiene el listado de zonas asignadas a un empleado específico.
-     * Permitido para roles: EMPLEADO, ADMINISTRADOR.
+     * Obtiene el listado de asignaciones de zona asociadas a un empleado específico.
+     * Permitido para los roles: EMPLEADO, ADMINISTRADOR, SOCIO.
      *
      * @param empleadoId Identificador único del empleado.
-     * @return ResponseEntity con la lista de {@link ZonaDTO} asociadas y código HTTP 200 OK.
+     * @return {@link ResponseEntity} con la lista de {@link AsignacionEmpleadoZonaResponse} y código HTTP 200 OK.
      */
     @GetMapping("/{empleadoId}/zonas")
-    @PreAuthorize("hasAnyRole('EMPLEADO', 'ADMINISTRADOR')")
-    public ResponseEntity<List<ZonaDTO>> listarZonasAsignadas(@PathVariable int empleadoId) {
-        logger.info("REST Request para obtener las zonas asignadas al empleado ID: {}", empleadoId);
-        List<ZonaDTO> zonas = empleadoService.listarZonasAsignadas(empleadoId);
+    @PreAuthorize("hasAnyRole('EMPLEADO', 'ADMINISTRADOR', 'SOCIO')")
+    public ResponseEntity<List<AsignacionEmpleadoZonaResponse>> listarZonasAsignadas(@PathVariable int empleadoId) {
+        log.info("Petición REST para obtener las zonas asignadas al empleado ID: {}", empleadoId);
+        List<AsignacionEmpleadoZonaResponse> zonas = empleadoService.listarZonasAsignadas(empleadoId);
         return ResponseEntity.ok(zonas);
     }
 
     /**
-     * Obtiene el listado de vehículos bajo la responsabilidad directa de un empleado específico.
-     * Permitido para roles: EMPLEADO, ADMINISTRADOR.
+     * Obtiene el listado de vehículos bajo la responsabilidad de un empleado específico.
+     * Permitido para los roles: EMPLEADO, ADMINISTRADOR, SOCIO.
      *
      * @param empleadoId Identificador único del empleado.
-     * @return ResponseEntity con la lista de {@link VehiculoDTO} bajo su responsabilidad y código HTTP 200 OK.
+     * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} y código HTTP 200 OK.
      */
     @GetMapping("/{empleadoId}/vehiculos-a-cargo")
-    @PreAuthorize("hasAnyRole('EMPLEADO', 'ADMINISTRADOR')")
-    public ResponseEntity<List<VehiculoDTO>> listarVehiculosBajoResponsabilidad(@PathVariable int empleadoId) {
-        logger.info("REST Request para obtener los vehículos bajo la responsabilidad del empleado ID: {}", empleadoId);
-        List<VehiculoDTO> vehiculos = empleadoService.listarVehiculosBajoResponsabilidad(empleadoId);
+    @PreAuthorize("hasAnyRole('EMPLEADO', 'ADMINISTRADOR', 'SOCIO')")
+    public ResponseEntity<List<VehiculoResponse>> listarVehiculosBajoResponsabilidad(@PathVariable int empleadoId) {
+        log.info("Petición REST para obtener los vehículos bajo la responsabilidad del empleado ID: {}", empleadoId);
+        List<VehiculoResponse> vehiculos = empleadoService.listarVehiculosBajoResponsabilidad(empleadoId);
         return ResponseEntity.ok(vehiculos);
     }
 }

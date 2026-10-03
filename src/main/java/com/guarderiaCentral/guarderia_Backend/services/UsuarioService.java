@@ -1,17 +1,29 @@
 package com.guarderiaCentral.guarderia_Backend.services;
 
-import com.guarderiaCentral.guarderia_Backend.dtos.UsuarioDTO;
 import com.guarderiaCentral.guarderia_Backend.exceptions.CredencialesInvalidasException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
+import com.guarderiaCentral.guarderia_Backend.exceptions.SysAdminProtegidoException;
 import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import com.guarderiaCentral.guarderia_Backend.modelos.Usuario;
+import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioRequest;
+import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioUpdate;
 
 import java.util.List;
 
 /**
- * Interfaz de servicio que define las operaciones de negocio para la gestión de {@link Usuario}.
+ * Interfaz de servicio que define las operaciones transversales de autenticación,
+ * verificación de roles y administración centralizada de usuarios por parte del SYSADMIN.
+ * Delega la gestión específica de cuentas en SocioService, EmpleadoService y AdministradorService.
  *
  * @author GuarderiaCentral
+ * @version 1.0
  */
 public interface UsuarioService {
 
@@ -35,43 +47,50 @@ public interface UsuarioService {
     boolean tieneRol(Usuario usuario, Rol rolRequerido);
 
     /**
-     * Busca un usuario activo por su nombre de usuario.
-     *
-     * @param nombreUsuario Nombre de usuario a buscar.
-     * @return {@link UsuarioDTO} con los datos limpios.
-     * @throws RegistroNoEncontradoException Si no se encuentra un usuario activo con dicho nombre.
-     */
-    UsuarioDTO buscarPorNombreUsuario(String nombreUsuario) throws RegistroNoEncontradoException;
-
-    /**
-     * Busca un usuario activo por su ID.
+     * Busca una cuenta de usuario activa por su identificador único en la tabla raíz.
      *
      * @param id Identificador único del usuario.
-     * @return {@link UsuarioDTO} correspondiente.
-     * @throws RegistroNoEncontradoException Si no existe un usuario activo con ese ID.
+     * @return Entidad {@link Usuario} encontrada.
+     * @throws RegistroNoEncontradoException Si no existe un usuario activo con dicho ID.
      */
-    UsuarioDTO buscarUsuarioPorId(Integer id) throws RegistroNoEncontradoException;
+    Usuario buscarPorId(Integer id) throws RegistroNoEncontradoException;
 
     /**
-     * Recupera la lista completa de todos los usuarios activos en el sistema.
+     * Recupera el listado completo de todos los usuarios activos del sistema sin importar su rol.
      *
-     * @return Lista de {@link UsuarioDTO}.
+     * @return Lista de entidades {@link Usuario} activas.
      */
-    List<UsuarioDTO> listarTodos();
+    List<Usuario> listarTodos();
 
     /**
-     * Actualiza los datos de un usuario existente.
+     * Recupera el listado completo de usuarios registrados, incluyendo aquellos en estado inactivo.
+     * Uso exclusivo para tareas de auditoría por parte del SYSADMIN.
      *
-     * @param dto DTO con los datos actualizados del usuario.
-     * @throws RegistroNoEncontradoException Si el usuario a actualizar no existe o está inactivo.
+     * @return Lista de entidades {@link Usuario} activas e inactivas.
      */
-    void actualizarUsuario(UsuarioDTO dto) throws RegistroNoEncontradoException;
+    List<Usuario> listarTodosIncluyendoInactivos();
 
-    /**
-     * Ejecuta el borrado lógico de un usuario estableciendo su campo {@code activo} en {@code false}.
-     *
-     * @param id Identificador del usuario a desactivar.
-     * @throws RegistroNoEncontradoException Si no existe el usuario activo.
-     */
-    void eliminarUsuario(Integer id) throws RegistroNoEncontradoException;
+    // --- Métodos delegados para gestión de Socios desde UsuarioRestController ---
+
+    SocioResponse crearSocio(SocioRequest request);
+
+    SocioResponse actualizarSocio(Integer id, SocioUpdate update);
+
+    void eliminarSocio(Integer id);
+
+    // --- Métodos delegados para gestión de Empleados desde UsuarioRestController ---
+
+    EmpleadoResponse crearEmpleado(EmpleadoRequest request);
+
+    EmpleadoResponse actualizarEmpleado(Integer id, EmpleadoUpdate update);
+
+    void eliminarEmpleado(Integer id);
+
+    // --- Métodos delegados para gestión de Administradores desde UsuarioRestController ---
+
+    AdministradorResponse crearAdministrador(AdministradorRequest request);
+
+    AdministradorResponse actualizarAdministrador(Integer id, AdministradorUpdate update) throws SysAdminProtegidoException;
+
+    void eliminarAdministrador(Integer id) throws SysAdminProtegidoException;
 }
