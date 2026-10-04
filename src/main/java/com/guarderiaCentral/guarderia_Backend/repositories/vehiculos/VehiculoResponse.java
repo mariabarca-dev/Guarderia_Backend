@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Objeto de respuesta para exponer la información pública de un Vehículo,
- * incluyendo los IDs de su socio y empleado relacionados.
+ * incluyendo el ID de su socio relacionado.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -18,7 +18,6 @@ public class VehiculoResponse {
 
     private Integer id;
     private Integer socioId;
-    private int empleadoId;
     private String nombre;
     private String matricula;
     private TipoVehiculo tipo;

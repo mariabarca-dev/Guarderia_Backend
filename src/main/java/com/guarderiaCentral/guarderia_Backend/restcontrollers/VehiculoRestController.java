@@ -26,7 +26,8 @@ import java.util.List;
  * Expone endpoints para la consulta de vehículos (accesibles por Administradores, Empleados y Socios)
  * y operaciones de creación, modificación y eliminación (exclusivas del rol ADMINISTRADOR).
  *
- * @author GuarderiaCentral
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
+ *
  * @version 1.0
  */
 @Slf4j
@@ -66,17 +67,17 @@ public class VehiculoRestController {
     }
 
     /**
-     * Obtiene el listado de vehículos asignados a garages ubicados dentro de una zona específica.
+     * Obtiene el listado de vehículos pertenecientes a un socio específico.
      *
-     * @param zonaId Identificador numérico de la zona.
-     * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} de la zona y estado HTTP 200 (OK).
-     * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si la zona no existe.
+     * @param socioId Identificador numérico del socio propietario.
+     * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} del socio y estado HTTP 200 (OK).
+     * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el socio no existe.
      */
-    @GetMapping("/zona/{zonaId}")
+    @GetMapping("/socio/{socioId}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
-    public ResponseEntity<List<VehiculoResponse>> listarVehiculosPorZona(@PathVariable Integer zonaId) {
-        log.info("REST Request: Consulta de vehículos en la zona ID: {}", zonaId);
-        List<VehiculoResponse> vehiculos = vehiculoService.listarPorZona(zonaId);
+    public ResponseEntity<List<VehiculoResponse>> listarVehiculosPorSocio(@PathVariable Integer socioId) {
+        log.info("REST Request: Consulta de vehículos para el socio ID: {}", socioId);
+        List<VehiculoResponse> vehiculos = vehiculoService.listarPorSocio(socioId);
         return ResponseEntity.ok(vehiculos);
     }
 
@@ -87,7 +88,7 @@ public class VehiculoRestController {
      * @param request Objeto {@link VehiculoRequest} con los datos del vehículo a crear, validado mediante anotaciones Jakarta.
      * @return {@link ResponseEntity} con el {@link VehiculoResponse} creado y estado HTTP 201 (CREATED).
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.MatriculaDuplicadaException Si la matrícula ya se encuentra registrada.
-     * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el socio o empleado indicado no existen.
+     * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el socio indicado no existe.
      */
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
@@ -118,7 +119,7 @@ public class VehiculoRestController {
     }
 
     /**
-     * Realiza la baja lógica de un vehículo en el sistema marcándolo como inactivo.
+     * Realiza la baja lógica de un vehículo en el sistema marcándolo como inactivo mediante su ID.
      * Operación restringida exclusivamente al rol ADMINISTRADOR.
      *
      * @param id Identificador único del vehículo a dar de baja.
@@ -129,7 +130,7 @@ public class VehiculoRestController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminarVehiculo(@PathVariable Integer id) {
         log.info("REST Request: Baja lógica de vehículo con ID: {}", id);
-        vehiculoService.eliminarVehiculo(id);
+        vehiculoService.eliminarVehiculoPorId(id);
         return ResponseEntity.noContent().build();
     }
 }

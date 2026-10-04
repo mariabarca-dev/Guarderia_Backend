@@ -1,6 +1,7 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
+import com.guarderiaCentral.guarderia_Backend.exceptions.LetraZonaDuplicadaException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.modelos.Zona;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRepository;
@@ -11,18 +12,18 @@ import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaUpdate;
 import com.guarderiaCentral.guarderia_Backend.services.ZonaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * Implementación del servicio de negocio para la entidad {@link Zona}.
- * Maneja las validaciones de unicidad, integridad referencial y borrado lógico.
+ * Maneja las validaciones de unicidad, integridad referencial, borrado lógico y guardado inteligente.
  *
- * @author Cátedra Guardería Central
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
 @Slf4j
 @Service
@@ -33,11 +34,12 @@ public class ZonaServiceImpl implements ZonaService {
     private final GarageRepository garageRepository;
 
     /**
-     * Registra una nueva zona en la base de datos previa normalización y verificación de unicidad.
+     * Registra una nueva zona en la base de datos previa normalización, verificación de unicidad
+     * y aplicación de guardado inteligente (reactivación si existe un registro inactivo).
      *
      * @param request DTO con los datos de entrada para el registro.
      * @return {@link ZonaResponse} Objeto de respuesta mapeado.
-     * @throws BusinessException Si ya existe una zona activa con la misma letra.
+     * @throws LetraZonaDuplicadaException Si ya existe una zona activa con la misma letra.
      */
     @Override
     @Transactional
@@ -47,16 +49,28 @@ public class ZonaServiceImpl implements ZonaService {
         String letraNormalizada = request.getLetra().trim().toUpperCase();
         request.setLetra(letraNormalizada);
 
-        if (zonaRepository.existsByLetraAndActivoTrue(letraNormalizada)) {
-            log.error("Error al registrar zona. La letra '{}' ya está registrada y activa.", letraNormalizada);
-            throw new BusinessException("Ya existe una zona registrada con la letra: " + letraNormalizada, HttpStatus.BAD_REQUEST);
+        Optional<Zona> zonaInactivaOpt = zonaRepository.findByLetraIncludingInactive(letraNormalizada);
+        Zona zona;
+
+        if (zonaInactivaOpt.isPresent()) {
+            zona = zonaInactivaOpt.get();
+            if (Boolean.TRUE.equals(zona.getActivo())) {
+                log.error("Error al registrar zona. La letra '{}' ya está registrada y activa.", letraNormalizada);
+                throw new LetraZonaDuplicadaException("Ya existe una zona registrada con la letra: " + letraNormalizada);
+            }
+            log.info("Reactiva zona inactiva con ID: {} y letra: {}", zona.getId(), letraNormalizada);
+            zona.setTipoVehiculo(request.getTipoVehiculo());
+            zona.setCapacidadVehiculos(request.getCapacidadVehiculos());
+            zona.setAnchoGarage(request.getAnchoGarage());
+            zona.setLargoGarage(request.getLargoGarage());
+            zona.setActivo(true);
+        } else {
+            zona = zonaRepository.toEntity(request);
+            zona.setActivo(true);
         }
 
-        Zona zona = zonaRepository.toEntity(request);
-        zona.setActivo(true);
-
         Zona zonaGuardada = zonaRepository.save(zona);
-        log.info("Zona registrada exitosamente con ID: {}", zonaGuardada.getId());
+        log.info("Zona registrada/reactivada exitosamente con ID: {}", zonaGuardada.getId());
 
         return zonaRepository.fromEntity(zonaGuardada);
     }
@@ -140,6 +154,7 @@ public class ZonaServiceImpl implements ZonaService {
      * @param update DTO con los datos a actualizar.
      * @return {@link ZonaResponse} Datos de la zona actualizada.
      * @throws RegistroNoEncontradoException Si la zona no existe.
+     * @throws LetraZonaDuplicadaException Si la nueva letra ya está asignada a otra zona activa.
      * @throws BusinessException Si se intenta modificar el tipo de vehículo teniendo garages asociados.
      */
     @Override
@@ -154,23 +169,24 @@ public class ZonaServiceImpl implements ZonaService {
                     return new RegistroNoEncontradoException("No se puede actualizar: La zona con ID " + id + " no existe.");
                 });
 
-        String nuevaLetra = update.getLetra().trim().toUpperCase();
-        update.setLetra(nuevaLetra);
+        if (update.getLetra() != null) {
+            String nuevaLetra = update.getLetra().trim().toUpperCase();
+            update.setLetra(nuevaLetra);
 
-        // Si cambia la letra, validar que la nueva no esté ocupada por otra zona
-        if (!zonaExistente.getLetra().equalsIgnoreCase(nuevaLetra) &&
-                zonaRepository.existsByLetraAndActivoTrue(nuevaLetra)) {
-            log.error("No se puede actualizar la zona. La letra '{}' ya está asignada a otra zona.", nuevaLetra);
-            throw new BusinessException("Ya existe una zona registrada con la letra: " + nuevaLetra, HttpStatus.BAD_REQUEST);
+            if (!zonaExistente.getLetra().equalsIgnoreCase(nuevaLetra) &&
+                    zonaRepository.existsByLetraAndActivoTrue(nuevaLetra)) {
+                log.error("No se puede actualizar la zona. La letra '{}' ya está asignada a otra zona.", nuevaLetra);
+                throw new LetraZonaDuplicadaException("Ya existe una zona registrada con la letra: " + nuevaLetra);
+            }
         }
 
         // Regla de Negocio: Validar si cambia el tipo de vehículo y si existen garages asociados
-        if (!zonaExistente.getTipoVehiculo().equals(update.getTipoVehiculo())) {
+        if (update.getTipoVehiculo() != null && !zonaExistente.getTipoVehiculo().equals(update.getTipoVehiculo())) {
             boolean tieneGarajes = garageRepository.existsByZonaIdAndActivoTrue(id);
             if (tieneGarajes) {
                 log.error("Bloqueo de modificación de tipo de vehículo en zona ID {}: posee garajes activos asociados.", id);
                 throw new BusinessException("Error: No se puede cambiar el tipo de vehículo de la zona '"
-                        + zonaExistente.getLetra() + "' porque ya posee garajes asociados.", HttpStatus.BAD_REQUEST);
+                        + zonaExistente.getLetra() + "' porque ya posee garajes asociados.");
             }
         }
 
@@ -184,10 +200,11 @@ public class ZonaServiceImpl implements ZonaService {
     /**
      * Desactiva lógicamente una zona del sistema. Bloquea la operación si la zona
      * aún tiene garajes asociados activos para resguardar la integridad referencial.
+     * Propaga la baja lógica a las asignaciones de empleado a zona activas.
      *
      * @param id Identificador único de la zona a desactivar.
      * @throws RegistroNoEncontradoException Si no se encuentra la zona activa.
-     * @throws BusinessException Si existen garajes asociados a la zona.
+     * @throws BusinessException Si existen garajes asociados activos a la zona.
      */
     @Override
     @Transactional
@@ -205,11 +222,12 @@ public class ZonaServiceImpl implements ZonaService {
         if (tieneGarajes) {
             log.error("Bloqueo de eliminación para la zona ID {}: existen garajes asociados.", id);
             throw new BusinessException("Error: No se puede eliminar la zona '" + zona.getLetra()
-                    + "' porque existen garajes asociados a ella.", HttpStatus.BAD_REQUEST);
+                    + "' porque existen garajes asociados a ella.");
         }
 
         zona.setActivo(false);
         zonaRepository.save(zona);
+
         log.info("Borrado lógico realizado con éxito para la zona ID: {}", id);
     }
 }

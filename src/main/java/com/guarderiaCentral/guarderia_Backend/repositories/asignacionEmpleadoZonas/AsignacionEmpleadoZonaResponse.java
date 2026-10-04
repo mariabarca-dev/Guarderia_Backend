@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 public class AsignacionEmpleadoZonaResponse {
 
     private Integer id;
-    private int empleadoId;
+    private Integer empleadoId;
     private Integer zonaId;
     private int cantVehiculosACargo;
     private Boolean activo;

@@ -1,6 +1,5 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
-import com.guarderiaCentral.guarderia_Backend.dtos.VehiculoDTO;
 import com.guarderiaCentral.guarderia_Backend.exceptions.MatriculaDuplicadaException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.modelos.Socio;
@@ -26,6 +25,9 @@ import java.util.stream.Collectors;
  * Implementación de la lógica de negocio para la entidad {@link Vehiculo}.
  * Maneja persistencia, validación de matrículas, relaciones con socios, borrado lógico
  * y filtros según responsabilidades de zonas.
+ *
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
+ *
  */
 @Slf4j
 @Service
@@ -38,13 +40,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     private final AsignacionEmpleadoZonaRepository asignacionEmpleadoZonaRepository;
 
     /**
-     * Registra un nuevo vehículo realizando validaciones de unicidad de matrícula
-     * y existencia del socio propietario.
-     *
-     * @param request Datos del vehículo a registrar.
-     * @return {@link VehiculoResponse} DTO con el vehículo guardado.
-     * @throws MatriculaDuplicadaException Si la matrícula ya pertenece a un vehículo activo.
-     * @throws RegistroNoEncontradoException Si el socio especificado no existe o está inactivo.
+     * {@inheritDoc}
      */
     @Override
     @Transactional
@@ -73,11 +69,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     }
 
     /**
-     * Busca un vehículo activo por su ID.
-     *
-     * @param id Identificador único del vehículo.
-     * @return DTO {@link VehiculoResponse}.
-     * @throws RegistroNoEncontradoException Si no existe registro activo.
+     * {@inheritDoc}
      */
     @Override
     @Transactional(readOnly = true)
@@ -92,11 +84,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     }
 
     /**
-     * Busca un vehículo activo por su matrícula.
-     *
-     * @param matricula Matrícula del vehículo.
-     * @return DTO {@link VehiculoResponse}.
-     * @throws RegistroNoEncontradoException Si no existe registro activo.
+     * {@inheritDoc}
      */
     @Override
     @Transactional(readOnly = true)
@@ -111,9 +99,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     }
 
     /**
-     * Obtiene la lista completa de vehículos activos.
-     *
-     * @return Lista de DTOs {@link VehiculoResponse}.
+     * {@inheritDoc}
      */
     @Override
     @Transactional(readOnly = true)
@@ -125,49 +111,42 @@ public class VehiculoServiceImpl implements VehiculoService {
     }
 
     /**
-     * Obtiene los vehículos asociados a un socio activo determinado en formato DTO simple.
-     *
-     * @param socioId ID del socio.
-     * @return Lista de {@link VehiculoDTO}.
-     * @throws RegistroNoEncontradoException Si el socio no existe o está inactivo.
+     * {@inheritDoc}
      */
     @Override
     @Transactional(readOnly = true)
-    public List<VehiculoDTO> listarPorSocio(Integer socioId) {
-        log.debug("Listando vehículos en formato DTO para socio ID: {}", socioId);
-        validarSocioExistente(socioId);
-
-        return vehiculoRepository.findAllBySocioIdAndActivoTrue(socioId).stream()
-                .map(v -> new VehiculoDTO(
-                        v.getId(),
-                        v.getMatricula(),
-                        v.getMarca(),
-                        v.getModelo(),
-                        v.getTipo() != null ? v.getTipo().name() : null,
-                        v.getSocio() != null ? v.getSocio().getId() : 0,
-                        v.getActivo()
-                ))
+    public List<VehiculoResponse> listarTodosIncluyendoInactivos() {
+        log.info("Listando todos los vehículos (incluyendo inactivos) por solicitud administrativa.");
+        return vehiculoRepository.findAll().stream()
+                .map(vehiculoRepository::fromEntity)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Método alternativo para buscar vehículos por socio ID.
-     *
-     * @param socioId ID del socio.
-     * @return Lista de {@link VehiculoDTO}.
-     * @throws RegistroNoEncontradoException Si el socio no existe o está inactivo.
+     * {@inheritDoc}
      */
     @Override
     @Transactional(readOnly = true)
-    public List<VehiculoDTO> buscarVehiculosPorSocio(Integer socioId) {
+    public List<VehiculoResponse> listarPorSocio(Integer socioId) {
+        log.debug("Listando vehículos para socio ID: {}", socioId);
+        validarSocioExistente(socioId);
+
+        return vehiculoRepository.findAllBySocioIdAndActivoTrue(socioId).stream()
+                .map(vehiculoRepository::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<VehiculoResponse> buscarVehiculosPorSocio(Integer socioId) {
         return listarPorSocio(socioId);
     }
 
     /**
-     * Busca vehículos activos filtrados por tipo de vehículo.
-     *
-     * @param tipo Tipo de vehículo (e.g. LANCHA, MOTO_AQUATICA).
-     * @return Lista de DTOs {@link VehiculoResponse}.
+     * {@inheritDoc}
      */
     @Override
     @Transactional(readOnly = true)
@@ -179,17 +158,11 @@ public class VehiculoServiceImpl implements VehiculoService {
     }
 
     /**
-     * Obtiene todos los vehículos pertenecientes a las zonas donde un empleado específico
-     * se encuentra asignado como responsable. Cumple con la regla de negocio donde la asignación
-     * de empleados se realiza por zona a través de AsignacionEmpleadoZona.
-     *
-     * @param empleadoId Identificador único del empleado.
-     * @return Lista de DTOs {@link VehiculoDTO} de las zonas a cargo del empleado.
-     * @throws RegistroNoEncontradoException Si el empleado no existe o no está activo.
+     * {@inheritDoc}
      */
     @Override
     @Transactional(readOnly = true)
-    public List<VehiculoDTO> listarVehiculosPorResponsable(int empleadoId) {
+    public List<VehiculoResponse> listarVehiculosPorResponsable(int empleadoId) {
         log.debug("Obteniendo vehículos pertenecientes a las zonas del empleado responsable ID: {}", empleadoId);
 
         if (!empleadoRepository.existsByIdAndActivoTrue(empleadoId)) {
@@ -202,26 +175,12 @@ public class VehiculoServiceImpl implements VehiculoService {
                 .collect(Collectors.toList());
 
         return vehiculoRepository.findAllByZonaIdInAndActivoTrue(zonaIds).stream()
-                .map(v -> new VehiculoDTO(
-                        v.getId(),
-                        v.getMatricula(),
-                        v.getMarca(),
-                        v.getModelo(),
-                        v.getTipo() != null ? v.getTipo().name() : null,
-                        v.getSocio() != null ? v.getSocio().getId() : 0,
-                        v.getActivo()
-                ))
+                .map(vehiculoRepository::fromEntity)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Actualiza los datos de un vehículo activo.
-     *
-     * @param id Identificador del vehículo a modificar.
-     * @param update DTO con los datos a actualizar.
-     * @return DTO {@link VehiculoResponse} con los datos actualizados.
-     * @throws RegistroNoEncontradoException Si el vehículo o el nuevo socio no existen o están inactivos.
-     * @throws MatriculaDuplicadaException Si la nueva matrícula está asignada a otro vehículo activo.
+     * {@inheritDoc}
      */
     @Override
     @Transactional
@@ -234,13 +193,15 @@ public class VehiculoServiceImpl implements VehiculoService {
                     return new RegistroNoEncontradoException("No existe vehículo con ID " + id);
                 });
 
-        vehiculoRepository.findByMatriculaAndActivoTrue(update.getMatricula())
-                .ifPresent(v -> {
-                    if (v.getId() != id) {
-                        log.error("La matrícula {} ya pertenece a otro vehículo activo (ID: {})", update.getMatricula(), v.getId());
-                        throw new MatriculaDuplicadaException("Ya existe otro vehículo con la matrícula: " + update.getMatricula());
-                    }
-                });
+        if (update.getMatricula() != null) {
+            vehiculoRepository.findByMatriculaAndActivoTrue(update.getMatricula())
+                    .ifPresent(v -> {
+                        if (!v.getId().equals(id)) {
+                            log.error("La matrícula {} ya pertenece a otro vehículo activo (ID: {})", update.getMatricula(), v.getId());
+                            throw new MatriculaDuplicadaException("Ya existe otro vehículo con la matrícula: " + update.getMatricula());
+                        }
+                    });
+        }
 
         if (update.getSocioId() != null) {
             Socio nuevoSocio = socioRepository.findByIdAndActivoTrue(update.getSocioId())
@@ -259,10 +220,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     }
 
     /**
-     * Realiza el borrado lógico de un vehículo buscando por su matrícula.
-     *
-     * @param matricula Matrícula del vehículo a dar de baja.
-     * @throws RegistroNoEncontradoException Si no existe vehículo activo con la matrícula especificada.
+     * {@inheritDoc}
      */
     @Override
     @Transactional
@@ -281,10 +239,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     }
 
     /**
-     * Realiza el borrado lógico de un vehículo buscando por su ID.
-     *
-     * @param id Identificador único del vehículo a dar de baja.
-     * @throws RegistroNoEncontradoException Si no existe vehículo activo con el ID especificado.
+     * {@inheritDoc}
      */
     @Override
     @Transactional

@@ -6,12 +6,13 @@ import com.guarderiaCentral.guarderia_Backend.modelos.TipoVehiculo;
 import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoUpdate;
-import com.guarderiaCentral.guarderia_Backend.dtos.VehiculoDTO;
 
 import java.util.List;
 
 /**
  * Interfaz de servicio que define el contrato de operaciones de negocio para la entidad Vehiculo.
+ *
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
 public interface VehiculoService {
 
@@ -51,22 +52,30 @@ public interface VehiculoService {
     List<VehiculoResponse> listarTodos();
 
     /**
+     * Recupera la lista completa de vehículos, incluyendo aquellos con borrado lógico (inactivos).
+     * Uso exclusivo administrativo/SYSADMIN.
+     *
+     * @return Lista de {@link VehiculoResponse} incluidos inactivos.
+     */
+    List<VehiculoResponse> listarTodosIncluyendoInactivos();
+
+    /**
      * Lista todos los vehículos pertenecientes a un socio determinado.
      *
      * @param socioId Identificador del socio propietario.
-     * @return Lista de DTOs simplificados (VehiculoDTO) pertenecientes al socio.
+     * @return Lista de respuestas de vehículos pertenecientes al socio.
      * @throws RegistroNoEncontradoException Si el socio especificado no existe o se encuentra inactivo.
      */
-    List<VehiculoDTO> listarPorSocio(Integer socioId);
+    List<VehiculoResponse> listarPorSocio(Integer socioId);
 
     /**
      * Método alternativo de consulta de vehículos pertenecientes a un socio.
      *
      * @param socioId Identificador del socio propietario.
-     * @return Lista de DTOs simplificados (VehiculoDTO).
+     * @return Lista de respuestas de vehículos.
      * @throws RegistroNoEncontradoException Si el socio especificado no existe o se encuentra inactivo.
      */
-    List<VehiculoDTO> buscarVehiculosPorSocio(Integer socioId);
+    List<VehiculoResponse> buscarVehiculosPorSocio(Integer socioId);
 
     /**
      * Filtra los vehículos activos por su tipo (por ejemplo: LANCHA, MOTO_AQUATICA, etc.).
@@ -80,10 +89,10 @@ public interface VehiculoService {
      * Lista los vehículos asociados a las zonas que están a cargo de un empleado responsable.
      *
      * @param empleadoId Identificador único del empleado.
-     * @return Lista de DTOs simplificados (VehiculoDTO) bajo la responsabilidad del empleado.
+     * @return Lista de respuestas de vehículos bajo la responsabilidad del empleado.
      * @throws RegistroNoEncontradoException Si el empleado no existe o está inactivo.
      */
-    List<VehiculoDTO> listarVehiculosPorResponsable(int empleadoId);
+    List<VehiculoResponse> listarVehiculosPorResponsable(int empleadoId);
 
     /**
      * Actualiza la información de un vehículo existente.

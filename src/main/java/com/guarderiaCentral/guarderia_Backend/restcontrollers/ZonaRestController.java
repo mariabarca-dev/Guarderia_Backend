@@ -21,7 +21,7 @@ import java.util.List;
  * Proporciona endpoints para consulta (GET) accesibles por SOCIO, EMPLEADO y ADMINISTRADOR,
  * y operaciones de escritura/modificación (POST, PUT, DELETE) exclusivas para ADMINISTRADOR.
  *
- * @author Cátedra Desarrollo Java Backend
+ * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  * @version 1.0
  */
 @Slf4j
@@ -57,13 +57,27 @@ public class ZonaRestController {
      * Obtiene la lista completa de todas las zonas activas en el sistema.
      * Accesible por usuarios con rol SOCIO, EMPLEADO o ADMINISTRADOR.
      *
-     * @return {@link ResponseEntity} con la lista de {@link ZonaResponse} y código HTTP 200 OK.
+     * @return {@link ResponseEntity} con la lista de {@link ZonaResponse} activas y código HTTP 200 OK.
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('SOCIO', 'EMPLEADO', 'ADMINISTRADOR')")
     public ResponseEntity<List<ZonaResponse>> listarZonas() {
         log.info("REST Request para listar todas las zonas activas");
         List<ZonaResponse> zonas = zonaService.listarTodas();
+        return ResponseEntity.ok(zonas);
+    }
+
+    /**
+     * Obtiene el listado completo de zonas incluyendo aquellas con borrado lógico (inactivas).
+     * Operación restringida a usuarios con rol ADMINISTRADOR.
+     *
+     * @return {@link ResponseEntity} con la lista completa de {@link ZonaResponse} y código HTTP 200 OK.
+     */
+    @GetMapping("/inactivos")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<List<ZonaResponse>> listarZonasIncluyendoInactivas() {
+        log.info("REST Request para listar todas las zonas (incluyendo inactivas)");
+        List<ZonaResponse> zonas = zonaService.listarTodasIncluyendoInactivas();
         return ResponseEntity.ok(zonas);
     }
 
@@ -87,7 +101,7 @@ public class ZonaRestController {
     }
 
     /**
-     * Actualiza la información de una zona existente identified por su ID.
+     * Actualiza la información de una zona existente identificada por su ID.
      * Operación restringida a usuarios con rol ADMINISTRADOR.
      *
      * @param id Identificador numérico único de la zona a actualizar.
@@ -101,26 +115,23 @@ public class ZonaRestController {
             @Valid @RequestBody ZonaUpdate update) {
 
         log.info("REST Request para actualizar Zona con ID: {}", id);
-        ZonaResponse zonaActualizada = zonaService.actualizarZona(id, update);
+              ZonaResponse zonaActualizada = zonaService.actualizarZona(id, update);
         return ResponseEntity.ok(zonaActualizada);
     }
 
     /**
-     * Realiza la baja lógica de una zona mediante su letra identificadora o ID.
+     * Realiza la baja lógica de una zona mediante su identificador numérico único.
      * Operación restringida a usuarios con rol ADMINISTRADOR.
      *
-     * @param letra Letra identificadora de la zona a eliminar.
+     * @param id Identificador numérico de la zona a eliminar.
      * @return {@link ResponseEntity} con respuesta sin contenido (204 No Content).
      */
-    @DeleteMapping("/{letra}")
+    @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<Void> eliminarZona(
-            @PathVariable
-            @Pattern(regexp = REGEX_LETRA_ZONA, message = "Debe especificar una letra de zona válida para eliminar (1 a 3 letras).")
-            String letra) {
-
-        log.info("REST Request para realizar borrado lógico de Zona con letra: {}", letra);
-        zonaService.eliminarZona(letra.trim().toUpperCase());
+    public ResponseEntity<Void> eliminarZona(@PathVariable Integer id) {
+        log.info("REST Request para realizar borrado lógico de Zona con ID: {}", id);
+        // CORREGIDO: Llama a eliminarZona en lugar de eliminar
+        zonaService.eliminarZona(id);
         return ResponseEntity.noContent().build();
     }
 }

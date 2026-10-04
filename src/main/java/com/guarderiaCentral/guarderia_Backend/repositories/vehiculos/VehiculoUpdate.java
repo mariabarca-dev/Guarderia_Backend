@@ -19,8 +19,6 @@ public class VehiculoUpdate {
 
     private Integer socioId;
 
-    private Integer empleadoId;
-
     @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
     private String nombre;
 

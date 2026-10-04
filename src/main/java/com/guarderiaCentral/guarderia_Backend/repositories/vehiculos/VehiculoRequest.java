@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Objeto de solicitud para la creación o registro de un Vehículo.
- * Contiene Bean Validation y los IDs de las entidades relacionadas (Socio y Empleado).
+ * Contiene Bean Validation y los IDs de las entidades relacionadas (Socio).
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -22,9 +22,6 @@ public class VehiculoRequest {
 
     @NotNull(message = "El ID del socio es obligatorio")
     private Integer socioId;
-
-    @NotNull(message = "El ID del empleado es obligatorio")
-    private Integer empleadoId;
 
     @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
     private String nombre;
