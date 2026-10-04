@@ -1,6 +1,5 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.empleados;
 
-import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -32,8 +31,6 @@ public class EmpleadoUpdate {
     private String nombreUsuario;
 
     private String clave;
-
-    private Rol rol;
 
     @Size(max = 50, message = "El código no puede superar los 50 caracteres")
     private String codigo;

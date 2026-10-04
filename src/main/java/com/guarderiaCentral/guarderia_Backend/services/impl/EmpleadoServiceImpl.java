@@ -82,7 +82,6 @@ public class EmpleadoServiceImpl implements EmpleadoService {
             if (request.getClave() != null && !request.getClave().isBlank()) {
                 update.setClave(passwordEncoder.encode(request.getClave()));
             }
-            update.setRol(request.getRol());
             update.setCodigo(request.getCodigo());
             update.setEspecialidad(request.getEspecialidad());
 

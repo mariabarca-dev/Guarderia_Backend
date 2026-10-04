@@ -5,7 +5,6 @@ import com.guarderiaCentral.guarderia_Backend.exceptions.DependenciasActivasExce
 import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
-import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import com.guarderiaCentral.guarderia_Backend.modelos.Socio;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioRepository;
@@ -31,6 +30,8 @@ import java.util.stream.Collectors;
 /**
  * Implementación de la lógica de negocio para la gestión de la entidad {@link Socio}.
  * Administra validaciones, guardado inteligente con reactivación, baja lógica con bloqueo y mapeos.
+ * El rol de toda cuenta de socio es siempre {@code Rol.SOCIO}: lo fija el repository y no se
+ * puede elegir ni modificar desde el Request o el Update.
  *
  * @author Guardería Central
  */
@@ -61,16 +62,10 @@ public class SocioServiceImpl implements SocioService {
             throw new BusinessException("La fecha de ingreso no puede ser anterior a la fecha de fundación del sistema (" + FECHA_FUNDACION + ").");
         }
 
-        // 2. Validar Rol asignado
-        if (request.getRol() != Rol.SOCIO && request.getRol() != Rol.ADMINISTRADOR) {
-            log.error("Error al registrar socio: Rol asignado no válido ({})", request.getRol());
-            throw new BusinessException("El rol asignado no cuenta con los permisos permitidos para este tipo de registro.");
-        }
-
-        // 3. Verificar si el nombreUsuario pertenece a otro usuario en toda la jerarquía (activos e inactivos)
+        // 2. Verificar si el nombreUsuario pertenece a otro usuario en toda la jerarquía (activos e inactivos)
         Optional<Integer> duenoNombreUsuarioOpt = usuarioRepository.buscarIdPorNombreUsuarioIncluyendoInactivos(request.getNombreUsuario());
 
-        // 4. Buscar socio por DNI incluyendo inactivos para guardado inteligente / reactivación
+        // 3. Buscar socio por DNI incluyendo inactivos para guardado inteligente / reactivación
         Optional<Socio> socioInactivoOpt = socioRepository.findByDniIncludingInactive(request.getDni());
 
         if (socioInactivoOpt.isPresent()) {
@@ -97,7 +92,6 @@ public class SocioServiceImpl implements SocioService {
             if (request.getClave() != null && !request.getClave().isBlank()) {
                 update.setClave(passwordEncoder.encode(request.getClave()));
             }
-            update.setRol(request.getRol());
             update.setDni(request.getDni());
             update.setFechaIngreso(request.getFechaIngreso());
 

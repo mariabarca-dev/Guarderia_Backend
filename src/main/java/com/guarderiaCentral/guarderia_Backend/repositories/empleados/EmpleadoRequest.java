@@ -1,8 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.empleados;
 
-import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -39,9 +37,6 @@ public class EmpleadoRequest {
 
     @NotBlank(message = "La clave es obligatoria")
     private String clave;
-
-    @NotNull(message = "El rol es obligatorio")
-    private Rol rol;
 
     @NotBlank(message = "El código de empleado es obligatorio")
     @Size(max = 50, message = "El código no puede superar los 50 caracteres")
