@@ -4,6 +4,7 @@ import com.guarderiaCentral.guarderia_Backend.modelos.Garage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Zona;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -23,11 +24,20 @@ public interface GarageRepository extends JpaRepository<Garage, Integer> {
      * Busca un garage por su número único, incluyendo registros inactivos (baja lógica).
      * Utilizado en el flujo de guardado inteligente para detectar reactivaciones.
      *
-     * @.param numeroGarage Número de garage a buscar.
+     * @param numeroGarage Número de garage a buscar.
      * @return Optional con la entidad Garage si existe (activa o inactiva).
      */
     @Query(value = "SELECT * FROM garages WHERE numero_garage = ?1", nativeQuery = true)
     Optional<Garage> findByNumeroGarageIncludingInactive(int numeroGarage);
+
+    /**
+     * Verifica la existencia de garajes activos asociados a una zona específica.
+     *
+     * @param zonaId ID de la zona.
+     * @return true si existen garajes activos en la zona, false en caso contrario.
+     */
+    @Query("SELECT COUNT(g) > 0 FROM Garage g WHERE g.zona.id = :zonaId AND g.activo = true")
+    boolean existsByZonaIdAndActivoTrue(@Param("zonaId") Integer zonaId);
 
     /**
      * Método explícito para uso administrativo que devuelve todos los registros,
