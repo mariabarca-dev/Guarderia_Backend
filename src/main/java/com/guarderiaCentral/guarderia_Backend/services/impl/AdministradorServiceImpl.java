@@ -66,7 +66,6 @@ public class AdministradorServiceImpl implements AdministradorService {
                     if (request.getClave() != null && !request.getClave().isBlank()) {
                         update.setClave(passwordEncoder.encode(request.getClave()));
                     }
-                    update.setRol(request.getRol());
 
                     administradorRepository.updateEntity(inactivo, update);
                     inactivo.setActivo(true);
