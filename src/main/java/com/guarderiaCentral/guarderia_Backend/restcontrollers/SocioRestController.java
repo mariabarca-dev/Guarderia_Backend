@@ -25,8 +25,9 @@ import java.util.List;
 
 /**
  * Controlador REST para la gestión y administración de la entidad Socio.
- * Proporciona endpoints para la gestión integral de socios por parte del ADMINISTRADOR
- * y para la consulta autorizada de activos asociados (vehículos y garajes) por parte de SOCIO y EMPLEADO.
+ * Proporciona endpoints para la gestión de las cuentas de socio por parte del ADMINISTRADOR y del SYSADMIN
+ * y para la consulta autorizada de activos asociados (vehículos y garajes) por parte de SOCIO, EMPLEADO y
+ * ADMINISTRADOR. El SYSADMIN no tiene acceso a las consultas de entidades de negocio (vehículos y garajes).
  *
  * @author GuarderiaCentral
  * @version 1.0
@@ -41,12 +42,12 @@ public class SocioRestController {
 
     /**
      * Obtiene el listado completo de todos los socios activos registrados en el sistema.
-     * Accesible por roles ADMINISTRADOR, EMPLEADO y SOCIO.
+     * Accesible por roles ADMINISTRADOR, SYSADMIN, EMPLEADO y SOCIO.
      *
      * @return {@link ResponseEntity} que contiene la lista de {@link SocioResponse} y el estado HTTP 200 (OK).
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN', 'EMPLEADO', 'SOCIO')")
     public ResponseEntity<List<SocioResponse>> listarTodosLosSocios() {
         log.info("REST Request: Consulta para listar todos los socios activos");
         List<SocioResponse> socios = socioService.listarTodos();
@@ -55,12 +56,12 @@ public class SocioRestController {
 
     /**
      * Obtiene el listado completo de socios, incluyendo aquellos en estado inactivo (borrado lógico).
-     * Endpoint exclusivo para auditoría y administración por parte del rol ADMINISTRADOR.
+     * Endpoint exclusivo para auditoría y administración por parte de los roles ADMINISTRADOR y SYSADMIN.
      *
      * @return {@link ResponseEntity} que contiene la lista de {@link SocioResponse} y el estado HTTP 200 (OK).
      */
     @GetMapping("/inactivos")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<List<SocioResponse>> listarSociosInactivos() {
         log.info("REST Request: Consulta de listado completo de socios incluyendo inactivos");
         List<SocioResponse> socios = socioService.listarTodosIncluyendoInactivos();
@@ -69,13 +70,14 @@ public class SocioRestController {
 
     /**
      * Busca y retorna un socio específico a través de su identificador único (ID).
+     * Accesible por roles ADMINISTRADOR, SYSADMIN, EMPLEADO y SOCIO.
      *
      * @param id Identificador numérico del socio.
      * @return {@link ResponseEntity} con la información detallada del {@link SocioResponse} y estado HTTP 200 (OK).
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el ID no existe o se encuentra inactivo.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN', 'EMPLEADO', 'SOCIO')")
     public ResponseEntity<SocioResponse> buscarSocioPorId(@PathVariable Integer id) {
         log.info("REST Request: Consulta de socio por ID: {}", id);
         SocioResponse socio = socioService.buscarPorId(id);
@@ -84,13 +86,14 @@ public class SocioRestController {
 
     /**
      * Busca y retorna la información de un socio utilizando su Documento Nacional de Identidad (DNI).
+     * Accesible por roles ADMINISTRADOR, SYSADMIN, EMPLEADO y SOCIO.
      *
      * @param dni Cadena de texto representando el DNI del socio a consultar.
      * @return {@link ResponseEntity} con el {@link SocioResponse} encontrado y estado HTTP 200 (OK).
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el DNI no corresponde a ningún registro activo.
      */
     @GetMapping("/dni/{dni}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN', 'EMPLEADO', 'SOCIO')")
     public ResponseEntity<SocioResponse> buscarSocioPorDni(@PathVariable String dni) {
         log.info("REST Request: Consulta de socio por DNI: {}", dni);
         SocioResponse socio = socioService.buscarPorDni(dni);
@@ -99,7 +102,7 @@ public class SocioRestController {
 
     /**
      * Registra un nuevo socio en el sistema o reactiva uno inactivo existente.
-     * Operación exclusiva del rol ADMINISTRADOR.
+     * Operación exclusiva de los roles ADMINISTRADOR y SYSADMIN.
      *
      * @param request Objeto {@link SocioRequest} validado.
      * @return {@link ResponseEntity} con el {@link SocioResponse} creado y estado HTTP 201 (CREATED).
@@ -107,7 +110,7 @@ public class SocioRestController {
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException Si el nombre de usuario ya está registrado.
      */
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<SocioResponse> registrarSocio(@Valid @RequestBody SocioRequest request) {
         log.info("REST Request: Alta de nuevo socio con DNI: {}", request.getDni());
         SocioResponse nuevoSocio = socioService.crear(request);
@@ -116,7 +119,7 @@ public class SocioRestController {
 
     /**
      * Actualiza la información de un socio existente en el sistema.
-     * Operación exclusiva del rol ADMINISTRADOR.
+     * Operación exclusiva de los roles ADMINISTRADOR y SYSADMIN.
      *
      * @param id Identificador numérico del socio a modificar.
      * @param update Objeto {@link SocioUpdate} validado con los nuevos datos a aplicar.
@@ -124,7 +127,7 @@ public class SocioRestController {
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el socio especificado no existe o está inactivo.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<SocioResponse> modificarSocio(
             @PathVariable Integer id,
             @Valid @RequestBody SocioUpdate update) {
@@ -135,7 +138,7 @@ public class SocioRestController {
 
     /**
      * Ejecuta el borrado lógico de un socio en el sistema cambiando su estado a inactivo.
-     * Operación exclusiva del rol ADMINISTRADOR.
+     * Operación exclusiva de los roles ADMINISTRADOR y SYSADMIN.
      *
      * @param id Identificador único del socio a dar de baja.
      * @return {@link ResponseEntity} con estado HTTP 204 (NO_CONTENT).
@@ -143,7 +146,7 @@ public class SocioRestController {
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.DependenciasActivasException Si el socio tiene vehículos activos o garajes a su nombre.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<Void> eliminarSocio(@PathVariable Integer id) {
         log.info("REST Request: Baja lógica de socio con ID: {}", id);
         socioService.eliminar(id);
