@@ -131,7 +131,7 @@ public class EmpleadoServiceImpl implements EmpleadoService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<EmpleadoResponse> listarTodosIncluyendoInactivas() {
+    public List<EmpleadoResponse> listarTodosIncluyendoInactivos() {
         log.info("Obteniendo listado completo de empleados (activos e inactivos).");
         return empleadoRepository.findAllIncludingInactive().stream()
                 .map(empleadoRepository::fromEntity)

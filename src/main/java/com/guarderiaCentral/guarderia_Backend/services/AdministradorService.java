@@ -47,7 +47,7 @@ public interface AdministradorService {
      *
      * @return Lista de {@link AdministradorResponse} con todos los registros.
      */
-    List<AdministradorResponse> listarTodosIncluyendoInactivas();
+    List<AdministradorResponse> listarTodosIncluyendoInactivos();
 
     /**
      * Actualiza los datos de un administrador existente.

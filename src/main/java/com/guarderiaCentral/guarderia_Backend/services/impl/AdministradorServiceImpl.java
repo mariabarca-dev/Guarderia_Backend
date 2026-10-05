@@ -118,7 +118,7 @@ public class AdministradorServiceImpl implements AdministradorService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<AdministradorResponse> listarTodosIncluyendoInactivas() {
+    public List<AdministradorResponse> listarTodosIncluyendoInactivos() {
         log.info("Listando todos los administradores (incluyendo inactivos).");
         return administradorRepository.findAllIncludingInactive().stream()
                 .map(administradorRepository::fromEntity)

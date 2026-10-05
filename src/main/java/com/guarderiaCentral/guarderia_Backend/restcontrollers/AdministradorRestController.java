@@ -83,7 +83,7 @@ public class AdministradorRestController {
     @PreAuthorize("hasRole('SYSADMIN')")
     public ResponseEntity<List<AdministradorResponse>> listarTodosIncluyendoInactivos() {
         log.info("REST Request para obtener el listado de administradores incluyendo inactivos.");
-        List<AdministradorResponse> administradores = administradorService.listarTodosIncluyendoInactivas();
+        List<AdministradorResponse> administradores = administradorService.listarTodosIncluyendoInactivos();
         return ResponseEntity.ok(administradores);
     }
 

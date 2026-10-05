@@ -63,7 +63,7 @@ public class EmpleadoRestController {
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<List<EmpleadoResponse>> obtenerTodosIncluyendoInactivos() {
         log.info("Petición REST para listar todos los empleados (incluyendo inactivos).");
-        List<EmpleadoResponse> lista = empleadoService.listarTodosIncluyendoInactivas();
+        List<EmpleadoResponse> lista = empleadoService.listarTodosIncluyendoInactivos();
         return ResponseEntity.ok(lista);
     }
 
