@@ -43,6 +43,15 @@ public interface AsignacionVehiculoGarageRepository extends JpaRepository<Asigna
     boolean existsByIdAndActivoTrue(Integer id);
 
     /**
+     * Busca las asignaciones activas de un vehículo a un garage.
+     * Se usa en la baja lógica del vehículo para liberar el garage en cascada.
+     *
+     * @param vehiculoId ID del vehículo.
+     * @return Lista de asignaciones activas del vehículo.
+     */
+    List<AsignacionVehiculoGarage> findAllByVehiculoIdAndActivoTrue(Integer vehiculoId);
+
+    /**
      * Método explícito para uso administrativo que devuelve todos los registros,
      * incluyendo aquellos inactivos (borrado lógico), utilizando consulta nativa para saltar el @SQLRestriction.
      *

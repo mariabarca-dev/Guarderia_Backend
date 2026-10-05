@@ -1,19 +1,20 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.vehiculos;
 
 import com.guarderiaCentral.guarderia_Backend.modelos.Socio;
-import com.guarderiaCentral.guarderia_Backend.modelos.Vehiculo;
 import com.guarderiaCentral.guarderia_Backend.modelos.TipoVehiculo;
+import com.guarderiaCentral.guarderia_Backend.modelos.Vehiculo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
- * Repositorio Spring Data JPA para la entidad Vehiculo.
- * Filtra por defecto los registros activos mediante convención de Spring Data y encapsula los métodos default de mapeo.
+ * Repositorio Spring Data JPA para la entidad {@link Vehiculo}.
+ * Por el {@code @SQLRestriction} de la entidad, los métodos derivados y {@code findById}/{@code findAll}
+ * solo ven registros activos; las consultas nativas se usan cuando hace falta ver también los inactivos.
+ * Encapsula los métodos {@code default} de mapeo entre entidad y objetos de datos.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -21,14 +22,14 @@ import java.util.Optional;
 public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
 
     /**
-     * Busca todos los vehículos cuyo estado activo sea true (Convención Spring Data).
+     * Busca todos los vehículos cuyo estado activo sea true.
      *
      * @return Lista de vehículos activos.
      */
     List<Vehiculo> findAllByActivoTrue();
 
     /**
-     * Busca un vehículo por su ID asegurando que se encuentre activo (Convención Spring Data).
+     * Busca un vehículo por su ID asegurando que se encuentre activo.
      *
      * @param id ID del vehículo.
      * @return Optional con el vehículo encontrado si está activo.
@@ -44,14 +45,6 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
     boolean existsByIdAndActivoTrue(Integer id);
 
     /**
-     * Verifica la existencia de un vehículo activo por su matrícula.
-     *
-     * @param matricula Matrícula del vehículo.
-     * @return true si existe y está activo.
-     */
-    boolean existsByMatriculaAndActivoTrue(String matricula);
-
-    /**
      * Busca un vehículo por su matrícula única asegurando que esté activo.
      *
      * @param matricula Matrícula del vehículo.
@@ -60,8 +53,8 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
     Optional<Vehiculo> findByMatriculaAndActivoTrue(String matricula);
 
     /**
-     * Busca un vehículo por su matrícula permitiendo encontrar registros inactivos (borrado lógico)
-     * para el flujo de guardado inteligente / reactivación.
+     * Busca un vehículo por su matrícula incluyendo los registros inactivos (consulta nativa),
+     * para el flujo de guardado inteligente (reactivación) y para detectar colisiones de matrícula.
      *
      * @param matricula Matrícula del vehículo.
      * @return Optional con el vehículo encontrado (activo o inactivo).
@@ -70,8 +63,7 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
     Optional<Vehiculo> findByMatriculaIncludingInactive(String matricula);
 
     /**
-     * Método explícito para uso administrativo que devuelve todos los registros,
-     * incluyendo aquellos inactivos (borrado lógico) mediante consulta nativa.
+     * Devuelve todos los vehículos, incluyendo los inactivos (borrado lógico), mediante consulta nativa.
      *
      * @return Lista completa de vehículos (activos e inactivos).
      */
@@ -79,11 +71,27 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
     List<Vehiculo> findAllIncludingInactive();
 
     /**
+     * Busca todos los vehículos activos que pertenecen a un socio.
+     *
+     * @param socioId Identificador del socio propietario.
+     * @return Lista de vehículos activos del socio.
+     */
+    List<Vehiculo> findAllBySocioIdAndActivoTrue(Integer socioId);
+
+    /**
+     * Busca todos los vehículos activos de un tipo determinado.
+     *
+     * @param tipo Tipo de vehículo (por ejemplo MOTORHOME, CARAVANA o TRAILER).
+     * @return Lista de vehículos activos que coinciden con el tipo.
+     */
+    List<Vehiculo> findAllByTipoAndActivoTrue(TipoVehiculo tipo);
+
+    /**
      * Convierte un {@link VehiculoRequest} en una entidad {@link Vehiculo}.
-     * Las relaciones se configuran como referencias vacías utilizando únicamente sus IDs.
+     * La relación con el socio se arma asignando únicamente su ID.
      *
      * @param request Objeto con los datos de entrada.
-     * @return Entidad Vehiculo mapeada con activo = true.
+     * @return Entidad Vehiculo mapeada con activo = true, o null si el request es null.
      */
     default Vehiculo toEntity(VehiculoRequest request) {
         if (request == null) {
@@ -141,9 +149,10 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
 
     /**
      * Convierte una entidad {@link Vehiculo} en un {@link VehiculoResponse}.
+     * De la relación con el socio solo lee el ID, para no inicializar proxies LAZY.
      *
      * @param vehiculo Entidad Vehiculo de origen.
-     * @return Objeto de respuesta con la información pública y referencias.
+     * @return Objeto de respuesta con los datos del vehículo, o null si la entidad es null.
      */
     default VehiculoResponse fromEntity(Vehiculo vehiculo) {
         if (vehiculo == null) {
@@ -162,30 +171,4 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
         response.setActivo(vehiculo.getActivo());
         return response;
     }
-
-
-    /**
-     * Busca y retorna una lista de todos los vehículos activos asociados a un socio específico.
-     *
-     * @param socioId Identificador único del socio cuyos vehículos se desean consultar.
-     * @return Una lista de objetos {@link Vehiculo} que pertenecen al socio y se encuentran activos (borrado lógico en true).
-     */
-    List<Vehiculo> findAllBySocioIdAndActivoTrue(Integer socioId);
-
-    /**
-     * Busca todos los vehículos activos filtrados por su tipo.
-     *
-     * @param tipo Tipo de vehículo (ej.MOTORHOME,CARAVANA,TRAILER ).
-     * @return Lista de vehículos que coinciden con el tipo.
-     */
-    List<Vehiculo> findAllByTipoAndActivoTrue(TipoVehiculo tipo);
-
-    /**
-     * Busca todos los vehículos activos cuyas asignaciones de garaje pertenezcan a una lista de IDs de zonas.
-     *
-     * @param zonaIds Lista de identificadores de zonas.
-     * @return Lista de vehículos activos en esas zonas.
-     */
-    @Query("SELECT v FROM Vehiculo v JOIN AsignacionVehiculoGarage a ON v.id = a.vehiculo.id JOIN a.garage g WHERE g.zona.id IN :zonaIds AND v.activo = true")
-    List<Vehiculo> findAllByZonaIdInAndActivoTrue(@Param("zonaIds") List<Integer> zonaIds);
 }

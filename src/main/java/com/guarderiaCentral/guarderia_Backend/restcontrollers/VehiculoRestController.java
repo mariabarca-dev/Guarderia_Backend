@@ -1,5 +1,8 @@
 package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 
+import com.guarderiaCentral.guarderia_Backend.exceptions.MatriculaDuplicadaException;
+import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
+import com.guarderiaCentral.guarderia_Backend.modelos.TipoVehiculo;
 import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoUpdate;
@@ -22,13 +25,13 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Controlador REST para la gestión integral de la entidad Vehículo.
- * Expone endpoints para la consulta de vehículos (accesibles por Administradores, Empleados y Socios)
- * y operaciones de creación, modificación y eliminación (exclusivas del rol ADMINISTRADOR).
+ * Controlador REST para la gestión de la entidad Vehículo.
+ * Las consultas están abiertas a ADMINISTRADOR, EMPLEADO y SOCIO (solo registros activos);
+ * el alta, la modificación, la baja y la consulta de inactivos son exclusivas del ADMINISTRADOR.
+ * El rol SYSADMIN no tiene acceso a este recurso.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
- *
- * @version 1.0
+ * @version 1.1
  */
 @Slf4j
 @RestController
@@ -39,7 +42,7 @@ public class VehiculoRestController {
     private final VehiculoService vehiculoService;
 
     /**
-     * Obtiene el listado completo de vehículos activos registrados en el sistema.
+     * Obtiene el listado de vehículos activos.
      *
      * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} y estado HTTP 200 (OK).
      */
@@ -47,66 +50,102 @@ public class VehiculoRestController {
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
     public ResponseEntity<List<VehiculoResponse>> listarTodosLosVehiculos() {
         log.info("REST Request: Consulta para listar todos los vehículos");
-        List<VehiculoResponse> vehiculos = vehiculoService.listarTodos();
-        return ResponseEntity.ok(vehiculos);
+        return ResponseEntity.ok(vehiculoService.listarTodos());
     }
 
     /**
-     * Busca y retorna la información de un vehículo según su identificador único.
+     * Obtiene el listado completo de vehículos, incluyendo los dados de baja lógica.
+     * Operación restringida al rol ADMINISTRADOR.
+     *
+     * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} y estado HTTP 200 (OK).
+     */
+    @GetMapping("/inactivos")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<List<VehiculoResponse>> listarVehiculosIncluyendoInactivos() {
+        log.info("REST Request: Consulta administrativa de vehículos incluyendo inactivos");
+        return ResponseEntity.ok(vehiculoService.listarTodosIncluyendoInactivos());
+    }
+
+    /**
+     * Busca un vehículo activo según su identificador único.
      *
      * @param id Identificador numérico del vehículo.
-     * @return {@link ResponseEntity} con los detalles del {@link VehiculoResponse} y estado HTTP 200 (OK).
-     * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el vehículo no existe.
+     * @return {@link ResponseEntity} con el {@link VehiculoResponse} y estado HTTP 200 (OK).
+     * @throws RegistroNoEncontradoException Si el vehículo no existe o está inactivo.
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
     public ResponseEntity<VehiculoResponse> buscarVehiculoPorId(@PathVariable Integer id) {
         log.info("REST Request: Consulta de vehículo por ID: {}", id);
-        VehiculoResponse vehiculo = vehiculoService.buscarPorId(id);
-        return ResponseEntity.ok(vehiculo);
+        return ResponseEntity.ok(vehiculoService.buscarPorId(id));
     }
 
     /**
-     * Obtiene el listado de vehículos pertenecientes a un socio específico.
+     * Busca un vehículo activo según su matrícula.
+     *
+     * @param matricula Matrícula del vehículo.
+     * @return {@link ResponseEntity} con el {@link VehiculoResponse} y estado HTTP 200 (OK).
+     * @throws RegistroNoEncontradoException Si no existe un vehículo activo con esa matrícula.
+     */
+    @GetMapping("/matricula/{matricula}")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
+    public ResponseEntity<VehiculoResponse> buscarVehiculoPorMatricula(@PathVariable String matricula) {
+        log.info("REST Request: Consulta de vehículo por matrícula: {}", matricula);
+        return ResponseEntity.ok(vehiculoService.buscarPorMatricula(matricula));
+    }
+
+    /**
+     * Obtiene los vehículos activos de un tipo determinado.
+     *
+     * @param tipo Tipo de vehículo (MOTORHOME, CASA_RODANTE_DE_ARRASTRE, CARAVANA o TRAILER).
+     * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} y estado HTTP 200 (OK).
+     */
+    @GetMapping("/tipo/{tipo}")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
+    public ResponseEntity<List<VehiculoResponse>> listarVehiculosPorTipo(@PathVariable TipoVehiculo tipo) {
+        log.info("REST Request: Consulta de vehículos por tipo: {}", tipo);
+        return ResponseEntity.ok(vehiculoService.buscarPorTipo(tipo));
+    }
+
+    /**
+     * Obtiene los vehículos activos pertenecientes a un socio.
      *
      * @param socioId Identificador numérico del socio propietario.
-     * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} del socio y estado HTTP 200 (OK).
-     * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el socio no existe.
+     * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} y estado HTTP 200 (OK).
+     * @throws RegistroNoEncontradoException Si el socio no existe o está inactivo.
      */
     @GetMapping("/socio/{socioId}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
     public ResponseEntity<List<VehiculoResponse>> listarVehiculosPorSocio(@PathVariable Integer socioId) {
         log.info("REST Request: Consulta de vehículos para el socio ID: {}", socioId);
-        List<VehiculoResponse> vehiculos = vehiculoService.listarPorSocio(socioId);
-        return ResponseEntity.ok(vehiculos);
+        return ResponseEntity.ok(vehiculoService.listarPorSocio(socioId));
     }
 
     /**
-     * Registra un nuevo vehículo en el sistema.
-     * Operación restringida exclusivamente al rol ADMINISTRADOR.
+     * Registra un nuevo vehículo (o reactiva uno dado de baja con la misma matrícula).
+     * Operación restringida al rol ADMINISTRADOR.
      *
-     * @param request Objeto {@link VehiculoRequest} con los datos del vehículo a crear, validado mediante anotaciones Jakarta.
+     * @param request {@link VehiculoRequest} con los datos del vehículo, validado con Bean Validation.
      * @return {@link ResponseEntity} con el {@link VehiculoResponse} creado y estado HTTP 201 (CREATED).
-     * @throws com.guarderiaCentral.guarderia_Backend.exceptions.MatriculaDuplicadaException Si la matrícula ya se encuentra registrada.
-     * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el socio indicado no existe.
+     * @throws MatriculaDuplicadaException   Si la matrícula pertenece a un vehículo activo.
+     * @throws RegistroNoEncontradoException Si el socio indicado no existe o está inactivo.
      */
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<VehiculoResponse> registrarVehiculo(@Valid @RequestBody VehiculoRequest request) {
         log.info("REST Request: Alta de nuevo vehículo con matrícula: {}", request.getMatricula());
-        VehiculoResponse nuevoVehiculo = vehiculoService.registrarVehiculo(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoVehiculo);
+        return ResponseEntity.status(HttpStatus.CREATED).body(vehiculoService.crear(request));
     }
 
     /**
-     * Actualiza la información de un vehículo existente en el sistema.
-     * Operación restringida exclusivamente al rol ADMINISTRADOR.
+     * Actualiza los datos de un vehículo activo.
+     * Operación restringida al rol ADMINISTRADOR.
      *
-     * @param id Identificador del vehículo a modificar.
-     * @param update Objeto {@link VehiculoUpdate} validado con los nuevos datos a actualizar.
+     * @param id     Identificador del vehículo a modificar.
+     * @param update {@link VehiculoUpdate} validado con los nuevos datos.
      * @return {@link ResponseEntity} con el {@link VehiculoResponse} actualizado y estado HTTP 200 (OK).
-     * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el vehículo no existe.
-     * @throws com.guarderiaCentral.guarderia_Backend.exceptions.MatriculaDuplicadaException Si la nueva matrícula colisiona con otro registro.
+     * @throws RegistroNoEncontradoException Si el vehículo o el nuevo socio no existen o están inactivos.
+     * @throws MatriculaDuplicadaException   Si la nueva matrícula pertenece a otro vehículo.
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
@@ -114,23 +153,22 @@ public class VehiculoRestController {
             @PathVariable Integer id,
             @Valid @RequestBody VehiculoUpdate update) {
         log.info("REST Request: Actualización de vehículo con ID: {}", id);
-        VehiculoResponse vehiculoActualizado = vehiculoService.actualizarVehiculo(id, update);
-        return ResponseEntity.ok(vehiculoActualizado);
+        return ResponseEntity.ok(vehiculoService.actualizar(id, update));
     }
 
     /**
-     * Realiza la baja lógica de un vehículo en el sistema marcándolo como inactivo mediante su ID.
-     * Operación restringida exclusivamente al rol ADMINISTRADOR.
+     * Da de baja lógicamente un vehículo y libera su garage.
+     * Operación restringida al rol ADMINISTRADOR.
      *
      * @param id Identificador único del vehículo a dar de baja.
      * @return {@link ResponseEntity} sin contenido y estado HTTP 204 (NO_CONTENT).
-     * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el vehículo no existe.
+     * @throws RegistroNoEncontradoException Si el vehículo no existe o ya está inactivo.
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminarVehiculo(@PathVariable Integer id) {
         log.info("REST Request: Baja lógica de vehículo con ID: {}", id);
-        vehiculoService.eliminarVehiculoPorId(id);
+        vehiculoService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 }
