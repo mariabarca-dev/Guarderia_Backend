@@ -1,6 +1,7 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.empleados;
 
 import com.guarderiaCentral.guarderia_Backend.modelos.Empleado;
+import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -94,9 +95,11 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Integer> {
 
     /**
      * Convierte un {@link EmpleadoRequest} en una entidad {@link Empleado}.
+     * El rol de la cuenta siempre es {@link Rol#EMPLEADO}: no se toma del Request, para que
+     * quien da de alta un empleado no pueda asignarle un rol con más permisos.
      *
      * @param request Objeto con los datos de entrada.
-     * @return Entidad Empleado mapeada con activo = true.
+     * @return Entidad Empleado mapeada con rol EMPLEADO y activo = true.
      */
     default Empleado toEntity(EmpleadoRequest request) {
         if (request == null) {
@@ -109,7 +112,7 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Integer> {
         empleado.setTelefono(request.getTelefono());
         empleado.setNombreUsuario(request.getNombreUsuario());
         empleado.setClave(request.getClave());
-        empleado.setRol(request.getRol());
+        empleado.setRol(Rol.EMPLEADO);
         empleado.setCodigo(request.getCodigo());
         empleado.setEspecialidad(request.getEspecialidad());
         empleado.setActivo(true);
@@ -118,7 +121,7 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Integer> {
 
     /**
      * Actualiza los campos de una entidad {@link Empleado} existente a partir de un {@link EmpleadoUpdate}.
-     * Solo modifica los atributos que no sean nulos.
+     * Solo modifica los atributos que no sean nulos. El rol de la cuenta nunca se modifica.
      *
      * @param empleado Entidad de empleado existente.
      * @param update   Objeto con los nuevos valores.
@@ -144,9 +147,6 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Integer> {
         }
         if (update.getClave() != null) {
             empleado.setClave(update.getClave());
-        }
-        if (update.getRol() != null) {
-            empleado.setRol(update.getRol());
         }
         if (update.getCodigo() != null) {
             empleado.setCodigo(update.getCodigo());

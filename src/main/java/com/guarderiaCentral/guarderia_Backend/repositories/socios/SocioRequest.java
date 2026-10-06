@@ -1,6 +1,5 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.socios;
 
-import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -43,9 +42,6 @@ public class SocioRequest {
     @NotBlank(message = "La clave es obligatoria")
     private String clave;
 
-    @NotNull(message = "El rol es obligatorio")
-    private Rol rol;
-
     @NotBlank(message = "El DNI es obligatorio")
     @Size(max = 20, message = "El DNI no puede superar los 20 caracteres")
     private String dni;
@@ -53,3 +49,4 @@ public class SocioRequest {
     @NotNull(message = "La fecha de ingreso es obligatoria")
     private LocalDate fechaIngreso;
 }
+

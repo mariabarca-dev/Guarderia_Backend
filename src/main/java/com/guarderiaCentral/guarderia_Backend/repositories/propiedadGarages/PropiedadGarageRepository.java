@@ -20,14 +20,14 @@ import java.util.Optional;
 public interface PropiedadGarageRepository extends JpaRepository<PropiedadGarage, Integer> {
 
     /**
-     * Busca todas las propiedades de garage cuyo estado activo sea true (Convención Spring Data).
+     * Busca todas las propiedades de garage cuyo estado activo sea true.
      *
      * @return Lista de propiedades de garage activas.
      */
     List<PropiedadGarage> findAllByActivoTrue();
 
     /**
-     * Busca una propiedad de garage por su ID asegurando que se encuentre activa (Convención Spring Data).
+     * Busca una propiedad de garage por su ID asegurando que se encuentre activa.
      *
      * @param id ID de la propiedad de garage.
      * @return Optional con la propiedad encontrada si está activa.
@@ -44,7 +44,7 @@ public interface PropiedadGarageRepository extends JpaRepository<PropiedadGarage
 
     /**
      * Método explícito para uso administrativo que devuelve todos los registros,
-     * incluyendo aquellos inactivos (borrado lógico), utilizando consulta nativa para sortear el @SQLRestriction.
+     * incluyendo aquellos inactivos (borrado lógico), utilizando consulta nativa.
      *
      * @return Lista completa de propiedades de garage (activas e inactivas).
      */
@@ -53,7 +53,6 @@ public interface PropiedadGarageRepository extends JpaRepository<PropiedadGarage
 
     /**
      * Convierte un {@link PropiedadGarageRequest} en una entidad {@link PropiedadGarage}.
-     * Las relaciones se configuran como referencias vacías utilizando únicamente sus IDs.
      *
      * @param request Objeto con los datos de entrada.
      * @return Entidad PropiedadGarage mapeada con activo = true.

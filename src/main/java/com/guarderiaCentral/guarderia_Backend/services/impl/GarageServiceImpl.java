@@ -14,7 +14,7 @@ import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRespons
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageUpdate;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaRepository;
-import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaResponse; // Usando ZonaResponse
+import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaResponse;
 import com.guarderiaCentral.guarderia_Backend.services.GarageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -249,9 +249,11 @@ public class GarageServiceImpl implements GarageService {
                 disponibles = 0;
             }
 
-            // Mapeo utilizando ZonaResponse (asegúrate de que ZonaResponse tenga setters para la capacidad o los datos calculados si los requiere tu capa web)
+            // Mapeo utilizando ZonaResponse e inyección de los campos calculados de disponibilidad
             ZonaResponse dto = zonaRepository.fromEntity(z);
-            // Si ZonaResponse incluye campos para calcular disponibilidad, puedes asignarlos aquí.
+            dto.setEspaciosDisponibles(disponibles);
+            dto.setEspaciosOcupados((int) ocupadosReales);
+
             return dto;
         }).collect(Collectors.toList());
     }

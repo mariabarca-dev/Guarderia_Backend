@@ -4,6 +4,7 @@ import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRespons
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageUpdate;
+import com.guarderiaCentral.guarderia_Backend.services.GarageService;
 import com.guarderiaCentral.guarderia_Backend.services.PropiedadGarageService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -22,15 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Controlador RESTful para la gestión y administración de las relaciones de propiedad entre Socios y Garajes.
- * Administra el registro de compra, consulta y mantenimiento de las titularidades sobre los garajes.
- *
- * Cumple con la matriz de control de acceso basada en roles:
- * - SOCIO y EMPLEADO: Permiso de lectura/consulta sobre sus propios registros de asignación o entidades asociadas.
- * - ADMINISTRADOR: Control total CRUD (GET/POST/PUT/DELETE) sobre las propiedades de garajes.
- * - SYSADMIN: Sin acceso a la entidad de negocio PropiedadGarage.
  *
  * @version 1.0
  */
@@ -42,13 +38,8 @@ public class PropiedadGarageRestController {
     private static final Logger logger = LoggerFactory.getLogger(PropiedadGarageRestController.class);
 
     private final PropiedadGarageService propiedadGarageService;
+    private final GarageService garageService;
 
-    /**
-     * Obtiene el listado global de todas las relaciones de propiedad de garaje activas registradas en el sistema.
-     * Permitido para roles: ADMINISTRADOR, EMPLEADO.
-     *
-     * @return ResponseEntity conteniendo la lista de {@link PropiedadGarageResponse} y código HTTP 200 OK.
-     */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO')")
     public ResponseEntity<List<PropiedadGarageResponse>> obtenerTodas() {
@@ -57,13 +48,7 @@ public class PropiedadGarageRestController {
         return ResponseEntity.ok(lista);
     }
 
-    /**
-     * Obtiene el listado completo de todas las relaciones de propiedad de garaje, incluyendo inactivas (uso administrativo).
-     * Permitido para rol: ADMINISTRADOR.
-     *
-     * @return ResponseEntity conteniendo la lista completa de {@link PropiedadGarageResponse} y código HTTP 200 OK.
-     */
-    @GetMapping("/admin/todas")
+    @GetMapping("/inactivas")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<PropiedadGarageResponse>> listarTodasIncluyendoInactivas() {
         logger.info("REST Request para listar todas las propiedades de garajes (incluyendo inactivas).");
@@ -71,13 +56,6 @@ public class PropiedadGarageRestController {
         return ResponseEntity.ok(lista);
     }
 
-    /**
-     * Busca y retorna el detalle de una propiedad de garaje por su identificador único.
-     * Permitido para roles: ADMINISTRADOR, EMPLEADO, SOCIO.
-     *
-     * @param id Identificador único del registro de propiedad.
-     * @return ResponseEntity con la información de {@link PropiedadGarageResponse} y código HTTP 200 OK.
-     */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
     public ResponseEntity<PropiedadGarageResponse> obtenerPorId(@PathVariable Integer id) {
@@ -86,13 +64,6 @@ public class PropiedadGarageRestController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Registra una nueva venta/titularidad de garaje asignándola a un socio.
-     * Permitido para rol: ADMINISTRADOR.
-     *
-     * @param request Objeto con los datos de asignación de la propiedad ({@link PropiedadGarageRequest}).
-     * @return ResponseEntity con el {@link PropiedadGarageResponse} creado y código HTTP 201 Created.
-     */
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<PropiedadGarageResponse> registrarPropiedad(@Valid @RequestBody PropiedadGarageRequest request) {
@@ -102,14 +73,6 @@ public class PropiedadGarageRestController {
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaPropiedad);
     }
 
-    /**
-     * Actualiza la información registrada de una propiedad de garaje existente.
-     * Permitido para rol: ADMINISTRADOR.
-     *
-     * @param id Identificador único del registro de propiedad a modificar.
-     * @param update Objeto con la información actualizada de la propiedad ({@link PropiedadGarageUpdate}).
-     * @return ResponseEntity con el {@link PropiedadGarageResponse} actualizado y código HTTP 200 OK.
-     */
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<PropiedadGarageResponse> actualizar(
@@ -120,13 +83,6 @@ public class PropiedadGarageRestController {
         return ResponseEntity.ok(propiedadActualizada);
     }
 
-    /**
-     * Cancela o desactiva (borrado lógico) la asignación de propiedad de un garaje.
-     * Permitido para rol: ADMINISTRADOR.
-     *
-     * @param id Identificador único del registro de propiedad a dar de baja.
-     * @return ResponseEntity con código HTTP 204 No Content.
-     */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
@@ -135,25 +91,22 @@ public class PropiedadGarageRestController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Obtiene la lista de garajes pertenecientes a un socio determinado utilizando {@link GarageResponse}.
-     * Permitido para roles: ADMINISTRADOR, EMPLEADO, SOCIO.
-     *
-     * @param socioId Identificador único del socio a consultar.
-     * @return ResponseEntity conteniendo la lista de {@link GarageResponse} pertenecientes al socio y código HTTP 200 OK.
-     */
     @GetMapping("/socio/{socioId}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
     public ResponseEntity<List<GarageResponse>> listarPorSocio(@PathVariable Integer socioId) {
         logger.info("REST Request para listar los garajes pertenecientes al socio ID: {}", socioId);
         List<GarageResponse> garages = propiedadGarageService.listarPorSocio(socioId).stream()
                 .map(prop -> {
-                    if (prop.getGarage() != null) {
-                        return prop.getGarage();
+                    if (prop.getGarageId() != null) {
+                        try {
+                            return garageService.buscarPorId(prop.getGarageId());
+                        } catch (Exception e) {
+                            return null;
+                        }
                     }
                     return null;
                 })
-                .filter(java.util.Objects::nonNull)
+                .filter(Objects::nonNull)
                 .toList();
         return ResponseEntity.ok(garages);
     }

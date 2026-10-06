@@ -1,6 +1,5 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.administradores;
 
-import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -32,6 +31,4 @@ public class AdministradorUpdate {
     private String nombreUsuario;
 
     private String clave;
-
-    private Rol rol;
 }

@@ -1,6 +1,5 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.socios;
 
-import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -36,10 +35,9 @@ public class SocioUpdate {
 
     private String clave;
 
-    private Rol rol;
-
     @Size(max = 20, message = "El DNI no puede superar los 20 caracteres")
     private String dni;
 
     private LocalDate fechaIngreso;
 }
+

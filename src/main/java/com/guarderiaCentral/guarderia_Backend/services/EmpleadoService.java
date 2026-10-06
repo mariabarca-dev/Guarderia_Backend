@@ -52,7 +52,7 @@ public interface EmpleadoService {
      *
      * @return Lista de {@link EmpleadoResponse} incluidos inactivos.
      */
-    List<EmpleadoResponse> listarTodosIncluyendoInactivas();
+    List<EmpleadoResponse> listarTodosIncluyendoInactivos();
 
     /**
      * Actualiza la información de un empleado existente.

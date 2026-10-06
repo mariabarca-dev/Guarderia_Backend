@@ -1,8 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.administradores;
 
-import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -39,7 +37,4 @@ public class AdministradorRequest {
 
     @NotBlank(message = "La clave es obligatoria")
     private String clave;
-
-    @NotNull(message = "El rol es obligatorio")
-    private Rol rol;
 }

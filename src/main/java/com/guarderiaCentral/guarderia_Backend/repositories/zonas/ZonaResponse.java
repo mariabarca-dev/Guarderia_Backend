@@ -6,7 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Objeto de respuesta para exponer la información pública de una Zona.
+ * Objeto de respuesta para exponer la información pública de una Zona,
+ * incluyendo su estado actual de disponibilidad.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -22,4 +23,8 @@ public class ZonaResponse {
     private float anchoGarage;
     private float largoGarage;
     private Boolean activo;
+
+    // Campos calculados para reportar disponibilidad a la vista o frontend
+    private int espaciosDisponibles;
+    private int espaciosOcupados;
 }

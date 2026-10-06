@@ -24,11 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Implementación del servicio de gestión de propiedades de garage ({@link PropiedadGarageService}).
- * Maneja las transacciones y aplica de manera estricta las reglas de negocio del dominio:
- * - Un garage no puede venderse más de una vez mientras mantenga una propiedad activa.
- * - La fecha de compra del garage no puede ser anterior a la fecha de alta/ingreso del socio.
- * - Soporte nativo para borrado lógico, auditoría y mapeo de datos.
+ * Implementación del servicio de gestión de propiedades de garage.
  *
  * @author Cátedra
  * @version 1.0
@@ -42,9 +38,6 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
     private final SocioRepository socioRepository;
     private final GarageRepository garageRepository;
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional
     public PropiedadGarageResponse registrarPropiedad(PropiedadGarageRequest request) {
@@ -52,19 +45,12 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
 
         Socio socio = socioRepository.findById(request.getSocioId())
                 .filter(Socio::getActivo)
-                .orElseThrow(() -> {
-                    log.error("Socio no encontrado con ID: {}", request.getSocioId());
-                    return new RegistroNoEncontradoException("El socio especificado no existe o está inactivo en el sistema.");
-                });
+                .orElseThrow(() -> new RegistroNoEncontradoException("El socio especificado no existe o está inactivo en el sistema."));
 
         Garage garage = garageRepository.findById(request.getGarageId())
                 .filter(Garage::getActivo)
-                .orElseThrow(() -> {
-                    log.error("Garage no encontrado con ID: {}", request.getGarageId());
-                    return new RegistroNoEncontradoException("El garage especificado no existe o está inactivo en el sistema.");
-                });
+                .orElseThrow(() -> new RegistroNoEncontradoException("El garage especificado no existe o está inactivo en el sistema."));
 
-        // REGLA DE NEGOCIO: Validar que el garage no tenga una propiedad activa
         boolean yaVendido = propiedadGarageRepository.findAll().stream()
                 .anyMatch(p -> Boolean.TRUE.equals(p.getActivo())
                         && p.getGarage() != null
@@ -75,15 +61,15 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
             throw new GarageYaVendidoException("Error: El garaje N° " + garage.getNumeroGarage() + " ya tiene un socio propietario asignado.");
         }
 
-        // REGLA DE NEGOCIO: La fecha de compra no puede ser anterior a la fecha de ingreso del socio
-        LocalDate fechaCompra = request.getFechaCompra();
+        LocalDate fechaCompra = request.getFechaCompraGarage();
         if (socio.getFechaIngreso() != null && fechaCompra.isBefore(socio.getFechaIngreso())) {
-            log.warn("Fecha de compra invalida: {} es anterior a la fecha de ingreso del socio: {}", fechaCompra, socio.getFechaIngreso());
             throw new BusinessException("Error de negocio: La fecha de compra (" + fechaCompra
                     + ") no puede ser anterior a la fecha de ingreso del socio (" + socio.getFechaIngreso() + ").", HttpStatus.BAD_REQUEST);
         }
 
-        PropiedadGarage nuevaPropiedad = propiedadGarageRepository.toEntity(request, socio, garage);
+        PropiedadGarage nuevaPropiedad = propiedadGarageRepository.toEntity(request);
+        nuevaPropiedad.setSocio(socio);
+        nuevaPropiedad.setGarage(garage);
         nuevaPropiedad.setActivo(true);
 
         PropiedadGarage guardada = propiedadGarageRepository.save(nuevaPropiedad);
@@ -92,25 +78,16 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
         return propiedadGarageRepository.fromEntity(guardada);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional(readOnly = true)
     public PropiedadGarageResponse obtenerPorId(Integer id) {
         log.debug("Buscando propiedad de garage con ID: {}", id);
         PropiedadGarage propiedad = propiedadGarageRepository.findById(id)
                 .filter(PropiedadGarage::getActivo)
-                .orElseThrow(() -> {
-                    log.error("Propiedad de garage no encontrada con ID: {}", id);
-                    return new RegistroNoEncontradoException("Propiedad de garage no encontrada con ID: " + id);
-                });
+                .orElseThrow(() -> new RegistroNoEncontradoException("Propiedad de garage no encontrada con ID: " + id));
         return propiedadGarageRepository.fromEntity(propiedad);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional(readOnly = true)
     public List<PropiedadGarageResponse> listarTodas() {
@@ -121,30 +98,21 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional(readOnly = true)
     public List<PropiedadGarageResponse> listarTodasIncluyendoInactivas() {
         log.debug("Listando todas las propiedades de garage (incluyendo inactivas)");
-        // Se asume el método estándar o equivalente en el repositorio para incluir inactivas si estuviera disponible,
-        // de lo contrario se filtra según la necesidad de auditoría.
-        return propiedadGarageRepository.findAll().stream()
+        return propiedadGarageRepository.findAllIncludingInactive().stream()
                 .map(propiedadGarageRepository::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional(readOnly = true)
     public List<PropiedadGarageResponse> listarPorSocio(Integer socioId) {
         log.debug("Listando propiedades para el Socio ID: {}", socioId);
 
         if (!socioRepository.existsById(socioId)) {
-            log.error("Socio no encontrado con ID: {}", socioId);
             throw new RegistroNoEncontradoException("El socio especificado con ID " + socioId + " no existe.");
         }
 
@@ -156,9 +124,6 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional
     public PropiedadGarageResponse actualizar(Integer id, PropiedadGarageUpdate update) {
@@ -166,10 +131,7 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
 
         PropiedadGarage propiedadExistente = propiedadGarageRepository.findById(id)
                 .filter(PropiedadGarage::getActivo)
-                .orElseThrow(() -> {
-                    log.error("Propiedad de garage no encontrada para actualizar con ID: {}", id);
-                    return new RegistroNoEncontradoException("No se encontró la propiedad de garage especificada.");
-                });
+                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró la propiedad de garage especificada."));
 
         Socio socio = socioRepository.findById(update.getSocioId())
                 .filter(Socio::getActivo)
@@ -179,21 +141,21 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
                 .filter(Garage::getActivo)
                 .orElseThrow(() -> new RegistroNoEncontradoException("El garage especificado no existe o está inactivo."));
 
-        if (update.getFechaCompra() != null && socio.getFechaIngreso() != null && update.getFechaCompra().isBefore(socio.getFechaIngreso())) {
-            throw new BusinessException("Error de negocio: La fecha de compra (" + update.getFechaCompra()
+        if (update.getFechaCompraGarage() != null && socio.getFechaIngreso() != null && update.getFechaCompraGarage().isBefore(socio.getFechaIngreso())) {
+            throw new BusinessException("Error de negocio: La fecha de compra (" + update.getFechaCompraGarage()
                     + ") no puede ser anterior a la fecha de ingreso del socio (" + socio.getFechaIngreso() + ").", HttpStatus.BAD_REQUEST);
         }
 
-        propiedadGarageRepository.updateEntity(propiedadExistente, update, socio, garage);
+        propiedadGarageRepository.updateEntity(propiedadExistente, update);
+        propiedadExistente.setSocio(socio);
+        propiedadExistente.setGarage(garage);
+
         PropiedadGarage actualizada = propiedadGarageRepository.save(propiedadExistente);
         log.info("Propiedad de garage actualizada exitosamente con ID: {}", actualizada.getId());
 
         return propiedadGarageRepository.fromEntity(actualizada);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Transactional
     public void eliminar(Integer id) {
@@ -201,10 +163,7 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
 
         PropiedadGarage propiedad = propiedadGarageRepository.findById(id)
                 .filter(PropiedadGarage::getActivo)
-                .orElseThrow(() -> {
-                    log.error("Propiedad de garage no encontrada con ID: {}", id);
-                    return new RegistroNoEncontradoException("Propiedad de garage no encontrada con ID: " + id);
-                });
+                .orElseThrow(() -> new RegistroNoEncontradoException("Propiedad de garage no encontrada con ID: " + id));
 
         propiedad.setActivo(false);
         propiedadGarageRepository.save(propiedad);

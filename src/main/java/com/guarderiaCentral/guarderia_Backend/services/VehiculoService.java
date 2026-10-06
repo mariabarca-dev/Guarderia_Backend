@@ -17,107 +17,83 @@ import java.util.List;
 public interface VehiculoService {
 
     /**
-     * Registra un nuevo vehículo en el sistema verificando que no exista la matrícula.
+     * Registra un nuevo vehículo. Si existe un vehículo inactivo con la misma matrícula, lo reactiva
+     * con los datos del request; si existe uno activo, rechaza el alta.
      *
      * @param request Datos de la solicitud de alta del vehículo.
-     * @return DTO de respuesta con la información del vehículo registrado.
-     * @throws MatriculaDuplicadaException Si la matrícula ya se encuentra registrada.
-     * @throws RegistroNoEncontradoException Si el socio asignado al vehículo no existe o está inactivo.
+     * @return {@link VehiculoResponse} con el vehículo creado o reactivado.
+     * @throws MatriculaDuplicadaException   Si la matrícula pertenece a un vehículo activo.
+     * @throws RegistroNoEncontradoException Si el socio indicado no existe o está inactivo.
      */
-    VehiculoResponse registrarVehiculo(VehiculoRequest request);
+    VehiculoResponse crear(VehiculoRequest request);
 
     /**
      * Busca un vehículo activo por su identificador único.
      *
      * @param id Identificador único del vehículo.
-     * @return DTO de respuesta con la información del vehículo.
-     * @throws RegistroNoEncontradoException Si no existe un vehículo activo con el ID proporcionado.
+     * @return {@link VehiculoResponse} con la información del vehículo.
+     * @throws RegistroNoEncontradoException Si no existe un vehículo activo con ese ID.
      */
     VehiculoResponse buscarPorId(Integer id);
 
     /**
      * Busca un vehículo activo por su matrícula.
      *
-     * @param matricula Matrícula o dominio del vehículo.
-     * @return DTO de respuesta con la información del vehículo.
-     * @throws RegistroNoEncontradoException Si no existe un vehículo activo con dicha matrícula.
+     * @param matricula Matrícula del vehículo.
+     * @return {@link VehiculoResponse} con la información del vehículo.
+     * @throws RegistroNoEncontradoException Si no existe un vehículo activo con esa matrícula.
      */
     VehiculoResponse buscarPorMatricula(String matricula);
 
     /**
-     * Recupera la lista de todos los vehículos activos en el sistema.
+     * Lista todos los vehículos activos.
      *
-     * @return Lista de DTOs de respuesta de vehículos activos.
+     * @return Lista de {@link VehiculoResponse} activos.
      */
     List<VehiculoResponse> listarTodos();
 
     /**
-     * Recupera la lista completa de vehículos, incluyendo aquellos con borrado lógico (inactivos).
-     * Uso exclusivo administrativo/SYSADMIN.
+     * Lista todos los vehículos, incluyendo los dados de baja lógica.
+     * Uso exclusivo del rol ADMINISTRADOR.
      *
-     * @return Lista de {@link VehiculoResponse} incluidos inactivos.
+     * @return Lista de {@link VehiculoResponse} activos e inactivos.
      */
     List<VehiculoResponse> listarTodosIncluyendoInactivos();
 
     /**
-     * Lista todos los vehículos pertenecientes a un socio determinado.
+     * Lista los vehículos activos de un socio.
      *
      * @param socioId Identificador del socio propietario.
-     * @return Lista de respuestas de vehículos pertenecientes al socio.
-     * @throws RegistroNoEncontradoException Si el socio especificado no existe o se encuentra inactivo.
+     * @return Lista de {@link VehiculoResponse} del socio.
+     * @throws RegistroNoEncontradoException Si el socio no existe o está inactivo.
      */
     List<VehiculoResponse> listarPorSocio(Integer socioId);
 
     /**
-     * Método alternativo de consulta de vehículos pertenecientes a un socio.
-     *
-     * @param socioId Identificador del socio propietario.
-     * @return Lista de respuestas de vehículos.
-     * @throws RegistroNoEncontradoException Si el socio especificado no existe o se encuentra inactivo.
-     */
-    List<VehiculoResponse> buscarVehiculosPorSocio(Integer socioId);
-
-    /**
-     * Filtra los vehículos activos por su tipo (por ejemplo: LANCHA, MOTO_AQUATICA, etc.).
+     * Lista los vehículos activos de un tipo determinado.
      *
      * @param tipo Tipo de vehículo a filtrar.
-     * @return Lista de DTOs de respuesta con los vehículos coincidentes.
+     * @return Lista de {@link VehiculoResponse} que coinciden con el tipo.
      */
     List<VehiculoResponse> buscarPorTipo(TipoVehiculo tipo);
 
     /**
-     * Lista los vehículos asociados a las zonas que están a cargo de un empleado responsable.
+     * Actualiza los datos de un vehículo activo. Solo se modifican los campos no nulos del update.
      *
-     * @param empleadoId Identificador único del empleado.
-     * @return Lista de respuestas de vehículos bajo la responsabilidad del empleado.
-     * @throws RegistroNoEncontradoException Si el empleado no existe o está inactivo.
+     * @param id     Identificador del vehículo a modificar.
+     * @param update Datos a actualizar.
+     * @return {@link VehiculoResponse} con el vehículo actualizado.
+     * @throws RegistroNoEncontradoException Si el vehículo o el nuevo socio no existen o están inactivos.
+     * @throws MatriculaDuplicadaException   Si la nueva matrícula pertenece a otro vehículo, activo o inactivo.
      */
-    List<VehiculoResponse> listarVehiculosPorResponsable(int empleadoId);
+    VehiculoResponse actualizar(Integer id, VehiculoUpdate update);
 
     /**
-     * Actualiza la información de un vehículo existente.
-     *
-     * @param id Identificador del vehículo a modificar.
-     * @param update DTO con los datos actualizados.
-     * @return DTO de respuesta con el vehículo actualizado.
-     * @throws RegistroNoEncontradoException Si el vehículo o las entidades asociadas no existen.
-     * @throws MatriculaDuplicadaException Si la nueva matrícula pertenece a otro vehículo.
-     */
-    VehiculoResponse actualizarVehiculo(Integer id, VehiculoUpdate update);
-
-    /**
-     * Realiza el borrado lógico de un vehículo a partir de su matrícula.
-     *
-     * @param matricula Matrícula del vehículo a dar de baja.
-     * @throws RegistroNoEncontradoException Si no existe un vehículo activo con dicha matrícula.
-     */
-    void eliminarVehiculo(String matricula);
-
-    /**
-     * Realiza el borrado lógico de un vehículo a partir de su ID.
+     * Realiza la baja lógica de un vehículo y, en cascada, la de su asignación de garage activa,
+     * liberando el garage.
      *
      * @param id Identificador del vehículo a dar de baja.
-     * @throws RegistroNoEncontradoException Si no existe un vehículo activo con dicho ID.
+     * @throws RegistroNoEncontradoException Si no existe un vehículo activo con ese ID.
      */
-    void eliminarVehiculoPorId(Integer id);
+    void eliminar(Integer id);
 }

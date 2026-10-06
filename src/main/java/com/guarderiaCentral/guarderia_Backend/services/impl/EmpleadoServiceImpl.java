@@ -82,7 +82,6 @@ public class EmpleadoServiceImpl implements EmpleadoService {
             if (request.getClave() != null && !request.getClave().isBlank()) {
                 update.setClave(passwordEncoder.encode(request.getClave()));
             }
-            update.setRol(request.getRol());
             update.setCodigo(request.getCodigo());
             update.setEspecialidad(request.getEspecialidad());
 
@@ -132,7 +131,7 @@ public class EmpleadoServiceImpl implements EmpleadoService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<EmpleadoResponse> listarTodosIncluyendoInactivas() {
+    public List<EmpleadoResponse> listarTodosIncluyendoInactivos() {
         log.info("Obteniendo listado completo de empleados (activos e inactivos).");
         return empleadoRepository.findAllIncludingInactive().stream()
                 .map(empleadoRepository::fromEntity)

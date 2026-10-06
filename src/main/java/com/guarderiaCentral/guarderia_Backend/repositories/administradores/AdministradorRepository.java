@@ -1,6 +1,7 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.administradores;
 
 import com.guarderiaCentral.guarderia_Backend.modelos.Administrador;
+import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -12,7 +13,8 @@ import java.util.Optional;
  * Repositorio Spring Data JPA para la entidad Administrador.
  *
  * Filtra por defecto los registros activos mediante la anotación @SQLRestriction en la entidad raíz Usuario
- * y encapsula los métodos default de mapeo de DTOs.
+ * y encapsula los métodos default de mapeo entre {@link AdministradorRequest}, {@link AdministradorUpdate},
+ * {@link AdministradorResponse} y la entidad.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barcat
  */
@@ -71,9 +73,11 @@ public interface AdministradorRepository extends JpaRepository<Administrador, In
 
     /**
      * Convierte un {@link AdministradorRequest} en una entidad {@link Administrador}.
+     * El rol de la cuenta siempre es {@link Rol#ADMINISTRADOR}: no se toma del Request, de modo que
+     * esta ruta nunca pueda crear cuentas con otro rol (por ejemplo SYSADMIN).
      *
      * @param request Objeto con los datos de entrada.
-     * @return Entidad Administrador mapeada con activo = true.
+     * @return Entidad Administrador mapeada con rol ADMINISTRADOR y activo = true.
      */
     default Administrador toEntity(AdministradorRequest request) {
         if (request == null) {
@@ -86,14 +90,14 @@ public interface AdministradorRepository extends JpaRepository<Administrador, In
         administrador.setTelefono(request.getTelefono());
         administrador.setNombreUsuario(request.getNombreUsuario());
         administrador.setClave(request.getClave());
-        administrador.setRol(request.getRol());
+        administrador.setRol(Rol.ADMINISTRADOR);
         administrador.setActivo(true);
         return administrador;
     }
 
     /**
      * Actualiza los campos de una entidad {@link Administrador} existente a partir de un {@link AdministradorUpdate}.
-     * Solo modifica los atributos que no sean nulos.
+     * Solo modifica los atributos que no sean nulos. El rol de la cuenta nunca se modifica.
      *
      * @param administrador Entidad de administrador existente.
      * @param update        Objeto con los nuevos valores.
@@ -119,9 +123,6 @@ public interface AdministradorRepository extends JpaRepository<Administrador, In
         }
         if (update.getClave() != null) {
             administrador.setClave(update.getClave());
-        }
-        if (update.getRol() != null) {
-            administrador.setRol(update.getRol());
         }
     }
 

@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.socios;
 
+import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import com.guarderiaCentral.guarderia_Backend.modelos.Socio;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -11,7 +12,8 @@ import java.util.Optional;
 /**
  * Repositorio Spring Data JPA para la entidad {@link Socio}.
  * Gestiona la persistencia, consultas específicas por DNI y nombre de usuario,
- * consultas nativas con JOIN para herencia JOINED y métodos por defecto para conversión de DTOs.
+ * consultas nativas con JOIN para herencia JOINED y métodos por defecto de mapeo
+ * entre {@link SocioRequest}, {@link SocioUpdate}, {@link SocioResponse} y la entidad.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  * @version 1.0
@@ -105,9 +107,11 @@ public interface SocioRepository extends JpaRepository<Socio, Integer> {
 
     /**
      * Convierte un {@link SocioRequest} en una entidad {@link Socio}.
+     * El rol de la cuenta siempre es {@link Rol#SOCIO}: no se toma del Request, para que
+     * quien da de alta un socio no pueda asignarle un rol con más permisos.
      *
      * @param request Objeto con los datos de entrada.
-     * @return Entidad Socio mapeada con activo = true.
+     * @return Entidad Socio mapeada con rol SOCIO y activo = true.
      */
     default Socio toEntity(SocioRequest request) {
         if (request == null) {
@@ -120,7 +124,7 @@ public interface SocioRepository extends JpaRepository<Socio, Integer> {
         socio.setTelefono(request.getTelefono());
         socio.setNombreUsuario(request.getNombreUsuario());
         socio.setClave(request.getClave());
-        socio.setRol(request.getRol());
+        socio.setRol(Rol.SOCIO);
         socio.setDni(request.getDni());
         socio.setFechaIngreso(request.getFechaIngreso());
         socio.setActivo(true);
@@ -129,7 +133,7 @@ public interface SocioRepository extends JpaRepository<Socio, Integer> {
 
     /**
      * Actualiza los campos de una entidad {@link Socio} existente a partir de un {@link SocioUpdate}.
-     * Solo modifica los atributos que no sean nulos.
+     * Solo modifica los atributos que no sean nulos. El rol de la cuenta nunca se modifica.
      *
      * @param socio  Entidad de socio existente.
      * @param update Objeto con los nuevos valores.
@@ -155,9 +159,6 @@ public interface SocioRepository extends JpaRepository<Socio, Integer> {
         }
         if (update.getClave() != null) {
             socio.setClave(update.getClave());
-        }
-        if (update.getRol() != null) {
-            socio.setRol(update.getRol());
         }
         if (update.getDni() != null) {
             socio.setDni(update.getDni());
