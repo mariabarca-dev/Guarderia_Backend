@@ -50,7 +50,7 @@ public abstract class Usuario implements Serializable {
     private String clave;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "rol", nullable = false, length = 30)
+    @Column(name = "rol", nullable = false, length = 30, columnDefinition = "varchar(30)")
     private Rol rol;
 
     @Column(name = "activo", nullable = false)
