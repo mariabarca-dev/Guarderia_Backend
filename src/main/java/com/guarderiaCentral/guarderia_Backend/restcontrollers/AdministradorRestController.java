@@ -37,7 +37,7 @@ import java.util.List;
 public class AdministradorRestController {
 
     private final AdministradorService administradorService;
-
+///prueva bak
     /**
      * Registra un nuevo administrador en el sistema o reactiva uno inactivo existente.
      * <p>
