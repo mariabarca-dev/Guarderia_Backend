@@ -1,9 +1,11 @@
 package com.guarderiaCentral.guarderia_Backend.services;
 
+import com.guarderiaCentral.guarderia_Backend.exceptions.AccesoDenegadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.DependenciasActivasException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.GarageOcupadoResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioResponse;
@@ -109,4 +111,54 @@ public interface SocioService {
      * @throws RegistroNoEncontradoException Si el socio no existe, está inactivo o no posee garaje.
      */
     PropiedadGarageResponse obtenerEstadoGarageSocio(Integer socioId);
+
+    // --- Consultas del socio autenticado ("solo lo suyo"): el socio se identifica por el nombre de usuario del token ---
+
+    /**
+     * Devuelve el perfil del socio autenticado.
+     *
+     * @param nombreUsuario Nombre de usuario del socio autenticado (viene del token, no del cliente).
+     * @return DTO con los datos del socio.
+     * @throws RegistroNoEncontradoException Si no existe un socio activo con ese nombre de usuario.
+     */
+    SocioResponse buscarMiPerfil(String nombreUsuario);
+
+    /**
+     * Lista los vehículos del socio autenticado.
+     *
+     * @param nombreUsuario Nombre de usuario del socio autenticado.
+     * @return Lista de vehículos del socio.
+     * @throws RegistroNoEncontradoException Si no existe un socio activo con ese nombre de usuario.
+     */
+    List<VehiculoResponse> listarMisVehiculos(String nombreUsuario);
+
+    /**
+     * Busca un vehículo por ID verificando que pertenezca al socio autenticado.
+     *
+     * @param vehiculoId    Identificador del vehículo solicitado.
+     * @param nombreUsuario Nombre de usuario del socio autenticado.
+     * @return DTO con los datos del vehículo.
+     * @throws RegistroNoEncontradoException Si el vehículo o el socio no existen.
+     * @throws AccesoDenegadoException       Si el vehículo pertenece a otro socio.
+     */
+    VehiculoResponse buscarMiVehiculo(Integer vehiculoId, String nombreUsuario);
+
+    /**
+     * Lista los garages que el socio autenticado posee (propiedades de garage).
+     *
+     * @param nombreUsuario Nombre de usuario del socio autenticado.
+     * @return Lista de propiedades de garage del socio.
+     * @throws RegistroNoEncontradoException Si no existe un socio activo con ese nombre de usuario.
+     */
+    List<PropiedadGarageResponse> listarMisPropiedades(String nombreUsuario);
+
+    /**
+     * Lista los garages que ocupan los vehículos del socio autenticado, con lectura de luz,
+     * servicio de mantenimiento y fecha de asignación.
+     *
+     * @param nombreUsuario Nombre de usuario del socio autenticado.
+     * @return Lista de garages ocupados por sus vehículos.
+     * @throws RegistroNoEncontradoException Si no existe un socio activo con ese nombre de usuario.
+     */
+    List<GarageOcupadoResponse> listarMisGaragesOcupados(String nombreUsuario);
 }

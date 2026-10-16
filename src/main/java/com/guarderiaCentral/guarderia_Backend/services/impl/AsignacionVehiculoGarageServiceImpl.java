@@ -13,6 +13,7 @@ import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGar
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.GarageOcupadoResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoRepository;
@@ -210,6 +211,26 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
                 .orElseThrow(() -> new RegistroNoEncontradoException("No existe ninguna asignación activa para el vehículo ID: " + idVehiculo));
 
         return asignacionRepository.fromEntity(asignacion);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<GarageOcupadoResponse> listarGaragesOcupadosPorSocio(Integer socioId) {
+        log.info("Consultando los garages ocupados por los vehículos del socio ID: {}", socioId);
+        return asignacionRepository.findAllByActivoTrue().stream()
+                .filter(a -> a.getVehiculo() != null
+                        && a.getVehiculo().getSocio() != null
+                        && a.getVehiculo().getSocio().getId().equals(socioId)
+                        && a.getGarage() != null)
+                .map(a -> new GarageOcupadoResponse(
+                        a.getId(),
+                        a.getVehiculo().getId(),
+                        garageRepository.fromEntity(a.getGarage()),
+                        a.getFechaAsignacionGarage()))
+                .collect(Collectors.toList());
     }
 
     /**

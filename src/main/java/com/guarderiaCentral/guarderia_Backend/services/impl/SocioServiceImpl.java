@@ -1,11 +1,13 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
+import com.guarderiaCentral.guarderia_Backend.exceptions.AccesoDenegadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.DependenciasActivasException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.modelos.Socio;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.GarageOcupadoResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioRequest;
@@ -13,6 +15,7 @@ import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioUpdate;
 import com.guarderiaCentral.guarderia_Backend.repositories.usuarios.UsuarioRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoResponse;
+import com.guarderiaCentral.guarderia_Backend.services.AsignacionVehiculoGarageService;
 import com.guarderiaCentral.guarderia_Backend.services.PropiedadGarageService;
 import com.guarderiaCentral.guarderia_Backend.services.SocioService;
 import com.guarderiaCentral.guarderia_Backend.services.VehiculoService;
@@ -44,6 +47,7 @@ public class SocioServiceImpl implements SocioService {
     private final UsuarioRepository usuarioRepository;
     private final VehiculoService vehiculoService;
     private final PropiedadGarageService propiedadGarageService;
+    private final AsignacionVehiculoGarageService asignacionVehiculoGarageService;
     private final PasswordEncoder passwordEncoder;
 
     private static final LocalDate FECHA_FUNDACION = LocalDate.of(2000, 1, 1);
@@ -285,6 +289,66 @@ public class SocioServiceImpl implements SocioService {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public SocioResponse buscarMiPerfil(String nombreUsuario) {
+        log.debug("Consultando el perfil del socio autenticado: {}", nombreUsuario);
+        return socioRepository.fromEntity(obtenerSocioAutenticado(nombreUsuario));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<VehiculoResponse> listarMisVehiculos(String nombreUsuario) {
+        Socio socio = obtenerSocioAutenticado(nombreUsuario);
+        log.debug("Listando vehículos del socio autenticado ID: {}", socio.getId());
+        return vehiculoService.listarPorSocio(socio.getId());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public VehiculoResponse buscarMiVehiculo(Integer vehiculoId, String nombreUsuario) {
+        Socio socio = obtenerSocioAutenticado(nombreUsuario);
+        VehiculoResponse vehiculo = vehiculoService.buscarPorId(vehiculoId);
+
+        if (!socio.getId().equals(vehiculo.getSocioId())) {
+            log.warn("Acceso denegado: el socio ID {} intentó consultar el vehículo ID {} de otro socio.",
+                    socio.getId(), vehiculoId);
+            throw new AccesoDenegadoException("El vehículo solicitado no pertenece al socio autenticado.");
+        }
+        return vehiculo;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<PropiedadGarageResponse> listarMisPropiedades(String nombreUsuario) {
+        Socio socio = obtenerSocioAutenticado(nombreUsuario);
+        log.debug("Listando propiedades de garage del socio autenticado ID: {}", socio.getId());
+        return propiedadGarageService.listarPorSocio(socio.getId());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<GarageOcupadoResponse> listarMisGaragesOcupados(String nombreUsuario) {
+        Socio socio = obtenerSocioAutenticado(nombreUsuario);
+        log.debug("Listando garages ocupados por los vehículos del socio autenticado ID: {}", socio.getId());
+        return asignacionVehiculoGarageService.listarGaragesOcupadosPorSocio(socio.getId());
+    }
+
+    /**
      * Método auxiliar para verificar si un socio existe y está activo.
      *
      * @param socioId ID del socio a verificar.
@@ -295,5 +359,17 @@ public class SocioServiceImpl implements SocioService {
             log.error("Operación cancelada: El socio con ID {} no existe o está inactivo.", socioId);
             throw new RegistroNoEncontradoException("Socio no encontrado con ID: " + socioId);
         }
+    }
+
+    /**
+     * Resuelve el socio autenticado a partir del nombre de usuario que viene del token.
+     *
+     * @param nombreUsuario Nombre de usuario del {@code Authentication}.
+     * @return El {@link Socio} activo correspondiente.
+     * @throws RegistroNoEncontradoException Si no existe un socio activo con ese nombre de usuario.
+     */
+    private Socio obtenerSocioAutenticado(String nombreUsuario) {
+        return socioRepository.findByNombreUsuarioAndActivoTrue(nombreUsuario)
+                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el socio autenticado."));
     }
 }

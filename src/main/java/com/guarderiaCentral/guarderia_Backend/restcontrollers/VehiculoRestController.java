@@ -26,12 +26,12 @@ import java.util.List;
 
 /**
  * Controlador REST para la gestión de la entidad Vehículo.
- * Las consultas están abiertas a ADMINISTRADOR, EMPLEADO y SOCIO (solo registros activos);
- * el alta, la modificación, la baja y la consulta de inactivos son exclusivas del ADMINISTRADOR.
- * El rol SYSADMIN no tiene acceso a este recurso.
+ * Todas las operaciones (consultas, alta, modificación, baja y consulta de inactivos) son exclusivas del
+ * ADMINISTRADOR. El SOCIO consulta sus vehículos por {@code /api/socios/me/vehiculos}. El EMPLEADO y el
+ * SYSADMIN no tienen acceso a este recurso.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
- * @version 1.1
+ * @version 1.2
  */
 @Slf4j
 @RestController
@@ -47,7 +47,7 @@ public class VehiculoRestController {
      * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} y estado HTTP 200 (OK).
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<VehiculoResponse>> listarTodosLosVehiculos() {
         log.info("REST Request: Consulta para listar todos los vehículos");
         return ResponseEntity.ok(vehiculoService.listarTodos());
@@ -74,7 +74,7 @@ public class VehiculoRestController {
      * @throws RegistroNoEncontradoException Si el vehículo no existe o está inactivo.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<VehiculoResponse> buscarVehiculoPorId(@PathVariable Integer id) {
         log.info("REST Request: Consulta de vehículo por ID: {}", id);
         return ResponseEntity.ok(vehiculoService.buscarPorId(id));
@@ -88,7 +88,7 @@ public class VehiculoRestController {
      * @throws RegistroNoEncontradoException Si no existe un vehículo activo con esa matrícula.
      */
     @GetMapping("/matricula/{matricula}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<VehiculoResponse> buscarVehiculoPorMatricula(@PathVariable String matricula) {
         log.info("REST Request: Consulta de vehículo por matrícula: {}", matricula);
         return ResponseEntity.ok(vehiculoService.buscarPorMatricula(matricula));
@@ -101,7 +101,7 @@ public class VehiculoRestController {
      * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/tipo/{tipo}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<VehiculoResponse>> listarVehiculosPorTipo(@PathVariable TipoVehiculo tipo) {
         log.info("REST Request: Consulta de vehículos por tipo: {}", tipo);
         return ResponseEntity.ok(vehiculoService.buscarPorTipo(tipo));
@@ -115,7 +115,7 @@ public class VehiculoRestController {
      * @throws RegistroNoEncontradoException Si el socio no existe o está inactivo.
      */
     @GetMapping("/socio/{socioId}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<VehiculoResponse>> listarVehiculosPorSocio(@PathVariable Integer socioId) {
         log.info("REST Request: Consulta de vehículos para el socio ID: {}", socioId);
         return ResponseEntity.ok(vehiculoService.listarPorSocio(socioId));

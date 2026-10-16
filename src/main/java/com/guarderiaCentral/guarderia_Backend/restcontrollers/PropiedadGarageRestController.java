@@ -27,8 +27,10 @@ import java.util.Objects;
 
 /**
  * Controlador RESTful para la gestión y administración de las relaciones de propiedad entre Socios y Garajes.
+ * Todas las operaciones son exclusivas del ADMINISTRADOR. El SOCIO consulta sus propiedades por
+ * {@code /api/socios/me/propiedades}.
  *
- * @version 1.0
+ * @version 1.1
  */
 @RestController
 @RequestMapping("/api/propiedades-garage")
@@ -41,7 +43,7 @@ public class PropiedadGarageRestController {
     private final GarageService garageService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<PropiedadGarageResponse>> obtenerTodas() {
         logger.info("REST Request para listar todas las propiedades de garajes activas.");
         List<PropiedadGarageResponse> lista = propiedadGarageService.listarTodas();
@@ -57,7 +59,7 @@ public class PropiedadGarageRestController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<PropiedadGarageResponse> obtenerPorId(@PathVariable Integer id) {
         logger.info("REST Request para obtener la propiedad de garaje con ID: {}", id);
         PropiedadGarageResponse response = propiedadGarageService.obtenerPorId(id);
@@ -92,7 +94,7 @@ public class PropiedadGarageRestController {
     }
 
     @GetMapping("/socio/{socioId}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<GarageResponse>> listarPorSocio(@PathVariable Integer socioId) {
         logger.info("REST Request para listar los garajes pertenecientes al socio ID: {}", socioId);
         List<GarageResponse> garages = propiedadGarageService.listarPorSocio(socioId).stream()

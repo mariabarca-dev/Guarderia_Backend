@@ -28,11 +28,12 @@ import java.util.List;
  * Proporciona endpoints para consulta y mantenimiento de las instalaciones físicas (garages).
  *
  * Cumple con las restricciones de seguridad basadas en roles expuestas en la matriz del sistema:
- * - SOCIO y EMPLEADO: Acceso de lectura/consulta (GET) sobre la entidad Garage.
- * - ADMINISTRADOR: Control total (CRUD - GET/POST/PUT/DELETE) sobre la entidad Garage.
+ * - ADMINISTRADOR: Control total (CRUD - GET/POST/PUT/DELETE) sobre la entidad Garage, incluida la consulta de inactivos.
+ * - EMPLEADO: Solo la consulta de disponibilidad de garages por zona.
+ * - SOCIO: Sin acceso directo; consulta sus garages por los endpoints {@code /api/socios/me/...}.
  * - SYSADMIN: Sin acceso a la entidad de negocio Garage.
  *
- * @version 1.0
+ * @version 1.1
  */
 @RestController
 @RequestMapping("/api/garages")
@@ -45,12 +46,12 @@ public class GarageRestController {
 
     /**
      * Obtiene el listado de todos los garages activos registrados en el sistema.
-     * Permitido para roles: ADMINISTRADOR, EMPLEADO, SOCIO.
+     * Permitido para rol: ADMINISTRADOR.
      *
      * @return ResponseEntity conteniendo la lista de {@link GarageResponse} y código HTTP 200 OK.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<GarageResponse>> obtenerTodos() {
         logger.info("REST Request para listar todos los garages activos.");
         List<GarageResponse> lista = garageService.listarTodos();
@@ -58,14 +59,28 @@ public class GarageRestController {
     }
 
     /**
+     * Obtiene el listado completo de garages, incluyendo los dados de baja lógica (activo = false).
+     * Permitido exclusivamente para rol: ADMINISTRADOR.
+     *
+     * @return ResponseEntity conteniendo la lista de {@link GarageResponse} y código HTTP 200 OK.
+     */
+    @GetMapping("/inactivos")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<List<GarageResponse>> obtenerTodosIncluyendoInactivos() {
+        logger.info("REST Request para listar todos los garages (incluyendo inactivos).");
+        List<GarageResponse> lista = garageService.listarTodosIncluyendoInactivos();
+        return ResponseEntity.ok(lista);
+    }
+
+    /**
      * Busca y retorna un garage activo según su identificador único.
-     * Permitido para roles: ADMINISTRADOR, EMPLEADO, SOCIO.
+     * Permitido para rol: ADMINISTRADOR.
      *
      * @param id Identificador único del garage.
      * @return ResponseEntity con la información de {@link GarageResponse} y código HTTP 200 OK.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO', 'SOCIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<GarageResponse> obtenerPorId(@PathVariable Integer id) {
         logger.info("REST Request para obtener el garage con ID: {}", id);
         GarageResponse response = garageService.buscarPorId(id);

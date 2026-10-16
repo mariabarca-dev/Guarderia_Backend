@@ -26,8 +26,10 @@ import java.util.List;
  * Controlador RESTful para la gestión de asignaciones entre vehículos y garajes (AsignacionVehiculoGarage).
  * Proporciona endpoints REST limpios para operaciones CRUD sobre la relación asociativa 1 a 1 de asignación,
  * respetando la matriz de seguridad mediante Spring Security y anotaciones @PreAuthorize.
+ * Todas las operaciones son exclusivas del ADMINISTRADOR. El SOCIO consulta los garages que ocupan sus
+ * vehículos por {@code /api/socios/me/garages-ocupados}.
  *
- * @version 1.0
+ * @version 1.1
  */
 @RestController
 @RequestMapping("/api/asignaciones-vehiculo-garage")
@@ -40,12 +42,12 @@ public class AsignacionVehiculoGarageRestController {
 
     /**
      * Obtiene el listado completo de asignaciones activas de vehículos a garajes.
-     * Permitido para roles: SOCIO, EMPLEADO, ADMINISTRADOR.
+     * Permitido para rol: ADMINISTRADOR.
      *
      * @return ResponseEntity conteniendo la lista de {@link AsignacionVehiculoGarageResponse} y código HTTP 200 OK.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('SOCIO', 'EMPLEADO', 'ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<AsignacionVehiculoGarageResponse>> obtenerTodas() {
         logger.info("REST Request para listar todas las asignaciones de vehículo a garaje activas.");
         List<AsignacionVehiculoGarageResponse> lista = asignacionService.listarTodas();
@@ -69,13 +71,13 @@ public class AsignacionVehiculoGarageRestController {
 
     /**
      * Busca y retorna una asignación activa por su identificador único.
-     * Permitido para roles: SOCIO, EMPLEADO, ADMINISTRADOR.
+     * Permitido para rol: ADMINISTRADOR.
      *
      * @param id Identificador único de la asignación.
      * @return ResponseEntity con la {@link AsignacionVehiculoGarageResponse} encontrada y código HTTP 200 OK.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SOCIO', 'EMPLEADO', 'ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<AsignacionVehiculoGarageResponse> obtenerPorId(@PathVariable Integer id) {
         logger.info("REST Request para obtener la asignación de vehículo a garaje por ID: {}", id);
         AsignacionVehiculoGarageResponse response = asignacionService.buscarPorId(id);
@@ -84,13 +86,13 @@ public class AsignacionVehiculoGarageRestController {
 
     /**
      * Busca la asignación activa asociada a un vehículo específico utilizando su ID.
-     * Permitido para roles: SOCIO, EMPLEADO, ADMINISTRADOR.
+     * Permitido para rol: ADMINISTRADOR.
      *
      * @param vehiculoId Identificador único del vehículo.
      * @return ResponseEntity con la {@link AsignacionVehiculoGarageResponse} asociada al vehículo y código HTTP 200 OK.
      */
     @GetMapping("/vehiculo/{vehiculoId}")
-    @PreAuthorize("hasAnyRole('SOCIO', 'EMPLEADO', 'ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<AsignacionVehiculoGarageResponse> buscarPorVehiculo(@PathVariable Integer vehiculoId) {
         logger.info("REST Request para consultar la asignación asociada al vehículo ID: {}", vehiculoId);
         AsignacionVehiculoGarageResponse response = asignacionService.buscarPorVehiculo(vehiculoId);

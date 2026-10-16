@@ -7,6 +7,7 @@ import com.guarderiaCentral.guarderia_Backend.exceptions.ZonaSinCapacidadExcepti
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.GarageOcupadoResponse;
 
 import java.util.List;
 
@@ -71,6 +72,15 @@ public interface AsignacionVehiculoGarageService {
      * @throws RegistroNoEncontradoException Si el vehículo no tiene ninguna asignación activa.
      */
     AsignacionVehiculoGarageResponse buscarPorVehiculo(Integer idVehiculo);
+
+    /**
+     * Lista los garages que ocupan los vehículos de un socio, con los datos del garage
+     * (lectura de luz, mantenimiento) y la fecha de asignación.
+     *
+     * @param socioId Identificador del socio propietario de los vehículos.
+     * @return Lista de {@link GarageOcupadoResponse}; vacía si ninguno de sus vehículos está asignado.
+     */
+    List<GarageOcupadoResponse> listarGaragesOcupadosPorSocio(Integer socioId);
 
     /**
      * Actualiza la información de una asignación existente.
