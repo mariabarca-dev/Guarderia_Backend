@@ -28,12 +28,13 @@ import java.util.List;
  * Proporciona endpoints para consulta y mantenimiento de las instalaciones físicas (garages).
  *
  * Cumple con las restricciones de seguridad basadas en roles expuestas en la matriz del sistema:
- * - ADMINISTRADOR: Control total (CRUD - GET/POST/PUT/DELETE) sobre la entidad Garage, incluida la consulta de inactivos.
- * - EMPLEADO: Solo la consulta de disponibilidad de garages por zona.
+ * - ADMINISTRADOR: Control total (CRUD - GET/POST/PUT/DELETE) sobre la entidad Garage, incluida la consulta de inactivos
+ *   y el reporte de disponibilidad por zona.
+ * - EMPLEADO: Sin acceso directo; consulta sus zonas por {@code /api/empleados/me/zonas}.
  * - SOCIO: Sin acceso directo; consulta sus garages por los endpoints {@code /api/socios/me/...}.
  * - SYSADMIN: Sin acceso a la entidad de negocio Garage.
  *
- * @version 1.1
+ * @version 1.2
  */
 @RestController
 @RequestMapping("/api/garages")
@@ -70,6 +71,21 @@ public class GarageRestController {
         logger.info("REST Request para listar todos los garages (incluyendo inactivos).");
         List<GarageResponse> lista = garageService.listarTodosIncluyendoInactivos();
         return ResponseEntity.ok(lista);
+    }
+
+    /**
+     * Obtiene un reporte detallado con la información de disponibilidad y ocupación de los garages organizados por zona.
+     * Permitido exclusivamente para rol: ADMINISTRADOR.
+     * Se declara antes de {@code /{id}} para que la ruta fija no choque con el parámetro de ruta.
+     *
+     * @return ResponseEntity con la lista de {@link ZonaResponse} y código HTTP 200 OK.
+     */
+    @GetMapping("/disponibilidad")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<List<ZonaResponse>> consultarDisponibilidad() {
+        logger.info("REST Request para obtener el reporte global de disponibilidad de garages por zona.");
+        List<ZonaResponse> reporte = garageService.consultarDisponibilidadGarages();
+        return ResponseEntity.ok(reporte);
     }
 
     /**
@@ -135,19 +151,5 @@ public class GarageRestController {
         logger.info("REST Request para dar de baja lógicamente el garage con ID: {}", id);
         garageService.eliminar(id);
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * Obtiene un reporte detallado con la información de disponibilidad y ocupación de los garages organizados por zona.
-     * Permitido para roles: ADMINISTRADOR, EMPLEADO.
-     *
-     * @return ResponseEntity con la lista de {@link ZonaResponse} y código HTTP 200 OK.
-     */
-    @GetMapping("/disponibilidad")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'EMPLEADO')")
-    public ResponseEntity<List<ZonaResponse>> consultarDisponibilidad() {
-        logger.info("REST Request para obtener el reporte global de disponibilidad de garages por zona.");
-        List<ZonaResponse> reporte = garageService.consultarDisponibilidadGarages();
-        return ResponseEntity.ok(reporte);
     }
 }
