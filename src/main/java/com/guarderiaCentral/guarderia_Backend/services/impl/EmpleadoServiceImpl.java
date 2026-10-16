@@ -202,7 +202,7 @@ public class EmpleadoServiceImpl implements EmpleadoService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<AsignacionEmpleadoZonaResponse> listarZonasAsignadas(int empleadoId) {
+    public List<AsignacionEmpleadoZonaResponse> listarZonasAsignadas(Integer empleadoId) {
         log.info("Obteniendo zonas asignadas para el empleado ID: {}", empleadoId);
         obtenerEmpleadoActivoPorId(empleadoId);
 

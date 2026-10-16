@@ -35,10 +35,11 @@ public class AuthController {
 
     /**
      * Autentica un usuario mediante sus credenciales y emite un token JWT firmado que incluye su rol.
+     * La respuesta devuelve además el rol, para que el cliente sepa a qué panel dirigir al usuario.
      * Coincide con la regla de seguridad abierta: .requestMatchers("/api/auth/**").permitAll()
      *
      * @param loginRequest objeto JSON que contiene el nombre de usuario y la clave
-     * @return una respuesta HTTP con el token JWT de acceso generado
+     * @return una respuesta HTTP con el token JWT de acceso generado y el rol del usuario
      * @throws CredencialesInvalidasException si el usuario o la clave son incorrectos
      */
     @PostMapping("/login")
@@ -64,7 +65,7 @@ public class AuthController {
 
         log.info("Autenticación exitosa. Token JWT generado para el usuario: {}", loginRequest.getUsername());
 
-        return ResponseEntity.ok(new JwtResponse(jwt));
+        return ResponseEntity.ok(new JwtResponse(jwt, rol));
     }
 
     /**
@@ -80,12 +81,13 @@ public class AuthController {
     }
 
     /**
-     * DTO interno para retornar la respuesta estructurada con el token JWT.
+     * DTO interno para retornar la respuesta estructurada con el token JWT y el rol del usuario.
      */
     @Data
     @RequiredArgsConstructor
     public static class JwtResponse {
         private final String accessToken;
+        private final String rol;
         private final String tokenType = "Bearer";
     }
 }

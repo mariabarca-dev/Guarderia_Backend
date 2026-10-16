@@ -140,7 +140,7 @@ public class EmpleadoRestController {
      */
     @GetMapping("/{empleadoId}/zonas")
     @PreAuthorize("hasAnyRole('EMPLEADO', 'ADMINISTRADOR', 'SOCIO')")
-    public ResponseEntity<List<AsignacionEmpleadoZonaResponse>> listarZonasAsignadas(@PathVariable int empleadoId) {
+    public ResponseEntity<List<AsignacionEmpleadoZonaResponse>> listarZonasAsignadas(@PathVariable Integer empleadoId) {
         log.info("Petición REST para obtener las zonas asignadas al empleado ID: {}", empleadoId);
         List<AsignacionEmpleadoZonaResponse> zonas = empleadoService.listarZonasAsignadas(empleadoId);
         return ResponseEntity.ok(zonas);

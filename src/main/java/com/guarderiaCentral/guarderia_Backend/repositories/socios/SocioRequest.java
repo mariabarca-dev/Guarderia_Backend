@@ -2,6 +2,7 @@ package com.guarderiaCentral.guarderia_Backend.repositories.socios;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -37,6 +38,8 @@ public class SocioRequest {
 
     @NotBlank(message = "El nombre de usuario es obligatorio")
     @Size(max = 50, message = "El nombre de usuario no puede superar los 50 caracteres")
+    @Pattern(regexp = "^[a-zA-Z0-9_.-]+$",
+            message = "El nombre de usuario solo puede contener letras, números, punto, guion y guion bajo")
     private String nombreUsuario;
 
     @NotBlank(message = "La clave es obligatoria")
@@ -49,4 +52,3 @@ public class SocioRequest {
     @NotNull(message = "La fecha de ingreso es obligatoria")
     private LocalDate fechaIngreso;
 }
-

@@ -109,6 +109,7 @@ public interface SocioRepository extends JpaRepository<Socio, Integer> {
      * Convierte un {@link SocioRequest} en una entidad {@link Socio}.
      * El rol de la cuenta siempre es {@link Rol#SOCIO}: no se toma del Request, para que
      * quien da de alta un socio no pueda asignarle un rol con más permisos.
+     * La clave NO se copia acá: la asigna el service ya encriptada.
      *
      * @param request Objeto con los datos de entrada.
      * @return Entidad Socio mapeada con rol SOCIO y activo = true.
@@ -123,7 +124,6 @@ public interface SocioRepository extends JpaRepository<Socio, Integer> {
         socio.setDireccion(request.getDireccion());
         socio.setTelefono(request.getTelefono());
         socio.setNombreUsuario(request.getNombreUsuario());
-        socio.setClave(request.getClave());
         socio.setRol(Rol.SOCIO);
         socio.setDni(request.getDni());
         socio.setFechaIngreso(request.getFechaIngreso());
@@ -133,7 +133,8 @@ public interface SocioRepository extends JpaRepository<Socio, Integer> {
 
     /**
      * Actualiza los campos de una entidad {@link Socio} existente a partir de un {@link SocioUpdate}.
-     * Solo modifica los atributos que no sean nulos. El rol de la cuenta nunca se modifica.
+     * Solo modifica los atributos que no sean nulos. Una clave nula o en blanco significa "no cambiar".
+     * El rol de la cuenta nunca se modifica.
      *
      * @param socio  Entidad de socio existente.
      * @param update Objeto con los nuevos valores.
@@ -157,7 +158,7 @@ public interface SocioRepository extends JpaRepository<Socio, Integer> {
         if (update.getNombreUsuario() != null) {
             socio.setNombreUsuario(update.getNombreUsuario());
         }
-        if (update.getClave() != null) {
+        if (update.getClave() != null && !update.getClave().isBlank()) {
             socio.setClave(update.getClave());
         }
         if (update.getDni() != null) {

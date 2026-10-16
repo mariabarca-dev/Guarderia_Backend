@@ -82,7 +82,7 @@ public interface EmpleadoService {
      * @return Lista de {@link AsignacionEmpleadoZonaResponse}.
      * @throws RegistroNoEncontradoException si el empleado no existe o está inactivo.
      */
-    List<AsignacionEmpleadoZonaResponse> listarZonasAsignadas(int empleadoId);
+    List<AsignacionEmpleadoZonaResponse> listarZonasAsignadas(Integer empleadoId);
 
     /**
      * Obtiene los vehículos bajo responsabilidad indirecta de un empleado a través de sus zonas asignadas.

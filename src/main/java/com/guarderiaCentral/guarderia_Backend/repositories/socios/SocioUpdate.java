@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.socios;
 
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,6 +32,8 @@ public class SocioUpdate {
     private String telefono;
 
     @Size(max = 50, message = "El nombre de usuario no puede superar los 50 caracteres")
+    @Pattern(regexp = "^[a-zA-Z0-9_.-]+$",
+            message = "El nombre de usuario solo puede contener letras, números, punto, guion y guion bajo")
     private String nombreUsuario;
 
     private String clave;
@@ -40,4 +43,3 @@ public class SocioUpdate {
 
     private LocalDate fechaIngreso;
 }
-

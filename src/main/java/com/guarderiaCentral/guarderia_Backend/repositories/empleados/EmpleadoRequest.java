@@ -1,6 +1,7 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.empleados;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -33,6 +34,8 @@ public class EmpleadoRequest {
 
     @NotBlank(message = "El nombre de usuario es obligatorio")
     @Size(max = 50, message = "El nombre de usuario no puede superar los 50 caracteres")
+    @Pattern(regexp = "^[a-zA-Z0-9_.-]+$",
+            message = "El nombre de usuario solo puede contener letras, números, punto, guion y guion bajo")
     private String nombreUsuario;
 
     @NotBlank(message = "La clave es obligatoria")
