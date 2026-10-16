@@ -1,11 +1,12 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
+import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.CodigoEmpleadoDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.modelos.AsignacionEmpleadoZona;
 import com.guarderiaCentral.guarderia_Backend.modelos.Empleado;
-import com.guarderiaCentral.guarderia_Backend.modelos.Garage;
+import com.guarderiaCentral.guarderia_Backend.modelos.Vehiculo;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZonas.AsignacionEmpleadoZonaRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZonas.AsignacionEmpleadoZonaResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageRepository;
@@ -13,26 +14,28 @@ import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoRep
 import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoUpdate;
-import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.usuarios.UsuarioRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoResponse;
 import com.guarderiaCentral.guarderia_Backend.services.EmpleadoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * Implementación de la capa de servicio {@link EmpleadoService}.
  * Maneja la lógica de negocio de los empleados, validaciones de código y nombre de usuario,
- * guardado inteligente/reactivación, propagación en cascada de baja lógica sobre asignaciones y consultas asociadas.
+ * guardado inteligente/reactivación, propagación en cascada de baja lógica sobre asignaciones,
+ * la relación empleado-vehículo (vehículos que cada empleado atiende) y las consultas del empleado autenticado.
  *
  * @author Cátedra Guardería Central
  */
@@ -44,7 +47,6 @@ public class EmpleadoServiceImpl implements EmpleadoService {
     private final EmpleadoRepository empleadoRepository;
     private final UsuarioRepository usuarioRepository;
     private final AsignacionEmpleadoZonaRepository asignacionEmpleadoZonaRepository;
-    private final GarageRepository garageRepository;
     private final AsignacionVehiculoGarageRepository asignacionVehiculoGarageRepository;
     private final VehiculoRepository vehiculoRepository;
     private final PasswordEncoder passwordEncoder;
@@ -169,13 +171,21 @@ public class EmpleadoServiceImpl implements EmpleadoService {
 
     /**
      * {@inheritDoc}
-     * Propaga la desactivación en cascada a sus asignaciones de zona (AsignacionEmpleadoZona).
+     * Propaga la desactivación en cascada a sus asignaciones de zona (AsignacionEmpleadoZona)
+     * y libera los vehículos que tenía a cargo.
      */
     @Override
     @Transactional
     public void eliminar(Integer id) {
         log.info("Ejecutando borrado lógico para empleado con ID: {}", id);
         Empleado empleado = obtenerEmpleadoActivoPorId(id);
+
+        // Liberar los vehículos que tenía a cargo, para que no queden apuntando a un empleado inactivo
+        List<Vehiculo> vehiculosACargo = vehiculoRepository.findAllByActivoTrue().stream()
+                .filter(v -> v.getEmpleado() != null && v.getEmpleado().getId().equals(id))
+                .collect(Collectors.toList());
+        vehiculosACargo.forEach(v -> v.setEmpleado(null));
+        vehiculoRepository.saveAll(vehiculosACargo);
 
         // Desactivación lógica del empleado
         empleado.setActivo(false);
@@ -218,44 +228,122 @@ public class EmpleadoServiceImpl implements EmpleadoService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<VehiculoResponse> listarVehiculosBajoResponsabilidad(int empleadoId) {
-        log.info("Obteniendo vehículos bajo responsabilidad del empleado ID: {}", empleadoId);
+    public List<VehiculoResponse> listarVehiculosBajoResponsabilidad(Integer empleadoId) {
+        log.info("Obteniendo vehículos a cargo del empleado ID: {}", empleadoId);
         obtenerEmpleadoActivoPorId(empleadoId);
 
-        // 1. Zonas asociadas a asignaciones de empleado activas
-        List<Integer> zonasIds = asignacionEmpleadoZonaRepository.findAllByActivoTrue().stream()
-                .filter(asig -> asig.getEmpleado() != null
-                        && asig.getEmpleado().getId().equals(empleadoId)
-                        && asig.getZona() != null
-                        && Boolean.TRUE.equals(asig.getZona().getActivo()))
-                .map(asig -> asig.getZona().getId())
+        return vehiculoRepository.findAllByActivoTrue().stream()
+                .filter(v -> v.getEmpleado() != null && v.getEmpleado().getId().equals(empleadoId))
+                .map(vehiculoRepository::fromEntity)
                 .collect(Collectors.toList());
+    }
 
-        if (zonasIds.isEmpty()) {
-            return new ArrayList<>();
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public VehiculoResponse asignarVehiculo(Integer empleadoId, Integer vehiculoId) {
+        log.info("Asignando el vehículo ID {} al empleado ID {}", vehiculoId, empleadoId);
+        Empleado empleado = obtenerEmpleadoActivoPorId(empleadoId);
+        Vehiculo vehiculo = obtenerVehiculoActivoPorId(vehiculoId);
+
+        // 1. El vehículo pertenece a la zona del garage que ocupa
+        Integer zonaId = zonaPorVehiculo().get(vehiculoId);
+        if (zonaId == null) {
+            throw new BusinessException("El vehículo no está asignado a ningún garage, por lo que no pertenece a ninguna zona.", HttpStatus.CONFLICT);
         }
 
-        // 2. Garages activos de las zonas asignadas
-        List<Garage> garagesEnZonas = garageRepository.findAll().stream()
-                .filter(g -> g.getZona() != null
-                        && zonasIds.contains(g.getZona().getId())
-                        && Boolean.TRUE.equals(g.getActivo()))
-                .collect(Collectors.toList());
+        // 2. El empleado debe estar asignado a esa zona
+        AsignacionEmpleadoZona asignacionZona = asignacionEmpleadoZonaRepository.findAllByEmpleadoIdAndActivoTrue(empleadoId).stream()
+                .filter(a -> a.getZona() != null && a.getZona().getId().equals(zonaId))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException("El empleado no está asignado a la zona donde se encuentra el vehículo.", HttpStatus.CONFLICT));
 
-        List<Integer> garageIds = garagesEnZonas.stream().map(Garage::getId).collect(Collectors.toList());
-
-        if (garageIds.isEmpty()) {
-            return new ArrayList<>();
+        // 3. Si ya estaba a su cargo no hay nada que cambiar
+        if (vehiculo.getEmpleado() != null && vehiculo.getEmpleado().getId().equals(empleadoId)) {
+            return vehiculoRepository.fromEntity(vehiculo);
         }
 
-        // 3. Asignaciones Vehiculo-Garage activas asociadas a esos garages
-        return asignacionVehiculoGarageRepository.findAllByActivoTrue().stream()
-                .filter(asigVG -> asigVG.getGarage() != null
-                        && garageIds.contains(asigVG.getGarage().getId())
-                        && asigVG.getVehiculo() != null
-                        && Boolean.TRUE.equals(asigVG.getVehiculo().getActivo()))
-                .map(asigVG -> vehiculoRepository.fromEntity(asigVG.getVehiculo()))
-                .collect(Collectors.toList());
+        // 4. No puede superar la cantidad de vehículos a cargo definida para la zona
+        int asignados = contarVehiculosAsignadosEnZona(empleadoId, zonaId);
+        if (asignados >= asignacionZona.getCantVehiculosACargo()) {
+            throw new BusinessException("El empleado ya tiene asignados los " + asignacionZona.getCantVehiculosACargo()
+                    + " vehículos que tiene a cargo en la zona " + asignacionZona.getZona().getLetra() + ".", HttpStatus.CONFLICT);
+        }
+
+        vehiculo.setEmpleado(empleado);
+        Vehiculo guardado = vehiculoRepository.save(vehiculo);
+        log.info("Vehículo ID {} asignado al empleado ID {}", vehiculoId, empleadoId);
+
+        return vehiculoRepository.fromEntity(guardado);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public void desasignarVehiculo(Integer empleadoId, Integer vehiculoId) {
+        log.info("Quitando el vehículo ID {} del cargo del empleado ID {}", vehiculoId, empleadoId);
+        obtenerEmpleadoActivoPorId(empleadoId);
+        Vehiculo vehiculo = obtenerVehiculoActivoPorId(vehiculoId);
+
+        if (vehiculo.getEmpleado() == null || !vehiculo.getEmpleado().getId().equals(empleadoId)) {
+            throw new RegistroNoEncontradoException("El vehículo con ID " + vehiculoId + " no está a cargo del empleado con ID " + empleadoId + ".");
+        }
+
+        vehiculo.setEmpleado(null);
+        vehiculoRepository.save(vehiculo);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public int contarVehiculosAsignadosEnZona(Integer empleadoId, Integer zonaId) {
+        return vehiculosDelEmpleadoEnZona(empleadoId, zonaId).size();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public void liberarVehiculosEnZona(Integer empleadoId, Integer zonaId) {
+        List<Vehiculo> vehiculos = vehiculosDelEmpleadoEnZona(empleadoId, zonaId);
+        vehiculos.forEach(v -> v.setEmpleado(null));
+        vehiculoRepository.saveAll(vehiculos);
+        log.info("Se liberaron {} vehículo(s) del empleado ID {} en la zona ID {}", vehiculos.size(), empleadoId, zonaId);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public EmpleadoResponse buscarMiPerfil(String nombreUsuario) {
+        log.info("Consultando el perfil del empleado autenticado: {}", nombreUsuario);
+        return empleadoRepository.fromEntity(obtenerEmpleadoAutenticado(nombreUsuario));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<AsignacionEmpleadoZonaResponse> listarMisZonas(String nombreUsuario) {
+        return listarZonasAsignadas(obtenerEmpleadoAutenticado(nombreUsuario).getId());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<VehiculoResponse> listarMisVehiculos(String nombreUsuario) {
+        return listarVehiculosBajoResponsabilidad(obtenerEmpleadoAutenticado(nombreUsuario).getId());
     }
 
     // --- Métodos Privados Auxiliares ---
@@ -263,6 +351,38 @@ public class EmpleadoServiceImpl implements EmpleadoService {
     private Empleado obtenerEmpleadoActivoPorId(Integer id) {
         return empleadoRepository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró un empleado activo con el ID: " + id));
+    }
+
+    private Empleado obtenerEmpleadoAutenticado(String nombreUsuario) {
+        return empleadoRepository.findByNombreUsuarioAndActivoTrue(nombreUsuario)
+                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el empleado autenticado."));
+    }
+
+    private Vehiculo obtenerVehiculoActivoPorId(Integer id) {
+        return vehiculoRepository.findByIdAndActivoTrue(id)
+                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró un vehículo activo con el ID: " + id));
+    }
+
+    /**
+     * Arma un mapa vehículoId -> zonaId a partir de las asignaciones vehículo-garage activas.
+     */
+    private Map<Integer, Integer> zonaPorVehiculo() {
+        Map<Integer, Integer> zonaPorVehiculo = new HashMap<>();
+        asignacionVehiculoGarageRepository.findAllByActivoTrue().forEach(a -> {
+            if (a.getVehiculo() != null && a.getGarage() != null && a.getGarage().getZona() != null) {
+                zonaPorVehiculo.put(a.getVehiculo().getId(), a.getGarage().getZona().getId());
+            }
+        });
+        return zonaPorVehiculo;
+    }
+
+    private List<Vehiculo> vehiculosDelEmpleadoEnZona(Integer empleadoId, Integer zonaId) {
+        Map<Integer, Integer> zonaPorVehiculo = zonaPorVehiculo();
+        return vehiculoRepository.findAllByActivoTrue().stream()
+                .filter(v -> v.getEmpleado() != null
+                        && v.getEmpleado().getId().equals(empleadoId)
+                        && zonaId.equals(zonaPorVehiculo.get(v.getId())))
+                .collect(Collectors.toList());
     }
 
     private void validarCodigoUnico(String codigo, Integer idExcluir) {

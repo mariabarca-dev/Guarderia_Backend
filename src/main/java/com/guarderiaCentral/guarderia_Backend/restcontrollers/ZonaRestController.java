@@ -18,11 +18,11 @@ import java.util.List;
 
 /**
  * Controlador REST API para la gestión de Zonas en la Guardería Central.
- * Proporciona endpoints para consulta (GET) accesibles por SOCIO, EMPLEADO y ADMINISTRADOR,
- * y operaciones de escritura/modificación (POST, PUT, DELETE) exclusivas para ADMINISTRADOR.
+ * Todas las operaciones (consulta, alta, modificación y baja) son exclusivas del ADMINISTRADOR.
+ * El EMPLEADO consulta sus zonas por {@code /api/empleados/me/zonas}.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
- * @version 1.0
+ * @version 1.1
  */
 @Slf4j
 @Validated
@@ -55,12 +55,12 @@ public class ZonaRestController {
 
     /**
      * Obtiene la lista completa de todas las zonas activas en el sistema.
-     * Accesible por usuarios con rol SOCIO, EMPLEADO o ADMINISTRADOR.
+     * Accesible solo por usuarios con rol ADMINISTRADOR.
      *
      * @return {@link ResponseEntity} con la lista de {@link ZonaResponse} activas y código HTTP 200 OK.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('SOCIO', 'EMPLEADO', 'ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<ZonaResponse>> listarZonas() {
         log.info("REST Request para listar todas las zonas activas");
         List<ZonaResponse> zonas = zonaService.listarTodas();
@@ -83,13 +83,13 @@ public class ZonaRestController {
 
     /**
      * Busca y obtiene el detalle de una zona por su letra identificadora.
-     * Accesible por usuarios con rol SOCIO, EMPLEADO o ADMINISTRADOR.
+     * Accesible solo por usuarios con rol ADMINISTRADOR.
      *
      * @param letra Letra o identificador único de la zona (1 a 3 letras).
      * @return {@link ResponseEntity} con la {@link ZonaResponse} encontrada y código HTTP 200 OK.
      */
     @GetMapping("/{letra}")
-    @PreAuthorize("hasAnyRole('SOCIO', 'EMPLEADO', 'ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<ZonaResponse> buscarPorLetra(
             @PathVariable
             @Pattern(regexp = REGEX_LETRA_ZONA, message = "La letra de la zona debe contener entre 1 y 3 caracteres alfabéticos.")
@@ -115,7 +115,7 @@ public class ZonaRestController {
             @Valid @RequestBody ZonaUpdate update) {
 
         log.info("REST Request para actualizar Zona con ID: {}", id);
-              ZonaResponse zonaActualizada = zonaService.actualizarZona(id, update);
+        ZonaResponse zonaActualizada = zonaService.actualizarZona(id, update);
         return ResponseEntity.ok(zonaActualizada);
     }
 
@@ -130,7 +130,6 @@ public class ZonaRestController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminarZona(@PathVariable Integer id) {
         log.info("REST Request para realizar borrado lógico de Zona con ID: {}", id);
-        // CORREGIDO: Llama a eliminarZona en lugar de eliminar
         zonaService.eliminarZona(id);
         return ResponseEntity.noContent().build();
     }

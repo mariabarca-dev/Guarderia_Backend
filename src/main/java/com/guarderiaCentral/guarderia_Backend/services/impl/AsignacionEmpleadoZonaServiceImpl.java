@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
+import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.ZonaSinCapacidadException;
 import com.guarderiaCentral.guarderia_Backend.modelos.AsignacionEmpleadoZona;
@@ -12,8 +13,10 @@ import com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZon
 import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaRepository;
 import com.guarderiaCentral.guarderia_Backend.services.AsignacionEmpleadoZonaService;
+import com.guarderiaCentral.guarderia_Backend.services.EmpleadoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +25,8 @@ import java.util.stream.Collectors;
 
 /**
  * Implementación de la lógica de negocio para la entidad {@link AsignacionEmpleadoZona}.
+ * Mantiene coherente la relación empleado-vehículo: al eliminar o cambiar una asignación, los vehículos
+ * que el empleado tenía a cargo en esa zona quedan liberados.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -33,6 +38,7 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
     private final AsignacionEmpleadoZonaRepository asignacionRepository;
     private final EmpleadoRepository empleadoRepository;
     private final ZonaRepository zonaRepository;
+    private final EmpleadoService empleadoService;
 
     @Override
     @Transactional
@@ -112,9 +118,25 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
         AsignacionEmpleadoZona asignacion = asignacionRepository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> new RegistroNoEncontradoException("La asignación con ID " + id + " no fue encontrada."));
 
+        Integer empleadoActualId = asignacion.getEmpleado().getId();
+        Integer zonaActualId = asignacion.getZona().getId();
+
+        boolean cambiaEmpleadoOZona =
+                (update.getEmpleadoId() != null && !update.getEmpleadoId().equals(empleadoActualId))
+                        || (update.getZonaId() != null && !update.getZonaId().equals(zonaActualId));
+
         if (update.getCantVehiculosACargo() != null) {
             if (update.getCantVehiculosACargo() < 0) {
                 throw new IllegalArgumentException("La cantidad de vehículos a cargo no puede ser negativa.");
+            }
+
+            // No se puede bajar la cantidad por debajo de los vehículos que el empleado ya tiene asignados en la zona
+            if (!cambiaEmpleadoOZona) {
+                int asignados = empleadoService.contarVehiculosAsignadosEnZona(empleadoActualId, zonaActualId);
+                if (update.getCantVehiculosACargo() < asignados) {
+                    throw new BusinessException("No se puede reducir a " + update.getCantVehiculosACargo()
+                            + " vehículos: el empleado ya tiene " + asignados + " asignados en la zona.", HttpStatus.CONFLICT);
+                }
             }
 
             Zona zona = asignacion.getZona();
@@ -142,6 +164,11 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
         asignacionRepository.updateEntity(asignacion, update, empleadoNuevo, zonaNueva);
         AsignacionEmpleadoZona actualizada = asignacionRepository.save(asignacion);
 
+        // Si la asignación pasó a otro empleado u otra zona, los vehículos del par anterior quedan liberados
+        if (cambiaEmpleadoOZona) {
+            empleadoService.liberarVehiculosEnZona(empleadoActualId, zonaActualId);
+        }
+
         log.info("Asignación con ID: {} actualizada exitosamente", actualizada.getId());
         return asignacionRepository.fromEntity(actualizada);
     }
@@ -153,8 +180,15 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
         AsignacionEmpleadoZona asignacion = asignacionRepository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> new RegistroNoEncontradoException("La asignación con ID " + id + " no fue encontrada."));
 
+        Integer empleadoId = asignacion.getEmpleado().getId();
+        Integer zonaId = asignacion.getZona().getId();
+
         asignacion.setActivo(false);
         asignacionRepository.save(asignacion);
+
+        // El empleado deja de atender la zona: se liberan los vehículos que tenía a cargo en ella
+        empleadoService.liberarVehiculosEnZona(empleadoId, zonaId);
+
         log.info("Borrado lógico aplicado exitosamente a la asignación con ID: {}", id);
     }
 }

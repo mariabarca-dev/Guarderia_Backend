@@ -9,6 +9,7 @@ import org.hibernate.annotations.SQLRestriction;
 
 /**
  * Entidad que representa un Vehículo registrado perteneciente a un Socio.
+ * Puede tener un Empleado a cargo (opcional): el empleado que lo atiende dentro de la zona donde está guardado.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -28,6 +29,10 @@ public class Vehiculo {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "socio_id", nullable = false)
     private Socio socio;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "empleado_id")
+    private Empleado empleado;
 
     @Column(name = "nombre", length = 100)
     private String nombre;

@@ -24,10 +24,11 @@ import java.util.List;
 
 /**
  * Controlador RESTful para la gestión de las asignaciones de empleados a zonas (AsignacionEmpleadoZona).
- * Proporciona endpoints para realizar operaciones CRUD respetando la seguridad y permisos asignados por rol.
+ * Todas las operaciones son exclusivas del ADMINISTRADOR. El EMPLEADO consulta sus zonas por
+ * {@code /api/empleados/me/zonas}.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
- * @version 1.0
+ * @version 1.1
  */
 @RestController
 @RequestMapping("/api/asignaciones-empleado-zona")
@@ -40,12 +41,12 @@ public class AsignacionEmpleadoZonaRestController {
 
     /**
      * Obtiene la lista completa de asignaciones activas de empleados a zonas.
-     * Permitido para roles: SOCIO, EMPLEADO, ADMINISTRADOR.
+     * Permitido para rol: ADMINISTRADOR.
      *
      * @return ResponseEntity con la lista de {@link AsignacionEmpleadoZonaResponse} y código HTTP 200 OK.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('SOCIO', 'EMPLEADO', 'ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<AsignacionEmpleadoZonaResponse>> obtenerTodas() {
         logger.info("REST Request para obtener todas las asignaciones de empleado a zona activas.");
         List<AsignacionEmpleadoZonaResponse> lista = asignacionService.listarTodas();
@@ -69,13 +70,13 @@ public class AsignacionEmpleadoZonaRestController {
 
     /**
      * Busca y retorna una asignación activa por su identificador único.
-     * Permitido para roles: SOCIO, EMPLEADO, ADMINISTRADOR.
+     * Permitido para rol: ADMINISTRADOR.
      *
      * @param id Identificador único de la asignación.
      * @return ResponseEntity con la {@link AsignacionEmpleadoZonaResponse} encontrada y código HTTP 200 OK.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SOCIO', 'EMPLEADO', 'ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<AsignacionEmpleadoZonaResponse> obtenerPorId(@PathVariable Integer id) {
         logger.info("REST Request para obtener la asignación con ID: {}", id);
         AsignacionEmpleadoZonaResponse response = asignacionService.buscarPorId(id);
