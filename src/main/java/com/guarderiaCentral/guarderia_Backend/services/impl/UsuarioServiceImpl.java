@@ -1,6 +1,5 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
-import com.guarderiaCentral.guarderia_Backend.exceptions.CredencialesInvalidasException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.SysAdminProtegidoException;
 import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
@@ -15,25 +14,27 @@ import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioUpdate;
 import com.guarderiaCentral.guarderia_Backend.repositories.usuarios.UsuarioRepository;
+import com.guarderiaCentral.guarderia_Backend.repositories.usuarios.UsuarioResponse;
 import com.guarderiaCentral.guarderia_Backend.services.AdministradorService;
 import com.guarderiaCentral.guarderia_Backend.services.EmpleadoService;
 import com.guarderiaCentral.guarderia_Backend.services.SocioService;
 import com.guarderiaCentral.guarderia_Backend.services.UsuarioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * Implementación de {@link UsuarioService} para la autenticación y administración centralizada de cuentas.
+ * Implementación de {@link UsuarioService} para la consulta y administración centralizada de cuentas.
  * Delega la lógica de negocio y guardado inteligente en {@link SocioService}, {@link EmpleadoService}
  * y {@link AdministradorService} para garantizar un único camino de validación por tipo de cuenta.
+ * Las consultas devuelven {@link UsuarioResponse}, que nunca incluye la clave.
  *
  * @author GuarderiaCentral
- * @version 1.0
+ * @version 1.2
  */
 @Slf4j
 @Service
@@ -41,7 +42,6 @@ import java.util.List;
 public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
-    private final PasswordEncoder passwordEncoder;
     private final SocioService socioService;
     private final EmpleadoService empleadoService;
     private final AdministradorService administradorService;
@@ -51,48 +51,15 @@ public class UsuarioServiceImpl implements UsuarioService {
      */
     @Override
     @Transactional(readOnly = true)
-    public Usuario validarLogin(String nombreUsuario, String clave) throws CredencialesInvalidasException {
-        log.info("Intentando validar credenciales para el usuario: {}", nombreUsuario);
-
-        Usuario u = usuarioRepository.findByNombreUsuarioAndActivoTrue(nombreUsuario)
-                .orElseThrow(() -> {
-                    log.warn("Fallo de autenticación: Usuario '{}' no encontrado o inactivo.", nombreUsuario);
-                    return new CredencialesInvalidasException("Usuario o contraseña incorrectos.");
-                });
-
-        if (!passwordEncoder.matches(clave, u.getClave())) {
-            log.warn("Fallo de autenticación: Contraseña incorrecta para el usuario '{}'.", nombreUsuario);
-            throw new CredencialesInvalidasException("Usuario o contraseña incorrectos.");
-        }
-
-        log.info("Autenticación exitosa para el usuario: {}", nombreUsuario);
-        return u;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean tieneRol(Usuario usuario, Rol rolRequerido) {
-        if (usuario == null || usuario.getRol() == null) {
-            return false;
-        }
-        return usuario.getRol() == rolRequerido;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public Usuario buscarPorId(Integer id) throws RegistroNoEncontradoException {
+    public UsuarioResponse buscarPorId(Integer id) throws RegistroNoEncontradoException {
         log.info("Buscando usuario activo con ID: {}", id);
-        return usuarioRepository.findById(id)
+        Usuario usuario = usuarioRepository.findById(id)
                 .filter(Usuario::getActivo)
                 .orElseThrow(() -> {
                     log.warn("No se encontró el usuario activo con ID: {}", id);
                     return new RegistroNoEncontradoException("No se encontró el usuario con ID: " + id);
                 });
+        return usuarioRepository.fromEntity(usuario);
     }
 
     /**
@@ -100,9 +67,26 @@ public class UsuarioServiceImpl implements UsuarioService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<Usuario> listarTodos() {
+    public UsuarioResponse buscarMiUsuario(String nombreUsuario) throws RegistroNoEncontradoException {
+        log.info("Consultando los datos del usuario autenticado: {}", nombreUsuario);
+        Usuario usuario = usuarioRepository.findByNombreUsuarioAndActivoTrue(nombreUsuario)
+                .orElseThrow(() -> {
+                    log.warn("No se encontró el usuario autenticado '{}'.", nombreUsuario);
+                    return new RegistroNoEncontradoException("No se encontró el usuario autenticado.");
+                });
+        return usuarioRepository.fromEntity(usuario);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<UsuarioResponse> listarTodos() {
         log.info("Listando todos los usuarios activos.");
-        return usuarioRepository.findAll();
+        return usuarioRepository.findAll().stream()
+                .map(usuarioRepository::fromEntity)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -110,9 +94,11 @@ public class UsuarioServiceImpl implements UsuarioService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<Usuario> listarTodosIncluyendoInactivos() {
+    public List<UsuarioResponse> listarTodosIncluyendoInactivos() {
         log.info("Listando todos los usuarios (incluyendo inactivos).");
-        return usuarioRepository.listarTodosIncluyendoInactivos();
+        return usuarioRepository.listarTodosIncluyendoInactivos().stream()
+                .map(usuarioRepository::fromEntity)
+                .collect(Collectors.toList());
     }
 
     // --- Métodos delegados para gestión de Socios ---
@@ -193,7 +179,7 @@ public class UsuarioServiceImpl implements UsuarioService {
      * @throws SysAdminProtegidoException Si el usuario objetivo es SYSADMIN.
      */
     private void validarNoEsSysAdmin(Integer id) {
-        Usuario u = buscarPorId(id);
+        UsuarioResponse u = buscarPorId(id);
         if (u.getRol() == Rol.SYSADMIN) {
             throw new SysAdminProtegidoException("No se permite realizar esta operación sobre un usuario con rol SYSADMIN.");
         }

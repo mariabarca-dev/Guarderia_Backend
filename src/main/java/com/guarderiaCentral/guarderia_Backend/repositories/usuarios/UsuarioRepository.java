@@ -64,4 +64,25 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
      */
     @Query(value = "SELECT * FROM usuarios WHERE id = :id", nativeQuery = true)
     Optional<Usuario> buscarPorIdIncluyendoInactivos(@Param("id") Integer id);
+
+    /**
+     * Convierte una entidad {@link Usuario} en un {@link UsuarioResponse}.
+     * No expone la clave.
+     *
+     * @param usuario Entidad de origen.
+     * @return Objeto de respuesta con los datos comunes de la cuenta.
+     */
+    default UsuarioResponse fromEntity(Usuario usuario) {
+        if (usuario == null) {
+            return null;
+        }
+        UsuarioResponse response = new UsuarioResponse();
+        response.setId(usuario.getId());
+        response.setNombre(usuario.getNombre());
+        response.setApellido(usuario.getApellido());
+        response.setNombreUsuario(usuario.getNombreUsuario());
+        response.setRol(usuario.getRol());
+        response.setActivo(usuario.getActivo());
+        return response;
+    }
 }
