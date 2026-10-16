@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 /**
  * Implementación de la lógica de negocio para la entidad {@link Vehiculo}.
  * Maneja el guardado inteligente por matrícula (alta o reactivación), la validación de socios,
- * la baja lógica con cascada sobre la asignación de garage y las consultas filtradas.
+ * la baja lógica con cascada sobre la asignación de garage y el empleado a cargo, y las consultas filtradas.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -188,6 +188,7 @@ public class VehiculoServiceImpl implements VehiculoService {
 
     /**
      * {@inheritDoc}
+     * Además de dar de baja la asignación de garage, el vehículo deja de estar a cargo de cualquier empleado.
      */
     @Override
     @Transactional
@@ -205,6 +206,7 @@ public class VehiculoServiceImpl implements VehiculoService {
         asignacionVehiculoGarageRepository.saveAll(asignaciones);
         log.info("Se liberó el garage: {} asignación(es) del vehículo ID {} dadas de baja.", asignaciones.size(), id);
 
+        vehiculo.setEmpleado(null);
         vehiculo.setActivo(false);
         vehiculoRepository.save(vehiculo);
         log.info("Baja lógica del vehículo con ID {} realizada con éxito.", id);

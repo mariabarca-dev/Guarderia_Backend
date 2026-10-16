@@ -131,6 +131,8 @@ public class GarageServiceImpl implements GarageService {
 
     /**
      * {@inheritDoc}
+     * No permite cambiar la zona de un garage que está ocupado por un vehículo: el administrador debe
+     * liberar primero el garage (eliminando la asignación vehículo-garage) y volver a asignar el vehículo después.
      */
     @Override
     @Transactional
@@ -146,6 +148,8 @@ public class GarageServiceImpl implements GarageService {
         }
 
         if (update.getZonaId() != null && (garage.getZona() == null || !garage.getZona().getId().equals(update.getZonaId()))) {
+            validarGarageSinVehiculoParaCambiarDeZona(garage);
+
             Zona nuevaZona = zonaRepository.findById(update.getZonaId())
                     .filter(z -> Boolean.TRUE.equals(z.getActivo()))
                     .orElseThrow(() -> new RegistroNoEncontradoException("No existe una zona activa con el ID: " + update.getZonaId()));
@@ -264,5 +268,26 @@ public class GarageServiceImpl implements GarageService {
         return garageRepository.findById(id)
                 .filter(g -> Boolean.TRUE.equals(g.getActivo()))
                 .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró un garage activo con el ID: " + id));
+    }
+
+    /**
+     * Rechaza el cambio de zona si el garage está ocupado por un vehículo, indicando al administrador
+     * qué asignación debe eliminar primero.
+     *
+     * @param garage Garage cuya zona se quiere cambiar.
+     * @throws DependenciasActivasException Si el garage tiene una asignación vehículo-garage activa.
+     */
+    private void validarGarageSinVehiculoParaCambiarDeZona(Garage garage) {
+        asignacionVehiculoGarageRepository.findAllByActivoTrue().stream()
+                .filter(a -> a.getGarage() != null && a.getGarage().getId().equals(garage.getId()))
+                .findFirst()
+                .ifPresent(a -> {
+                    String matricula = a.getVehiculo() != null ? a.getVehiculo().getMatricula() : "desconocida";
+                    log.warn("Cambio de zona rechazado: el garage ID {} está ocupado por el vehículo {}", garage.getId(), matricula);
+                    throw new DependenciasActivasException("No se puede cambiar de zona el garage N° " + garage.getNumeroGarage()
+                            + " porque está ocupado por el vehículo con matrícula " + matricula + ". "
+                            + "Primero eliminá la asignación vehículo-garage (ID " + a.getId() + "), "
+                            + "cambiá la zona del garage y volvé a asignar el vehículo.");
+                });
     }
 }

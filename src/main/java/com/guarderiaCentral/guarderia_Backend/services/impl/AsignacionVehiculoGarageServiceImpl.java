@@ -25,12 +25,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * Implementación de la lógica de negocio para la gestión de asignaciones entre Vehículos y Garajes.
  * Garantiza la integridad referencial, el borrado lógico y el cumplimiento de las reglas de dominio.
+ * Cuando un vehículo deja el garage o cambia de zona, deja de estar a cargo del empleado que lo atendía.
  */
 @Slf4j
 @Service
@@ -235,6 +237,8 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
 
     /**
      * {@inheritDoc}
+     * Si el vehículo cambia o el garage nuevo está en otra zona, el vehículo anterior deja de estar
+     * a cargo del empleado que lo atendía.
      */
     @Override
     @Transactional
@@ -245,8 +249,25 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
                 .filter(AsignacionVehiculoGarage::getActivo)
                 .orElseThrow(() -> new RegistroNoEncontradoException("No existe la asignación activa a actualizar con ID: " + id));
 
+        // Se guarda lo anterior antes de aplicar los cambios
+        Vehiculo vehiculoAnterior = asignacionExistente.getVehiculo();
+        Integer zonaAnteriorId = obtenerZonaId(asignacionExistente.getGarage());
+
         asignacionRepository.updateEntity(asignacionExistente, update);
         AsignacionVehiculoGarage actualizada = asignacionRepository.save(asignacionExistente);
+
+        boolean cambiaVehiculo = update.getVehiculoId() != null
+                && vehiculoAnterior != null
+                && !update.getVehiculoId().equals(vehiculoAnterior.getId());
+
+        Integer zonaNuevaId = zonaAnteriorId;
+        if (update.getGarageId() != null) {
+            zonaNuevaId = obtenerZonaId(garageRepository.findById(update.getGarageId()).orElse(null));
+        }
+
+        if (cambiaVehiculo || !Objects.equals(zonaAnteriorId, zonaNuevaId)) {
+            liberarEmpleadoDelVehiculo(vehiculoAnterior);
+        }
 
         log.info("Asignación ID: {} actualizada con éxito", id);
         return asignacionRepository.fromEntity(actualizada);
@@ -254,6 +275,7 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
 
     /**
      * {@inheritDoc}
+     * El vehículo queda sin garage, por lo que también deja de estar a cargo de un empleado.
      */
     @Override
     @Transactional
@@ -266,6 +288,8 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
 
         asignacion.setActivo(false);
         asignacionRepository.save(asignacion);
+
+        liberarEmpleadoDelVehiculo(asignacion.getVehiculo());
 
         log.info("Borrado lógico finalizado con éxito para la asignación ID: {}", id);
     }
@@ -280,5 +304,23 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
                         && a.getGarage().getZona() != null
                         && a.getGarage().getZona().getId().equals(zona.getId()))
                 .count();
+    }
+
+    /**
+     * Devuelve el ID de la zona de un garage, o null si el garage o su zona no existen.
+     */
+    private Integer obtenerZonaId(Garage garage) {
+        return (garage != null && garage.getZona() != null) ? garage.getZona().getId() : null;
+    }
+
+    /**
+     * Deja al vehículo sin empleado a cargo, si lo tenía.
+     */
+    private void liberarEmpleadoDelVehiculo(Vehiculo vehiculo) {
+        if (vehiculo != null && vehiculo.getEmpleado() != null) {
+            vehiculo.setEmpleado(null);
+            vehiculoRepository.save(vehiculo);
+            log.info("El vehículo ID {} dejó de estar a cargo de su empleado.", vehiculo.getId());
+        }
     }
 }
