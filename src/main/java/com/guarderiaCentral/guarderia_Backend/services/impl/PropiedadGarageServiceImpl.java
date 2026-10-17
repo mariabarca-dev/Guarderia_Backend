@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 /**
  * Implementación del servicio de gestión de propiedades de garage.
+ * Un garage pertenece a un solo socio: la regla se aplica tanto al registrar como al modificar una propiedad.
  *
  * @author Cátedra
  * @version 1.0
@@ -124,6 +125,11 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * {@inheritDoc}
+     * Si el garage indicado ya pertenece a otra propiedad activa, la modificación se rechaza para que un garage
+     * nunca tenga dos propietarios. La propiedad que se está modificando no cuenta como "otra".
+     */
     @Override
     @Transactional
     public PropiedadGarageResponse actualizar(Integer id, PropiedadGarageUpdate update) {
@@ -140,6 +146,17 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
         Garage garage = garageRepository.findById(update.getGarageId())
                 .filter(Garage::getActivo)
                 .orElseThrow(() -> new RegistroNoEncontradoException("El garage especificado no existe o está inactivo."));
+
+        boolean garageConOtroPropietario = propiedadGarageRepository.findAll().stream()
+                .anyMatch(p -> Boolean.TRUE.equals(p.getActivo())
+                        && !p.getId().equals(id)
+                        && p.getGarage() != null
+                        && p.getGarage().getId().equals(garage.getId()));
+
+        if (garageConOtroPropietario) {
+            log.warn("Intento fallido de modificar la propiedad ID {}: el garage N° {} ya tiene otro propietario.", id, garage.getNumeroGarage());
+            throw new GarageYaVendidoException("Error: El garaje N° " + garage.getNumeroGarage() + " ya tiene un socio propietario asignado.");
+        }
 
         if (update.getFechaCompraGarage() != null && socio.getFechaIngreso() != null && update.getFechaCompraGarage().isBefore(socio.getFechaIngreso())) {
             throw new BusinessException("Error de negocio: La fecha de compra (" + update.getFechaCompraGarage()

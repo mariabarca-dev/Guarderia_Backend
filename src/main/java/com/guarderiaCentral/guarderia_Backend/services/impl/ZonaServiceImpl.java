@@ -3,7 +3,9 @@ package com.guarderiaCentral.guarderia_Backend.services.impl;
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.LetraZonaDuplicadaException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
+import com.guarderiaCentral.guarderia_Backend.modelos.AsignacionEmpleadoZona;
 import com.guarderiaCentral.guarderia_Backend.modelos.Zona;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZonas.AsignacionEmpleadoZonaRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaRequest;
@@ -25,7 +27,8 @@ import java.util.stream.Collectors;
  * Implementación del servicio de negocio para la entidad {@link Zona}.
  * Maneja las validaciones de unicidad, integridad referencial, borrado lógico y guardado inteligente.
  * Al modificar la zona revalida lo ya existente: la capacidad no puede quedar por debajo de los garages
- * de la zona y los vehículos ya asignados deben seguir entrando en las nuevas medidas.
+ * de la zona ni de los vehículos que los empleados tienen a cargo en ella, y los vehículos ya asignados
+ * deben seguir entrando en las nuevas medidas.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -36,6 +39,7 @@ public class ZonaServiceImpl implements ZonaService {
 
     private final ZonaRepository zonaRepository;
     private final GarageRepository garageRepository;
+    private final AsignacionEmpleadoZonaRepository asignacionEmpleadoZonaRepository;
     private final AsignacionVehiculoGarageService asignacionVehiculoGarageService;
 
     /**
@@ -154,8 +158,9 @@ public class ZonaServiceImpl implements ZonaService {
     /**
      * Actualiza la información de una zona. Valida que no se modifique el tipo de vehículo si la zona ya
      * cuenta con garages asociados, que la nueva capacidad no quede por debajo de los garages que la zona ya
-     * tiene (cada garage aloja un solo vehículo, por lo que también cubre los vehículos ya asignados) y que,
-     * si cambian el ancho o el largo de los garages, los vehículos ya asignados en la zona sigan entrando.
+     * tiene (cada garage aloja un solo vehículo, por lo que también cubre los vehículos ya asignados) ni por
+     * debajo de los vehículos que los empleados ya tienen a cargo en la zona, y que, si cambian el ancho o el
+     * largo de los garages, los vehículos ya asignados en la zona sigan entrando.
      *
      * @param id Identificador de la zona.
      * @param update DTO con los datos a actualizar.
@@ -163,8 +168,8 @@ public class ZonaServiceImpl implements ZonaService {
      * @throws RegistroNoEncontradoException Si la zona no existe.
      * @throws LetraZonaDuplicadaException Si la nueva letra ya está asignada a otra zona activa.
      * @throws BusinessException Si se intenta modificar el tipo de vehículo teniendo garages asociados, bajar la
-     *                           capacidad por debajo de los garages existentes (409) o achicar los garages dejando
-     *                           afuera a un vehículo ya asignado.
+     *                           capacidad por debajo de los garages existentes o de los vehículos a cargo de
+     *                           empleados (409) o achicar los garages dejando afuera a un vehículo ya asignado.
      */
     @Override
     @Transactional
@@ -199,8 +204,8 @@ public class ZonaServiceImpl implements ZonaService {
             }
         }
 
-        // Regla de Negocio: la capacidad no puede quedar por debajo de los garages que la zona ya tiene
         if (update.getCapacidadVehiculos() != null) {
+            // Regla de Negocio: la capacidad no puede quedar por debajo de los garages que la zona ya tiene
             long garajesEnZona = garageRepository.findAll().stream()
                     .filter(g -> g.getZona() != null
                             && g.getZona().getId().equals(id)
@@ -214,6 +219,21 @@ public class ZonaServiceImpl implements ZonaService {
                         + zonaExistente.getLetra() + "' a " + update.getCapacidadVehiculos()
                         + " porque ya tiene " + garajesEnZona + " garajes activos. Primero dá de baja garajes de la zona"
                         + " o elegí una capacidad de al menos " + garajesEnZona + ".", HttpStatus.CONFLICT);
+            }
+
+            // Regla de Negocio: la capacidad no puede quedar por debajo de los vehículos que los empleados ya tienen a cargo
+            int vehiculosACargo = asignacionEmpleadoZonaRepository.findAllByZonaIdAndActivoTrue(id).stream()
+                    .mapToInt(AsignacionEmpleadoZona::getCantVehiculosACargo)
+                    .sum();
+
+            if (update.getCapacidadVehiculos() < vehiculosACargo) {
+                log.error("Bloqueo de reducción de capacidad en zona ID {}: nueva capacidad {}, vehículos a cargo de empleados {}.",
+                        id, update.getCapacidadVehiculos(), vehiculosACargo);
+                throw new BusinessException("Error: No se puede reducir la capacidad de la zona '"
+                        + zonaExistente.getLetra() + "' a " + update.getCapacidadVehiculos()
+                        + " porque los empleados ya tienen a cargo " + vehiculosACargo + " vehículos en la zona."
+                        + " Primero reducí la cantidad de vehículos a cargo de los empleados o elegí una capacidad de al menos "
+                        + vehiculosACargo + ".", HttpStatus.CONFLICT);
             }
         }
 

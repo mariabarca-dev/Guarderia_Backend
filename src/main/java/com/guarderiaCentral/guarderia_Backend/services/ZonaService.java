@@ -56,8 +56,8 @@ public interface ZonaService {
 
     /**
      * Actualiza la información de una zona existente. No permite cambiar el tipo de vehículo si la zona tiene
-     * garages, ni bajar la capacidad por debajo de los garages que ya tiene, ni achicar los garages de modo
-     * que un vehículo ya asignado deje de entrar.
+     * garages, ni bajar la capacidad por debajo de los garages que ya tiene ni de los vehículos que los empleados
+     * ya tienen a cargo en la zona, ni achicar los garages de modo que un vehículo ya asignado deje de entrar.
      *
      * @param id Identificador único de la zona a actualizar.
      * @param update Datos actualizados para la zona.

@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.services;
 
+import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.SysAdminProtegidoException;
@@ -21,10 +22,12 @@ public interface AdministradorService {
 
     /**
      * Registra un nuevo administrador en el sistema o reactiva uno inactivo existente.
+     * Las cuentas SYSADMIN inactivas no se reactivan por esta vía: su nombre de usuario se considera ocupado.
      *
      * @param request Datos de la solicitud de creación.
      * @return {@link AdministradorResponse} con el registro creado o reactivado.
-     * @throws NombreUsuarioDuplicadoException Si el nombre de usuario pertenece a otra cuenta activa o inactiva.
+     * @throws NombreUsuarioDuplicadoException Si el nombre de usuario pertenece a otra cuenta activa, a una cuenta
+     *                                         SYSADMIN inactiva o a otro tipo de usuario inactivo.
      */
     AdministradorResponse crear(AdministradorRequest request);
 
@@ -71,11 +74,13 @@ public interface AdministradorService {
 
     /**
      * Realiza el borrado lógico de un administrador cambiando su estado activo a false.
+     * El SYSADMIN no puede dar de baja su propia cuenta, para que el sistema no se quede sin SYSADMIN.
      *
      * @param id                    Identificador del administrador.
      * @param nombreUsuarioLlamador Nombre de usuario de quien realiza la operación (viene del token).
      * @throws RegistroNoEncontradoException Si no existe un administrador activo con el ID proporcionado.
      * @throws SysAdminProtegidoException    Si quien opera es ADMINISTRADOR y la cuenta es SYSADMIN.
+     * @throws BusinessException             Si el SYSADMIN intenta dar de baja su propia cuenta (409).
      */
     void eliminar(Integer id, String nombreUsuarioLlamador);
 }

@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
+import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.SysAdminProtegidoException;
@@ -13,6 +14,7 @@ import com.guarderiaCentral.guarderia_Backend.repositories.usuarios.UsuarioRepos
 import com.guarderiaCentral.guarderia_Backend.services.AdministradorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +28,8 @@ import java.util.Optional;
  * frente al rol ADMINISTRADOR y borrado lógico.
  * <p>
  * El SYSADMIN opera sobre todas las cuentas. Si quien llama es un ADMINISTRADOR, las cuentas SYSADMIN
- * no se listan y no se pueden consultar, modificar ni dar de baja.
+ * no se listan y no se pueden consultar, modificar, dar de baja ni reactivar. El SYSADMIN no puede dar de
+ * baja su propia cuenta, para que el sistema no se quede sin SYSADMIN.
  * </p>
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barcat
@@ -42,6 +45,8 @@ public class AdministradorServiceImpl implements AdministradorService {
 
     /**
      * {@inheritDoc}
+     * Solo se reactivan administradores comunes inactivos: una cuenta SYSADMIN inactiva no se reactiva por esta
+     * vía, por lo que su nombre de usuario se informa como ya registrado.
      */
     @Override
     @Transactional
@@ -57,7 +62,7 @@ public class AdministradorServiceImpl implements AdministradorService {
 
             if (inactivoOpt.isPresent()) {
                 Administrador inactivo = inactivoOpt.get();
-                if (Boolean.FALSE.equals(inactivo.getActivo())) {
+                if (Boolean.FALSE.equals(inactivo.getActivo()) && inactivo.getRol() != Rol.SYSADMIN) {
                     log.info("Reactivando administrador inactivo con ID: {}", inactivo.getId());
 
                     AdministradorUpdate update = new AdministradorUpdate();
@@ -167,6 +172,8 @@ public class AdministradorServiceImpl implements AdministradorService {
 
     /**
      * {@inheritDoc}
+     * El SYSADMIN no puede dar de baja su propia cuenta: se compara el nombre de usuario de la cuenta a borrar
+     * con el de quien llama (que viene del token). Un administrador común sí puede darse de baja.
      */
     @Override
     @Transactional
@@ -178,6 +185,11 @@ public class AdministradorServiceImpl implements AdministradorService {
                 .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el administrador activo con ID: " + id));
 
         validarAcceso(admin, nombreUsuarioLlamador);
+
+        if (admin.getRol() == Rol.SYSADMIN && admin.getNombreUsuario().equals(nombreUsuarioLlamador)) {
+            log.warn("El SYSADMIN '{}' intentó dar de baja su propia cuenta.", nombreUsuarioLlamador);
+            throw new BusinessException("Error: El SYSADMIN no puede dar de baja su propia cuenta.", HttpStatus.CONFLICT);
+        }
 
         admin.setActivo(false);
         administradorRepository.save(admin);
