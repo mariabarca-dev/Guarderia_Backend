@@ -1,7 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.services;
 
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
-import com.guarderiaCentral.guarderia_Backend.exceptions.SysAdminProtegidoException;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorUpdate;
@@ -22,7 +21,7 @@ import java.util.List;
  * Delega la gestión específica de cuentas en SocioService, EmpleadoService y AdministradorService.
  *
  * @author GuarderiaCentral
- * @version 1.2
+ * @version 1.3
  */
 public interface UsuarioService {
 
@@ -79,7 +78,7 @@ public interface UsuarioService {
 
     AdministradorResponse crearAdministrador(AdministradorRequest request);
 
-    AdministradorResponse actualizarAdministrador(Integer id, AdministradorUpdate update) throws SysAdminProtegidoException;
+    AdministradorResponse actualizarAdministrador(Integer id, AdministradorUpdate update, String nombreUsuarioLlamador);
 
-    void eliminarAdministrador(Integer id) throws SysAdminProtegidoException;
+    void eliminarAdministrador(Integer id, String nombreUsuarioLlamador);
 }

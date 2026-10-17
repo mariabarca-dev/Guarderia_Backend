@@ -11,7 +11,9 @@ import java.util.List;
 
 /**
  * Interfaz de servicio para la gestión de administradores.
- * Define las operaciones de negocio permitidas exclusivamente para el rol SYSADMIN.
+ * Define las operaciones de negocio permitidas a los roles ADMINISTRADOR y SYSADMIN.
+ * El SYSADMIN opera sobre todas las cuentas; el ADMINISTRADOR no puede ver, modificar ni dar de baja
+ * cuentas con rol SYSADMIN. Por eso las consultas y modificaciones reciben el nombre de usuario de quien llama.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barcat
  */
@@ -29,44 +31,51 @@ public interface AdministradorService {
     /**
      * Busca un administrador activo por su ID.
      *
-     * @param id Identificador único del administrador.
+     * @param id                    Identificador único del administrador.
+     * @param nombreUsuarioLlamador Nombre de usuario de quien realiza la consulta (viene del token).
      * @return {@link AdministradorResponse} correspondiente al ID.
      * @throws RegistroNoEncontradoException Si no se encuentra un administrador activo con dicho ID.
+     * @throws SysAdminProtegidoException    Si quien consulta es ADMINISTRADOR y la cuenta es SYSADMIN.
      */
-    AdministradorResponse buscarPorId(Integer id);
+    AdministradorResponse buscarPorId(Integer id, String nombreUsuarioLlamador);
 
     /**
-     * Lista todos los administradores activos.
+     * Lista todos los administradores activos. Si quien consulta es ADMINISTRADOR, excluye las cuentas SYSADMIN.
      *
-     * @return Lista de {@link AdministradorResponse} activos.
+     * @param nombreUsuarioLlamador Nombre de usuario de quien realiza la consulta (viene del token).
+     * @return Lista de {@link AdministradorResponse} activos visibles para quien consulta.
      */
-    List<AdministradorResponse> listarTodos();
+    List<AdministradorResponse> listarTodos(String nombreUsuarioLlamador);
 
     /**
-     * Lista todos los administradores incluyendo inactivos (uso exclusivo de SYSADMIN).
+     * Lista todos los administradores incluyendo inactivos. Si quien consulta es ADMINISTRADOR, excluye
+     * las cuentas SYSADMIN.
      *
-     * @return Lista de {@link AdministradorResponse} con todos los registros.
+     * @param nombreUsuarioLlamador Nombre de usuario de quien realiza la consulta (viene del token).
+     * @return Lista de {@link AdministradorResponse} con los registros visibles para quien consulta.
      */
-    List<AdministradorResponse> listarTodosIncluyendoInactivos();
+    List<AdministradorResponse> listarTodosIncluyendoInactivos(String nombreUsuarioLlamador);
 
     /**
      * Actualiza los datos de un administrador existente.
      *
-     * @param id     Identificador del administrador a actualizar.
-     * @param update Datos a modificar.
+     * @param id                    Identificador del administrador a actualizar.
+     * @param update                Datos a modificar.
+     * @param nombreUsuarioLlamador Nombre de usuario de quien realiza la operación (viene del token).
      * @return {@link AdministradorResponse} actualizado.
-     * @throws RegistroNoEncontradoException    Si el administrador no existe o está inactivo.
-     * @throws SysAdminProtegidoException       Si se intenta modificar una cuenta SYSADMIN.
+     * @throws RegistroNoEncontradoException   Si el administrador no existe o está inactivo.
+     * @throws SysAdminProtegidoException      Si quien opera es ADMINISTRADOR y la cuenta es SYSADMIN.
      * @throws NombreUsuarioDuplicadoException Si el nuevo nombre de usuario pertenece a otra cuenta.
      */
-    AdministradorResponse actualizar(Integer id, AdministradorUpdate update);
+    AdministradorResponse actualizar(Integer id, AdministradorUpdate update, String nombreUsuarioLlamador);
 
     /**
      * Realiza el borrado lógico de un administrador cambiando su estado activo a false.
      *
-     * @param id Identificador del administrador.
+     * @param id                    Identificador del administrador.
+     * @param nombreUsuarioLlamador Nombre de usuario de quien realiza la operación (viene del token).
      * @throws RegistroNoEncontradoException Si no existe un administrador activo con el ID proporcionado.
-     * @throws SysAdminProtegidoException    Si se intenta eliminar una cuenta SYSADMIN.
+     * @throws SysAdminProtegidoException    Si quien opera es ADMINISTRADOR y la cuenta es SYSADMIN.
      */
-    void eliminar(Integer id);
+    void eliminar(Integer id, String nombreUsuarioLlamador);
 }

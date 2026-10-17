@@ -19,12 +19,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Implementación de la lógica de negocio para la entidad Administrador.
- * Maneja persistencia JPA, guardado inteligente (reactivación), protección de SYSADMIN
- * y borrado lógico.
+ * Maneja persistencia JPA, guardado inteligente (reactivación), protección de las cuentas SYSADMIN
+ * frente al rol ADMINISTRADOR y borrado lógico.
+ * <p>
+ * El SYSADMIN opera sobre todas las cuentas. Si quien llama es un ADMINISTRADOR, las cuentas SYSADMIN
+ * no se listan y no se pueden consultar, modificar ni dar de baja.
+ * </p>
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barcat
  */
@@ -91,12 +94,13 @@ public class AdministradorServiceImpl implements AdministradorService {
      */
     @Override
     @Transactional(readOnly = true)
-    public AdministradorResponse buscarPorId(Integer id) {
+    public AdministradorResponse buscarPorId(Integer id, String nombreUsuarioLlamador) {
         log.info("Buscando administrador activo con ID: {}", id);
         Administrador admin = administradorRepository.findById(id)
                 .filter(Administrador::getActivo)
                 .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el administrador activo con ID: " + id));
 
+        validarAcceso(admin, nombreUsuarioLlamador);
         return administradorRepository.fromEntity(admin);
     }
 
@@ -105,12 +109,14 @@ public class AdministradorServiceImpl implements AdministradorService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<AdministradorResponse> listarTodos() {
+    public List<AdministradorResponse> listarTodos(String nombreUsuarioLlamador) {
         log.info("Listando todos los administradores activos.");
+        boolean llamadorEsSysAdmin = esSysAdmin(nombreUsuarioLlamador);
         return administradorRepository.findAll().stream()
                 .filter(Administrador::getActivo)
+                .filter(admin -> puedeVer(admin, llamadorEsSysAdmin))
                 .map(administradorRepository::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -118,11 +124,13 @@ public class AdministradorServiceImpl implements AdministradorService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<AdministradorResponse> listarTodosIncluyendoInactivos() {
+    public List<AdministradorResponse> listarTodosIncluyendoInactivos(String nombreUsuarioLlamador) {
         log.info("Listando todos los administradores (incluyendo inactivos).");
+        boolean llamadorEsSysAdmin = esSysAdmin(nombreUsuarioLlamador);
         return administradorRepository.findAllIncludingInactive().stream()
+                .filter(admin -> puedeVer(admin, llamadorEsSysAdmin))
                 .map(administradorRepository::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -130,16 +138,14 @@ public class AdministradorServiceImpl implements AdministradorService {
      */
     @Override
     @Transactional
-    public AdministradorResponse actualizar(Integer id, AdministradorUpdate update) {
+    public AdministradorResponse actualizar(Integer id, AdministradorUpdate update, String nombreUsuarioLlamador) {
         log.info("Actualizando administrador con ID: {}", id);
 
         Administrador admin = administradorRepository.findById(id)
                 .filter(Administrador::getActivo)
                 .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el administrador activo con ID: " + id));
 
-        if (admin.getRol() == Rol.SYSADMIN) {
-            throw new SysAdminProtegidoException("No se permite realizar esta operación sobre un usuario con rol SYSADMIN.");
-        }
+        validarAcceso(admin, nombreUsuarioLlamador);
 
         if (update.getNombreUsuario() != null && !update.getNombreUsuario().equals(admin.getNombreUsuario())) {
             Optional<Integer> duenoOpt = usuarioRepository.buscarIdPorNombreUsuarioIncluyendoInactivos(update.getNombreUsuario());
@@ -164,19 +170,54 @@ public class AdministradorServiceImpl implements AdministradorService {
      */
     @Override
     @Transactional
-    public void eliminar(Integer id) {
+    public void eliminar(Integer id, String nombreUsuarioLlamador) {
         log.info("Ejecutando borrado lógico para el administrador con ID: {}", id);
 
         Administrador admin = administradorRepository.findById(id)
                 .filter(Administrador::getActivo)
                 .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró el administrador activo con ID: " + id));
 
-        if (admin.getRol() == Rol.SYSADMIN) {
-            throw new SysAdminProtegidoException("No se permite realizar esta operación sobre un usuario con rol SYSADMIN.");
-        }
+        validarAcceso(admin, nombreUsuarioLlamador);
 
         admin.setActivo(false);
         administradorRepository.save(admin);
         log.info("Administrador con ID: {} desactivado correctamente.", id);
+    }
+
+    /**
+     * Indica si quien llama tiene rol SYSADMIN. Se resuelve contra la base y no contra el cliente.
+     * Si el usuario no se encuentra, se lo trata como no SYSADMIN (la opción más restrictiva).
+     *
+     * @param nombreUsuarioLlamador Nombre de usuario de quien realiza la operación.
+     * @return true si la cuenta activa de quien llama tiene rol SYSADMIN.
+     */
+    private boolean esSysAdmin(String nombreUsuarioLlamador) {
+        return usuarioRepository.findByNombreUsuarioAndActivoTrue(nombreUsuarioLlamador)
+                .map(usuario -> usuario.getRol() == Rol.SYSADMIN)
+                .orElse(false);
+    }
+
+    /**
+     * Regla única de visibilidad: el SYSADMIN ve todas las cuentas; el ADMINISTRADOR no ve las SYSADMIN.
+     *
+     * @param admin               Cuenta a evaluar.
+     * @param llamadorEsSysAdmin  true si quien llama es SYSADMIN.
+     * @return true si quien llama puede ver y operar sobre la cuenta.
+     */
+    private boolean puedeVer(Administrador admin, boolean llamadorEsSysAdmin) {
+        return llamadorEsSysAdmin || admin.getRol() != Rol.SYSADMIN;
+    }
+
+    /**
+     * Valida que quien llama pueda operar sobre la cuenta indicada.
+     *
+     * @param admin                 Cuenta objetivo.
+     * @param nombreUsuarioLlamador Nombre de usuario de quien realiza la operación.
+     * @throws SysAdminProtegidoException Si quien llama es ADMINISTRADOR y la cuenta objetivo es SYSADMIN.
+     */
+    private void validarAcceso(Administrador admin, String nombreUsuarioLlamador) {
+        if (!puedeVer(admin, esSysAdmin(nombreUsuarioLlamador))) {
+            throw new SysAdminProtegidoException();
+        }
     }
 }

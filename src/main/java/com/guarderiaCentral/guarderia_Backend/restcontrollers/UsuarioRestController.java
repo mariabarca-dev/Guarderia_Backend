@@ -37,7 +37,7 @@ import java.util.List;
  * cada operación se delega en {@link UsuarioService}. Esas operaciones son exclusivas del rol SYSADMIN.
  *
  * @author GuarderiaCentral
- * @version 1.1
+ * @version 1.2
  */
 @Slf4j
 @RestController
@@ -228,34 +228,37 @@ public class UsuarioRestController {
     }
 
     /**
-     * Actualiza la cuenta de un administrador.
+     * Actualiza la cuenta de un administrador (incluidas las cuentas SYSADMIN).
      * Permitido exclusivamente para el rol SYSADMIN.
      *
-     * @param id     Identificador del administrador.
-     * @param update {@link AdministradorUpdate} validado.
+     * @param id             Identificador del administrador.
+     * @param update         {@link AdministradorUpdate} validado.
+     * @param authentication Autenticación del usuario actual (el nombre sale del token).
      * @return {@link ResponseEntity} con el {@link AdministradorResponse} actualizado y estado HTTP 200 (OK).
      */
     @PutMapping("/administradores/{id}")
     @PreAuthorize("hasRole('SYSADMIN')")
     public ResponseEntity<AdministradorResponse> actualizarAdministrador(
             @PathVariable Integer id,
-            @Valid @RequestBody AdministradorUpdate update) {
+            @Valid @RequestBody AdministradorUpdate update,
+            Authentication authentication) {
         log.info("REST Request: Actualización de administrador ID {} por SYSADMIN", id);
-        return ResponseEntity.ok(usuarioService.actualizarAdministrador(id, update));
+        return ResponseEntity.ok(usuarioService.actualizarAdministrador(id, update, authentication.getName()));
     }
 
     /**
-     * Da de baja lógica la cuenta de un administrador.
+     * Da de baja lógica la cuenta de un administrador (incluidas las cuentas SYSADMIN).
      * Permitido exclusivamente para el rol SYSADMIN.
      *
-     * @param id Identificador del administrador.
+     * @param id             Identificador del administrador.
+     * @param authentication Autenticación del usuario actual (el nombre sale del token).
      * @return {@link ResponseEntity} sin contenido y estado HTTP 204 (NO_CONTENT).
      */
     @DeleteMapping("/administradores/{id}")
     @PreAuthorize("hasRole('SYSADMIN')")
-    public ResponseEntity<Void> eliminarAdministrador(@PathVariable Integer id) {
+    public ResponseEntity<Void> eliminarAdministrador(@PathVariable Integer id, Authentication authentication) {
         log.info("REST Request: Baja de administrador ID {} por SYSADMIN", id);
-        usuarioService.eliminarAdministrador(id);
+        usuarioService.eliminarAdministrador(id, authentication.getName());
         return ResponseEntity.noContent().build();
     }
 }

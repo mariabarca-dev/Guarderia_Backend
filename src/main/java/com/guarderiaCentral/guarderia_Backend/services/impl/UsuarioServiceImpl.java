@@ -1,8 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
-import com.guarderiaCentral.guarderia_Backend.exceptions.SysAdminProtegidoException;
-import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import com.guarderiaCentral.guarderia_Backend.modelos.Usuario;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorResponse;
@@ -32,9 +30,10 @@ import java.util.stream.Collectors;
  * Delega la lógica de negocio y guardado inteligente en {@link SocioService}, {@link EmpleadoService}
  * y {@link AdministradorService} para garantizar un único camino de validación por tipo de cuenta.
  * Las consultas devuelven {@link UsuarioResponse}, que nunca incluye la clave.
+ * La protección de las cuentas SYSADMIN frente al ADMINISTRADOR vive en {@link AdministradorService}.
  *
  * @author GuarderiaCentral
- * @version 1.2
+ * @version 1.3
  */
 @Slf4j
 @Service
@@ -158,30 +157,15 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     @Transactional
-    public AdministradorResponse actualizarAdministrador(Integer id, AdministradorUpdate update) throws SysAdminProtegidoException {
+    public AdministradorResponse actualizarAdministrador(Integer id, AdministradorUpdate update, String nombreUsuarioLlamador) {
         log.info("UsuarioService delegando actualización de administrador ID {} a AdministradorService.", id);
-        validarNoEsSysAdmin(id);
-        return administradorService.actualizar(id, update);
+        return administradorService.actualizar(id, update, nombreUsuarioLlamador);
     }
 
     @Override
     @Transactional
-    public void eliminarAdministrador(Integer id) throws SysAdminProtegidoException {
+    public void eliminarAdministrador(Integer id, String nombreUsuarioLlamador) {
         log.info("UsuarioService delegando eliminación de administrador ID {} a AdministradorService.", id);
-        validarNoEsSysAdmin(id);
-        administradorService.eliminar(id);
-    }
-
-    /**
-     * Valida que la cuenta objetivo no tenga rol SYSADMIN para proteger cuentas del sistema.
-     *
-     * @param id Identificador único del usuario.
-     * @throws SysAdminProtegidoException Si el usuario objetivo es SYSADMIN.
-     */
-    private void validarNoEsSysAdmin(Integer id) {
-        UsuarioResponse u = buscarPorId(id);
-        if (u.getRol() == Rol.SYSADMIN) {
-            throw new SysAdminProtegidoException("No se permite realizar esta operación sobre un usuario con rol SYSADMIN.");
-        }
+        administradorService.eliminar(id, nombreUsuarioLlamador);
     }
 }
