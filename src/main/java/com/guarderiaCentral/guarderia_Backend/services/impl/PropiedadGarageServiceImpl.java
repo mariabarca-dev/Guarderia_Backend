@@ -25,7 +25,8 @@ import java.util.stream.Collectors;
 
 /**
  * Implementación del servicio de gestión de propiedades de garage.
- * Un garage pertenece a un solo socio: la regla se aplica tanto al registrar como al modificar una propiedad.
+ * Un garage pertenece a un solo socio y su fecha de compra no puede ser anterior al ingreso del socio:
+ * ambas reglas se aplican tanto al registrar como al modificar una propiedad.
  *
  * @author Cátedra
  * @version 1.0
@@ -62,11 +63,7 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
             throw new GarageYaVendidoException("Error: El garaje N° " + garage.getNumeroGarage() + " ya tiene un socio propietario asignado.");
         }
 
-        LocalDate fechaCompra = request.getFechaCompraGarage();
-        if (socio.getFechaIngreso() != null && fechaCompra.isBefore(socio.getFechaIngreso())) {
-            throw new BusinessException("Error de negocio: La fecha de compra (" + fechaCompra
-                    + ") no puede ser anterior a la fecha de ingreso del socio (" + socio.getFechaIngreso() + ").", HttpStatus.BAD_REQUEST);
-        }
+        validarFechaCompraPosteriorAlIngreso(request.getFechaCompraGarage(), socio);
 
         PropiedadGarage nuevaPropiedad = propiedadGarageRepository.toEntity(request);
         nuevaPropiedad.setSocio(socio);
@@ -128,7 +125,8 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
     /**
      * {@inheritDoc}
      * Si el garage indicado ya pertenece a otra propiedad activa, la modificación se rechaza para que un garage
-     * nunca tenga dos propietarios. La propiedad que se está modificando no cuenta como "otra".
+     * nunca tenga dos propietarios. La propiedad que se está modificando no cuenta como "otra". La fecha de compra
+     * que se valida contra el ingreso del socio es la nueva o, si no se envía, la que ya tenía la propiedad.
      */
     @Override
     @Transactional
@@ -158,10 +156,10 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
             throw new GarageYaVendidoException("Error: El garaje N° " + garage.getNumeroGarage() + " ya tiene un socio propietario asignado.");
         }
 
-        if (update.getFechaCompraGarage() != null && socio.getFechaIngreso() != null && update.getFechaCompraGarage().isBefore(socio.getFechaIngreso())) {
-            throw new BusinessException("Error de negocio: La fecha de compra (" + update.getFechaCompraGarage()
-                    + ") no puede ser anterior a la fecha de ingreso del socio (" + socio.getFechaIngreso() + ").", HttpStatus.BAD_REQUEST);
-        }
+        LocalDate fechaCompraResultante = update.getFechaCompraGarage() != null
+                ? update.getFechaCompraGarage()
+                : propiedadExistente.getFechaCompraGarage();
+        validarFechaCompraPosteriorAlIngreso(fechaCompraResultante, socio);
 
         propiedadGarageRepository.updateEntity(propiedadExistente, update);
         propiedadExistente.setSocio(socio);
@@ -185,5 +183,20 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
         propiedad.setActivo(false);
         propiedadGarageRepository.save(propiedad);
         log.info("Borrado lógico completado para propiedad con ID: {}", id);
+    }
+
+    /**
+     * Valida que la fecha de compra no sea anterior a la fecha de ingreso del socio. Se usa tanto al registrar
+     * como al modificar una propiedad.
+     *
+     * @param fechaCompra Fecha de compra del garage (puede ser null, en cuyo caso no se valida).
+     * @param socio       Socio propietario.
+     * @throws BusinessException Si la fecha de compra es anterior al ingreso del socio (400).
+     */
+    private void validarFechaCompraPosteriorAlIngreso(LocalDate fechaCompra, Socio socio) {
+        if (fechaCompra != null && socio.getFechaIngreso() != null && fechaCompra.isBefore(socio.getFechaIngreso())) {
+            throw new BusinessException("Error de negocio: La fecha de compra (" + fechaCompra
+                    + ") no puede ser anterior a la fecha de ingreso del socio (" + socio.getFechaIngreso() + ").", HttpStatus.BAD_REQUEST);
+        }
     }
 }

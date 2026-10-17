@@ -65,13 +65,14 @@ public interface PropiedadGarageService {
     /**
      * Actualiza los datos de un registro de propiedad existente. El socio y el garage son obligatorios.
      * Un garage pertenece a un solo socio: no se puede pasar la propiedad a un garage que ya tiene otro propietario.
+     * La fecha de compra (la nueva o, si no se envía, la ya guardada) no puede ser anterior al ingreso del socio.
      *
      * @param id Identificador de la propiedad a modificar.
      * @param update DTO con los datos a actualizar.
      * @return {@link PropiedadGarageResponse} con la entidad actualizada.
      * @throws RegistroNoEncontradoException Si la propiedad, el socio o el garage no existen.
      * @throws GarageYaVendidoException Si el garage indicado ya pertenece a otra propiedad activa.
-     * @throws BusinessException Si la nueva fecha de compra incumple reglas de negocio.
+     * @throws BusinessException Si la fecha de compra es anterior a la fecha de ingreso del socio.
      */
     PropiedadGarageResponse actualizar(Integer id, PropiedadGarageUpdate update);
 

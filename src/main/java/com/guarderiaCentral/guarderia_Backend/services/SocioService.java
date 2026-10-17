@@ -1,6 +1,7 @@
 package com.guarderiaCentral.guarderia_Backend.services;
 
 import com.guarderiaCentral.guarderia_Backend.exceptions.AccesoDenegadoException;
+import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.DependenciasActivasException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
@@ -28,6 +29,7 @@ public interface SocioService {
      * @return DTO de respuesta con la información del socio registrado o reactivado.
      * @throws DniDuplicadoException            Si ya existe un socio activo con el mismo DNI.
      * @throws NombreUsuarioDuplicadoException Si el nombre de usuario ya pertenece a otra cuenta.
+     * @throws BusinessException                Si la fecha de ingreso es anterior a la fecha de fundación de la guardería.
      */
     SocioResponse crear(SocioRequest request);
 
@@ -64,7 +66,8 @@ public interface SocioService {
     List<SocioResponse> listarTodosIncluyendoInactivos();
 
     /**
-     * Actualiza la información de un socio existente.
+     * Actualiza la información de un socio existente. Si se modifica la fecha de ingreso, no puede ser anterior
+     * a la fecha de fundación de la guardería ni posterior a la compra más antigua de los garages del socio.
      *
      * @param id     Identificador del socio a actualizar.
      * @param update DTO con los nuevos datos del socio.
@@ -72,6 +75,7 @@ public interface SocioService {
      * @throws RegistroNoEncontradoException    Si el socio no existe o no se encuentra activo.
      * @throws DniDuplicadoException            Si el nuevo DNI ya pertenece a otro socio activo.
      * @throws NombreUsuarioDuplicadoException Si el nuevo nombre de usuario ya está en uso.
+     * @throws BusinessException                Si la nueva fecha de ingreso incumple alguna de las reglas anteriores.
      */
     SocioResponse actualizar(Integer id, SocioUpdate update);
 

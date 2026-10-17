@@ -21,12 +21,14 @@ import com.guarderiaCentral.guarderia_Backend.services.SocioService;
 import com.guarderiaCentral.guarderia_Backend.services.VehiculoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -35,6 +37,11 @@ import java.util.stream.Collectors;
  * Administra validaciones, guardado inteligente con reactivación, baja lógica con bloqueo y mapeos.
  * El rol de toda cuenta de socio es siempre {@code Rol.SOCIO}: lo fija el repository y no se
  * puede elegir ni modificar desde el Request o el Update.
+ * <p>
+ * La fecha de ingreso no puede ser anterior a la fundación de la guardería (al crear y al modificar) ni
+ * posterior a la compra más antigua de los garages del socio (al modificar), para que nunca quede un garage
+ * comprado antes de que el socio ingresara.
+ * </p>
  *
  * @author Guardería Central
  */
@@ -61,10 +68,7 @@ public class SocioServiceImpl implements SocioService {
         log.info("Iniciando registro de nuevo socio con DNI: {}", request.getDni());
 
         // 1. Validar fecha de ingreso
-        if (request.getFechaIngreso() != null && request.getFechaIngreso().isBefore(FECHA_FUNDACION)) {
-            log.error("Error al registrar socio: Fecha de ingreso {} anterior a la fundación.", request.getFechaIngreso());
-            throw new BusinessException("La fecha de ingreso no puede ser anterior a la fecha de fundación del sistema (" + FECHA_FUNDACION + ").");
-        }
+        validarFechaIngresoDesdeFundacion(request.getFechaIngreso());
 
         // 2. Verificar si el nombreUsuario pertenece a otro usuario en toda la jerarquía (activos e inactivos)
         Optional<Integer> duenoNombreUsuarioOpt = usuarioRepository.buscarIdPorNombreUsuarioIncluyendoInactivos(request.getNombreUsuario());
@@ -177,6 +181,8 @@ public class SocioServiceImpl implements SocioService {
 
     /**
      * {@inheritDoc}
+     * Si se modifica la fecha de ingreso, no puede ser anterior a la fundación de la guardería ni posterior a la
+     * compra más antigua de los garages activos del socio.
      */
     @Override
     @Transactional
@@ -202,6 +208,11 @@ public class SocioServiceImpl implements SocioService {
             if (duenoOpt.isPresent() && !duenoOpt.get().equals(id)) {
                 throw new NombreUsuarioDuplicadoException("El nombre de usuario '" + update.getNombreUsuario() + "' ya se encuentra registrado.");
             }
+        }
+
+        if (update.getFechaIngreso() != null) {
+            validarFechaIngresoDesdeFundacion(update.getFechaIngreso());
+            validarFechaIngresoAnteriorALasCompras(id, update.getFechaIngreso());
         }
 
         socioRepository.updateEntity(socioExistente, update);
@@ -346,6 +357,43 @@ public class SocioServiceImpl implements SocioService {
         Socio socio = obtenerSocioAutenticado(nombreUsuario);
         log.debug("Listando garages ocupados por los vehículos del socio autenticado ID: {}", socio.getId());
         return asignacionVehiculoGarageService.listarGaragesOcupadosPorSocio(socio.getId());
+    }
+
+    /**
+     * Valida que la fecha de ingreso no sea anterior a la fecha de fundación de la guardería.
+     * Se usa tanto al crear como al modificar un socio.
+     *
+     * @param fechaIngreso Fecha de ingreso a validar (puede ser null, en cuyo caso no se valida).
+     * @throws BusinessException Si la fecha es anterior a la fundación.
+     */
+    private void validarFechaIngresoDesdeFundacion(LocalDate fechaIngreso) {
+        if (fechaIngreso != null && fechaIngreso.isBefore(FECHA_FUNDACION)) {
+            log.error("Fecha de ingreso {} anterior a la fundación.", fechaIngreso);
+            throw new BusinessException("La fecha de ingreso no puede ser anterior a la fecha de fundación del sistema (" + FECHA_FUNDACION + ").");
+        }
+    }
+
+    /**
+     * Valida que la nueva fecha de ingreso no sea posterior a la compra más antigua de los garages activos del
+     * socio, para que nunca quede un garage comprado antes de que el socio ingresara.
+     *
+     * @param socioId          ID del socio que se está modificando.
+     * @param nuevaFechaIngreso Nueva fecha de ingreso solicitada.
+     * @throws BusinessException Si el socio ya compró un garage antes de la nueva fecha de ingreso (409).
+     */
+    private void validarFechaIngresoAnteriorALasCompras(Integer socioId, LocalDate nuevaFechaIngreso) {
+        Optional<LocalDate> primeraCompra = propiedadGarageService.listarPorSocio(socioId).stream()
+                .map(PropiedadGarageResponse::getFechaCompraGarage)
+                .filter(Objects::nonNull)
+                .min(LocalDate::compareTo);
+
+        if (primeraCompra.isPresent() && nuevaFechaIngreso.isAfter(primeraCompra.get())) {
+            log.error("No se puede cambiar el ingreso del socio ID {} a {}: ya compró un garage el {}.",
+                    socioId, nuevaFechaIngreso, primeraCompra.get());
+            throw new BusinessException("Error: No se puede cambiar la fecha de ingreso del socio a " + nuevaFechaIngreso
+                    + " porque ya compró un garage el " + primeraCompra.get()
+                    + ". Elegí una fecha de ingreso igual o anterior a esa compra.", HttpStatus.CONFLICT);
+        }
     }
 
     /**
