@@ -6,7 +6,6 @@ import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoExc
 import com.guarderiaCentral.guarderia_Backend.exceptions.ZonaSinCapacidadException;
 import com.guarderiaCentral.guarderia_Backend.modelos.AsignacionVehiculoGarage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Garage;
-import com.guarderiaCentral.guarderia_Backend.modelos.PropiedadGarage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Vehiculo;
 import com.guarderiaCentral.guarderia_Backend.modelos.Zona;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageRepository;
@@ -15,7 +14,6 @@ import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGar
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageUpdate;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.GarageOcupadoResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRepository;
-import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoRepository;
 import com.guarderiaCentral.guarderia_Backend.services.AsignacionVehiculoGarageService;
 import lombok.RequiredArgsConstructor;
@@ -26,12 +24,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * Implementación de la lógica de negocio para la gestión de asignaciones entre Vehículos y Garajes.
- * Garantiza la integridad referencial, el borrado lógico y el cumplimiento de las reglas de dominio.
+ * Garantiza la integridad referencial, el borrado lógico y el cumplimiento de las reglas de dominio:
+ * un garage aloja un solo vehículo, un vehículo ocupa un solo garage, el tipo del vehículo debe coincidir
+ * con el de la zona, el vehículo debe entrar en las dimensiones de los garages de la zona y la zona no
+ * puede superar su capacidad. Las mismas reglas se aplican al crear y al modificar una asignación.
  * Cuando un vehículo deja el garage o cambia de zona, deja de estar a cargo del empleado que lo atendía.
  */
 @Slf4j
@@ -42,7 +42,6 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
     private final AsignacionVehiculoGarageRepository asignacionRepository;
     private final VehiculoRepository vehiculoRepository;
     private final GarageRepository garageRepository;
-    private final PropiedadGarageRepository propiedadGarageRepository;
 
     /**
      * {@inheritDoc}
@@ -59,78 +58,20 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
         }
 
         // 1. Recuperar y verificar que las entidades existen y están activas
-        Vehiculo vehiculo = vehiculoRepository.findById(request.getVehiculoId())
-                .filter(Vehiculo::getActivo)
-                .orElseThrow(() -> new RegistroNoEncontradoException("El vehículo especificado no existe o se encuentra inactivo."));
+        Vehiculo vehiculo = buscarVehiculoActivo(request.getVehiculoId());
+        Garage garage = buscarGarageActivo(request.getGarageId());
 
-        Garage garage = garageRepository.findById(request.getGarageId())
-                .filter(Garage::getActivo)
-                .orElseThrow(() -> new RegistroNoEncontradoException("El garaje especificado no existe o se encuentra inactivo."));
+        // 2. REGLAS DE NEGOCIO: garage libre y vehículo sin otra asignación
+        validarGarageLibre(garage);
+        validarVehiculoSinAsignacion(vehiculo);
 
-        // 2. REGLA DE NEGOCIO: Excepción específica si el garaje ya está ocupado
-        boolean garageOcupado = asignacionRepository.findAll().stream()
-                .anyMatch(a -> Boolean.TRUE.equals(a.getActivo())
-                        && a.getGarage() != null
-                        && a.getGarage().getId().equals(garage.getId()));
+        // 3. REGLAS DE NEGOCIO: el vehículo debe encajar en la zona del garaje (tipo y dimensiones)
+        validarEncajeEnZona(vehiculo, garage);
 
-        if (garageOcupado) {
-            log.warn("Intento de asignar garaje ocupado ID: {}", garage.getId());
-            throw new GarageYaOcupadoException("Error: El garaje N° " + garage.getId() + " ya se encuentra ocupado por otro vehículo.");
-        }
+        // 4. REGLA DE NEGOCIO: capacidad máxima de la zona
+        validarCapacidadDeZona(garage.getZona());
 
-        // 3. REGLA DE NEGOCIO: El vehículo no puede tener otra asignación activa
-        boolean vehiculoYaAsignado = asignacionRepository.findAll().stream()
-                .anyMatch(a -> Boolean.TRUE.equals(a.getActivo())
-                        && a.getVehiculo() != null
-                        && a.getVehiculo().getId().equals(vehiculo.getId()));
-
-        if (vehiculoYaAsignado) {
-            log.warn("El vehículo ID: {} ya dispone de una asignación activa en el sistema", vehiculo.getId());
-            throw new BusinessException("Error de negocio: El vehículo con matrícula " + vehiculo.getMatricula()
-                    + " ya está asignado a un garaje en el sistema.", HttpStatus.CONFLICT);
-        }
-
-        // 4. REGLA DE NEGOCIO: El vehículo debe pertenecer al socio propietario del garaje (vía PropiedadGarage)
-        Optional<PropiedadGarage> propiedadOpt = propiedadGarageRepository.findAll().stream()
-                .filter(p -> Boolean.TRUE.equals(p.getActivo())
-                        && p.getGarage() != null
-                        && p.getGarage().getId().equals(garage.getId()))
-                .findFirst();
-
-        if (propiedadOpt.isPresent()) {
-            PropiedadGarage propiedad = propiedadOpt.get();
-            if (vehiculo.getSocio() == null || !vehiculo.getSocio().getId().equals(propiedad.getSocio().getId())) {
-                log.warn("Conflicto de titularidad: Vehículo ID {} no pertenece al propietario del garaje ID {}",
-                        vehiculo.getId(), garage.getId());
-                throw new BusinessException("Error de negocio: El vehículo no pertenece al socio propietario de este garaje.", HttpStatus.FORBIDDEN);
-            }
-        }
-
-        // 5. REGLA DE NEGOCIO: Compatibilidad de tipo de vehículo con el tipo permitido en la Zona
-        Zona zona = garage.getZona();
-        if (zona == null) {
-            log.error("El garaje ID {} no tiene ninguna zona asociada", garage.getId());
-            throw new BusinessException("Error de negocio: El garaje especificado no está asociado a ninguna zona.", HttpStatus.BAD_REQUEST);
-        }
-
-        if (vehiculo.getTipo() != zona.getTipoVehiculo()) {
-            log.warn("Incompatibilidad de tipo -> Vehículo: {}, Zona: {}", vehiculo.getTipo(), zona.getTipoVehiculo());
-            throw new BusinessException("Error de negocio: El vehículo de tipo " + vehiculo.getTipo()
-                    + " no es compatible con la zona asignada de " + zona.getTipoVehiculo() + ".", HttpStatus.BAD_REQUEST);
-        }
-
-        // 6. REGLA DE NEGOCIO: Excepción específica de capacidad máxima en la Zona
-        int capacidadMaxima = zona.getCapacidadVehiculos();
-        int vehiculosActuales = contarVehiculosActivosEnZona(zona);
-
-        if (vehiculosActuales >= capacidadMaxima) {
-            log.error("Capacidad de zona superada en la zona ID {}. Límite: {}, Actuales: {}",
-                    zona.getId(), capacidadMaxima, vehiculosActuales);
-            throw new ZonaSinCapacidadException("Error: La zona '" + zona.getLetra()
-                    + "' ha alcanzado su capacidad máxima permitida de " + capacidadMaxima + " vehículos.");
-        }
-
-        // 7. Mapeo y persistencia
+        // 5. Mapeo y persistencia
         AsignacionVehiculoGarage nuevaAsignacion = asignacionRepository.toEntity(request);
         nuevaAsignacion.setVehiculo(vehiculo);
         nuevaAsignacion.setGarage(garage);
@@ -237,8 +178,10 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
 
     /**
      * {@inheritDoc}
-     * Si el vehículo cambia o el garage nuevo está en otra zona, el vehículo anterior deja de estar
-     * a cargo del empleado que lo atendía.
+     * Solo se validan los cambios reales: si cambia el vehículo, no debe tener otra asignación; si cambia el
+     * garage, debe estar libre y, si está en otra zona, esa zona debe tener capacidad. Si cambia cualquiera de
+     * los dos, el vehículo debe encajar en la zona del garage (tipo y dimensiones). Si el vehículo cambia o el
+     * garage nuevo está en otra zona, el vehículo anterior deja de estar a cargo del empleado que lo atendía.
      */
     @Override
     @Transactional
@@ -251,19 +194,34 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
 
         // Se guarda lo anterior antes de aplicar los cambios
         Vehiculo vehiculoAnterior = asignacionExistente.getVehiculo();
-        Integer zonaAnteriorId = obtenerZonaId(asignacionExistente.getGarage());
+        Garage garageAnterior = asignacionExistente.getGarage();
+        Integer vehiculoAnteriorId = vehiculoAnterior != null ? vehiculoAnterior.getId() : null;
+        Integer garageAnteriorId = garageAnterior != null ? garageAnterior.getId() : null;
+        Integer zonaAnteriorId = obtenerZonaId(garageAnterior);
+
+        boolean cambiaVehiculo = update.getVehiculoId() != null && !update.getVehiculoId().equals(vehiculoAnteriorId);
+        boolean cambiaGarage = update.getGarageId() != null && !update.getGarageId().equals(garageAnteriorId);
+
+        // Vehículo y garage que quedarían tras el cambio (los actuales si no se modifican)
+        Vehiculo vehiculoDestino = cambiaVehiculo ? buscarVehiculoActivo(update.getVehiculoId()) : vehiculoAnterior;
+        Garage garageDestino = cambiaGarage ? buscarGarageActivo(update.getGarageId()) : garageAnterior;
+        Integer zonaNuevaId = obtenerZonaId(garageDestino);
+
+        if (cambiaVehiculo) {
+            validarVehiculoSinAsignacion(vehiculoDestino);
+        }
+        if (cambiaGarage) {
+            validarGarageLibre(garageDestino);
+        }
+        if (cambiaVehiculo || cambiaGarage) {
+            validarEncajeEnZona(vehiculoDestino, garageDestino);
+        }
+        if (cambiaGarage && !Objects.equals(zonaAnteriorId, zonaNuevaId)) {
+            validarCapacidadDeZona(garageDestino.getZona());
+        }
 
         asignacionRepository.updateEntity(asignacionExistente, update);
         AsignacionVehiculoGarage actualizada = asignacionRepository.save(asignacionExistente);
-
-        boolean cambiaVehiculo = update.getVehiculoId() != null
-                && vehiculoAnterior != null
-                && !update.getVehiculoId().equals(vehiculoAnterior.getId());
-
-        Integer zonaNuevaId = zonaAnteriorId;
-        if (update.getGarageId() != null) {
-            zonaNuevaId = obtenerZonaId(garageRepository.findById(update.getGarageId()).orElse(null));
-        }
 
         if (cambiaVehiculo || !Objects.equals(zonaAnteriorId, zonaNuevaId)) {
             liberarEmpleadoDelVehiculo(vehiculoAnterior);
@@ -295,12 +253,137 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public void validarVehiculoAsignadoSigueEncajando(Integer vehiculoId) {
+        asignacionRepository.findAllByVehiculoIdAndActivoTrue(vehiculoId)
+                .forEach(a -> validarEncajeEnZona(a.getVehiculo(), a.getGarage()));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public void validarVehiculosAsignadosEnZonaSiguenEncajando(Integer zonaId) {
+        asignacionRepository.findAllByActivoTrue().stream()
+                .filter(a -> a.getGarage() != null
+                        && a.getGarage().getZona() != null
+                        && a.getGarage().getZona().getId().equals(zonaId))
+                .forEach(a -> validarEncaje(a.getVehiculo(), a.getGarage().getZona()));
+    }
+
+    /**
+     * Recupera un vehículo activo o lanza la excepción de registro no encontrado.
+     */
+    private Vehiculo buscarVehiculoActivo(Integer vehiculoId) {
+        return vehiculoRepository.findById(vehiculoId)
+                .filter(Vehiculo::getActivo)
+                .orElseThrow(() -> new RegistroNoEncontradoException("El vehículo especificado no existe o se encuentra inactivo."));
+    }
+
+    /**
+     * Recupera un garage activo o lanza la excepción de registro no encontrado.
+     */
+    private Garage buscarGarageActivo(Integer garageId) {
+        return garageRepository.findById(garageId)
+                .filter(Garage::getActivo)
+                .orElseThrow(() -> new RegistroNoEncontradoException("El garaje especificado no existe o se encuentra inactivo."));
+    }
+
+    /**
+     * Valida que el garage no tenga ya una asignación activa.
+     *
+     * @throws GarageYaOcupadoException Si el garage está ocupado por otro vehículo.
+     */
+    private void validarGarageLibre(Garage garage) {
+        boolean garageOcupado = asignacionRepository.findAllByActivoTrue().stream()
+                .anyMatch(a -> a.getGarage() != null && a.getGarage().getId().equals(garage.getId()));
+
+        if (garageOcupado) {
+            log.warn("Intento de asignar garaje ocupado ID: {}", garage.getId());
+            throw new GarageYaOcupadoException("Error: El garaje N° " + garage.getNumeroGarage() + " ya se encuentra ocupado por otro vehículo.");
+        }
+    }
+
+    /**
+     * Valida que el vehículo no tenga ya otra asignación activa.
+     *
+     * @throws BusinessException Si el vehículo ya está asignado a un garage (409).
+     */
+    private void validarVehiculoSinAsignacion(Vehiculo vehiculo) {
+        boolean vehiculoYaAsignado = !asignacionRepository.findAllByVehiculoIdAndActivoTrue(vehiculo.getId()).isEmpty();
+
+        if (vehiculoYaAsignado) {
+            log.warn("El vehículo ID: {} ya dispone de una asignación activa en el sistema", vehiculo.getId());
+            throw new BusinessException("Error de negocio: El vehículo con matrícula " + vehiculo.getMatricula()
+                    + " ya está asignado a un garaje en el sistema.", HttpStatus.CONFLICT);
+        }
+    }
+
+    /**
+     * Valida que el vehículo encaje en la zona del garage. Exige que el garage tenga zona y delega el
+     * control de tipo y dimensiones en {@link #validarEncaje(Vehiculo, Zona)}.
+     *
+     * @throws BusinessException Si el garage no tiene zona, el tipo no coincide o el vehículo no entra.
+     */
+    private void validarEncajeEnZona(Vehiculo vehiculo, Garage garage) {
+        Zona zona = garage.getZona();
+        if (zona == null) {
+            log.error("El garaje ID {} no tiene ninguna zona asociada", garage.getId());
+            throw new BusinessException("Error de negocio: El garaje especificado no está asociado a ninguna zona.", HttpStatus.BAD_REQUEST);
+        }
+        validarEncaje(vehiculo, zona);
+    }
+
+    /**
+     * Valida que el tipo del vehículo coincida con el de la zona y que su ancho y profundidad no superen los
+     * de los garages de la zona (si miden lo mismo, entra).
+     *
+     * @throws BusinessException Si el tipo no coincide o el vehículo no entra en los garages de la zona.
+     */
+    private void validarEncaje(Vehiculo vehiculo, Zona zona) {
+        if (vehiculo.getTipo() != zona.getTipoVehiculo()) {
+            log.warn("Incompatibilidad de tipo -> Vehículo: {}, Zona: {}", vehiculo.getTipo(), zona.getTipoVehiculo());
+            throw new BusinessException("Error de negocio: El vehículo de tipo " + vehiculo.getTipo()
+                    + " no es compatible con la zona asignada de " + zona.getTipoVehiculo() + ".", HttpStatus.BAD_REQUEST);
+        }
+
+        if (vehiculo.getAncho() > zona.getAnchoGarage() || vehiculo.getProfundidad() > zona.getLargoGarage()) {
+            log.warn("El vehículo ID {} no entra en los garages de la zona ID {}", vehiculo.getId(), zona.getId());
+            throw new BusinessException("Error de negocio: El vehículo con matrícula " + vehiculo.getMatricula()
+                    + " (ancho " + vehiculo.getAncho() + ", profundidad " + vehiculo.getProfundidad()
+                    + ") no entra en los garages de la zona '" + zona.getLetra()
+                    + "' (ancho " + zona.getAnchoGarage() + ", profundidad " + zona.getLargoGarage() + ").",
+                    HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Valida que la zona tenga lugar para un vehículo más.
+     *
+     * @throws ZonaSinCapacidadException Si la zona alcanzó su capacidad máxima.
+     */
+    private void validarCapacidadDeZona(Zona zona) {
+        int capacidadMaxima = zona.getCapacidadVehiculos();
+        int vehiculosActuales = contarVehiculosActivosEnZona(zona);
+
+        if (vehiculosActuales >= capacidadMaxima) {
+            log.error("Capacidad de zona superada en la zona ID {}. Límite: {}, Actuales: {}",
+                    zona.getId(), capacidadMaxima, vehiculosActuales);
+            throw new ZonaSinCapacidadException("Error: La zona '" + zona.getLetra()
+                    + "' ha alcanzado su capacidad máxima permitida de " + capacidadMaxima + " vehículos.");
+        }
+    }
+
+    /**
      * Cuenta la cantidad de vehículos actualmente asignados y activos en la zona suministrada.
      */
     private int contarVehiculosActivosEnZona(Zona zona) {
-        return (int) asignacionRepository.findAll().stream()
-                .filter(a -> Boolean.TRUE.equals(a.getActivo())
-                        && a.getGarage() != null
+        return (int) asignacionRepository.findAllByActivoTrue().stream()
+                .filter(a -> a.getGarage() != null
                         && a.getGarage().getZona() != null
                         && a.getGarage().getZona().getId().equals(zona.getId()))
                 .count();

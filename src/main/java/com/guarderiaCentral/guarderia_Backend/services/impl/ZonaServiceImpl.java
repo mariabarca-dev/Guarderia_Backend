@@ -9,9 +9,11 @@ import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.zonas.ZonaUpdate;
+import com.guarderiaCentral.guarderia_Backend.services.AsignacionVehiculoGarageService;
 import com.guarderiaCentral.guarderia_Backend.services.ZonaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,8 @@ import java.util.stream.Collectors;
 /**
  * Implementación del servicio de negocio para la entidad {@link Zona}.
  * Maneja las validaciones de unicidad, integridad referencial, borrado lógico y guardado inteligente.
+ * Al modificar la zona revalida lo ya existente: la capacidad no puede quedar por debajo de los garages
+ * de la zona y los vehículos ya asignados deben seguir entrando en las nuevas medidas.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -32,6 +36,7 @@ public class ZonaServiceImpl implements ZonaService {
 
     private final ZonaRepository zonaRepository;
     private final GarageRepository garageRepository;
+    private final AsignacionVehiculoGarageService asignacionVehiculoGarageService;
 
     /**
      * Registra una nueva zona en la base de datos previa normalización, verificación de unicidad
@@ -147,15 +152,19 @@ public class ZonaServiceImpl implements ZonaService {
     }
 
     /**
-     * Actualiza la información de una zona. Valida que no se modifique el tipo de vehículo
-     * si la zona ya cuenta con garages asociados.
+     * Actualiza la información de una zona. Valida que no se modifique el tipo de vehículo si la zona ya
+     * cuenta con garages asociados, que la nueva capacidad no quede por debajo de los garages que la zona ya
+     * tiene (cada garage aloja un solo vehículo, por lo que también cubre los vehículos ya asignados) y que,
+     * si cambian el ancho o el largo de los garages, los vehículos ya asignados en la zona sigan entrando.
      *
      * @param id Identificador de la zona.
      * @param update DTO con los datos a actualizar.
      * @return {@link ZonaResponse} Datos de la zona actualizada.
      * @throws RegistroNoEncontradoException Si la zona no existe.
      * @throws LetraZonaDuplicadaException Si la nueva letra ya está asignada a otra zona activa.
-     * @throws BusinessException Si se intenta modificar el tipo de vehículo teniendo garages asociados.
+     * @throws BusinessException Si se intenta modificar el tipo de vehículo teniendo garages asociados, bajar la
+     *                           capacidad por debajo de los garages existentes (409) o achicar los garages dejando
+     *                           afuera a un vehículo ya asignado.
      */
     @Override
     @Transactional
@@ -190,7 +199,31 @@ public class ZonaServiceImpl implements ZonaService {
             }
         }
 
+        // Regla de Negocio: la capacidad no puede quedar por debajo de los garages que la zona ya tiene
+        if (update.getCapacidadVehiculos() != null) {
+            long garajesEnZona = garageRepository.findAll().stream()
+                    .filter(g -> g.getZona() != null
+                            && g.getZona().getId().equals(id)
+                            && Boolean.TRUE.equals(g.getActivo()))
+                    .count();
+
+            if (update.getCapacidadVehiculos() < garajesEnZona) {
+                log.error("Bloqueo de reducción de capacidad en zona ID {}: nueva capacidad {}, garajes activos {}.",
+                        id, update.getCapacidadVehiculos(), garajesEnZona);
+                throw new BusinessException("Error: No se puede reducir la capacidad de la zona '"
+                        + zonaExistente.getLetra() + "' a " + update.getCapacidadVehiculos()
+                        + " porque ya tiene " + garajesEnZona + " garajes activos. Primero dá de baja garajes de la zona"
+                        + " o elegí una capacidad de al menos " + garajesEnZona + ".", HttpStatus.CONFLICT);
+            }
+        }
+
         zonaRepository.updateEntity(zonaExistente, update);
+
+        // Regla de Negocio: si cambian las medidas de los garages, los vehículos ya asignados deben seguir entrando
+        if (update.getAnchoGarage() != null || update.getLargoGarage() != null) {
+            asignacionVehiculoGarageService.validarVehiculosAsignadosEnZonaSiguenEncajando(id);
+        }
+
         Zona zonaActualizada = zonaRepository.save(zonaExistente);
         log.info("Zona con ID: {} actualizada exitosamente.", id);
 

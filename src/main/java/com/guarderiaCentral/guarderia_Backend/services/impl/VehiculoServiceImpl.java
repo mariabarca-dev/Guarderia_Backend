@@ -12,6 +12,7 @@ import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoRep
 import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.vehiculos.VehiculoUpdate;
+import com.guarderiaCentral.guarderia_Backend.services.AsignacionVehiculoGarageService;
 import com.guarderiaCentral.guarderia_Backend.services.VehiculoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
  * Implementación de la lógica de negocio para la entidad {@link Vehiculo}.
  * Maneja el guardado inteligente por matrícula (alta o reactivación), la validación de socios,
  * la baja lógica con cascada sobre la asignación de garage y el empleado a cargo, y las consultas filtradas.
+ * Al modificar un vehículo ya asignado a un garage, revalida que siga encajando en la zona.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -37,6 +39,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     private final VehiculoRepository vehiculoRepository;
     private final SocioRepository socioRepository;
     private final AsignacionVehiculoGarageRepository asignacionVehiculoGarageRepository;
+    private final AsignacionVehiculoGarageService asignacionVehiculoGarageService;
 
     /**
      * {@inheritDoc}
@@ -156,6 +159,8 @@ public class VehiculoServiceImpl implements VehiculoService {
 
     /**
      * {@inheritDoc}
+     * Si el vehículo tiene un garage asignado, con su nuevo tipo y medidas debe seguir encajando en la zona
+     * de ese garage; si no, la modificación se rechaza y no se guarda nada.
      */
     @Override
     @Transactional
@@ -181,6 +186,7 @@ public class VehiculoServiceImpl implements VehiculoService {
         }
 
         vehiculoRepository.updateEntity(vehiculo, update);
+        asignacionVehiculoGarageService.validarVehiculoAsignadoSigueEncajando(id);
         Vehiculo actualizado = vehiculoRepository.save(vehiculo);
         log.info("Vehículo ID {} actualizado correctamente.", id);
         return vehiculoRepository.fromEntity(actualizado);

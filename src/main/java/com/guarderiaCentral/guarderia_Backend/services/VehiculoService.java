@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.services;
 
+import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.MatriculaDuplicadaException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.modelos.TipoVehiculo;
@@ -79,12 +80,16 @@ public interface VehiculoService {
 
     /**
      * Actualiza los datos de un vehículo activo. Solo se modifican los campos no nulos del update.
+     * Si el vehículo tiene un garage asignado, con su nuevo tipo y medidas debe seguir encajando en la zona
+     * de ese garage.
      *
      * @param id     Identificador del vehículo a modificar.
      * @param update Datos a actualizar.
      * @return {@link VehiculoResponse} con el vehículo actualizado.
      * @throws RegistroNoEncontradoException Si el vehículo o el nuevo socio no existen o están inactivos.
      * @throws MatriculaDuplicadaException   Si la nueva matrícula pertenece a otro vehículo, activo o inactivo.
+     * @throws BusinessException             Si el vehículo está asignado a un garage y, con sus nuevos datos,
+     *                                       ya no encaja en la zona.
      */
     VehiculoResponse actualizar(Integer id, VehiculoUpdate update);
 

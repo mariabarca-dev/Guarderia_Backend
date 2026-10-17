@@ -13,22 +13,24 @@ import java.util.List;
 
 /**
  * Interfaz de servicio para la gestión de asignaciones de vehículos a garajes.
- * Define las operaciones de negocio, validaciones de pertenencia, compatibilidad y capacidad.
+ * Define las operaciones de negocio y las validaciones de disponibilidad, compatibilidad (tipo y
+ * dimensiones) y capacidad. Además ofrece la revalidación de las asignaciones vigentes para los casos
+ * en que cambian las medidas de un vehículo o de una zona.
  */
 public interface AsignacionVehiculoGarageService {
 
     /**
      * Registra una nueva asignación de un vehículo a un garaje.
-     * Aplica validaciones de disponibilidad del garaje, pertenencia al socio propietario,
-     * compatibilidad de tipo de vehículo con la zona y capacidad disponible en la zona.
+     * Aplica validaciones de disponibilidad del garaje, compatibilidad de tipo y dimensiones del vehículo
+     * con la zona y capacidad disponible en la zona.
      *
      * @param request DTO de entrada con los IDs del vehículo, garaje y fecha de asignación.
      * @return DTO de respuesta con la asignación registrada.
      * @throws RegistroNoEncontradoException Si el vehículo o el garaje no existen o están inactivos.
      * @throws GarageYaOcupadoException      Si el garaje ya tiene una asignación activa.
      * @throws ZonaSinCapacidadException     Si la zona asociada al garaje ha alcanzado su capacidad máxima.
-     * @throws BusinessException             Si el vehículo ya está asignado, no pertenece al dueño del garaje
-     *                                       o su tipo no es compatible con la zona.
+     * @throws BusinessException             Si el vehículo ya está asignado, su tipo no es compatible con la zona
+     *                                       o no entra en las dimensiones de los garages de la zona.
      */
     AsignacionVehiculoGarageResponse crearAsignacion(AsignacionVehiculoGarageRequest request);
 
@@ -83,12 +85,16 @@ public interface AsignacionVehiculoGarageService {
     List<GarageOcupadoResponse> listarGaragesOcupadosPorSocio(Integer socioId);
 
     /**
-     * Actualiza la información de una asignación existente.
+     * Actualiza la información de una asignación existente. Si cambia el vehículo o el garage, aplica las
+     * mismas reglas que el alta: garage libre, vehículo sin otra asignación, compatibilidad de tipo y
+     * dimensiones, y capacidad de la zona cuando el garage nuevo está en otra zona.
      *
      * @param id     Identificador de la asignación a actualizar.
      * @param update DTO con los datos modificados.
      * @return DTO de respuesta actualizado.
-     * @throws RegistroNoEncontradoException Si la asignación no existe o está inactiva.
+     * @throws RegistroNoEncontradoException Si la asignación, el vehículo o el garage no existen o están inactivos.
+     * @throws GarageYaOcupadoException      Si el garage nuevo ya tiene una asignación activa.
+     * @throws ZonaSinCapacidadException     Si la zona del garage nuevo alcanzó su capacidad máxima.
      * @throws BusinessException             Si los nuevos datos incumplen las reglas de negocio.
      */
     AsignacionVehiculoGarageResponse actualizarAsignacion(Integer id, AsignacionVehiculoGarageUpdate update);
@@ -100,4 +106,22 @@ public interface AsignacionVehiculoGarageService {
      * @throws RegistroNoEncontradoException Si no existe ninguna asignación activa con este ID.
      */
     void eliminarAsignacion(Integer id);
+
+    /**
+     * Revalida que un vehículo con asignación activa siga encajando en la zona de su garage (tipo y
+     * dimensiones). Se usa al modificar los datos del vehículo. Si no tiene asignación, no hace nada.
+     *
+     * @param vehiculoId Identificador del vehículo modificado.
+     * @throws BusinessException Si el vehículo, con sus nuevos datos, ya no encaja en la zona.
+     */
+    void validarVehiculoAsignadoSigueEncajando(Integer vehiculoId);
+
+    /**
+     * Revalida que todos los vehículos asignados a garages de una zona sigan encajando en ella (tipo y
+     * dimensiones). Se usa al modificar las medidas de los garages de la zona.
+     *
+     * @param zonaId Identificador de la zona modificada.
+     * @throws BusinessException Si algún vehículo asignado ya no encaja con las nuevas medidas de la zona.
+     */
+    void validarVehiculosAsignadosEnZonaSiguenEncajando(Integer zonaId);
 }
