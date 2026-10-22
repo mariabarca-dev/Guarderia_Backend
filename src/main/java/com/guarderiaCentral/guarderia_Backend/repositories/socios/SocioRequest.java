@@ -13,10 +13,11 @@ import java.time.LocalDate;
 /**
  * Objeto de solicitud para la creación o registro de un Socio.
  * Contiene los campos heredados de usuario y los específicos de socio, junto con Bean Validation.
- * Los campos de texto solo admiten caracteres válidos para cada dato, por lo que no aceptan scripts.
+ * Todos los campos de texto, incluida la clave, solo admiten caracteres válidos para cada dato,
+ * por lo que no aceptan scripts ni caracteres de marcado.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
- * @version 1.1
+ * @version 1.2
  */
 @Data
 @NoArgsConstructor
@@ -52,6 +53,8 @@ public class SocioRequest {
     private String nombreUsuario;
 
     @NotBlank(message = "La clave es obligatoria")
+    @Size(max = 100, message = "La clave no puede superar los 100 caracteres")
+    @Pattern(regexp = "^[^<>]*$", message = "La clave no puede contener los caracteres < o >")
     private String clave;
 
     @NotBlank(message = "El DNI es obligatorio")

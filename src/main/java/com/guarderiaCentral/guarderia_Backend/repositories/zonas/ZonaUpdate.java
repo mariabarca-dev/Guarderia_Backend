@@ -2,6 +2,7 @@ package com.guarderiaCentral.guarderia_Backend.repositories.zonas;
 
 import com.guarderiaCentral.guarderia_Backend.modelos.TipoVehiculo;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Objeto de solicitud para la actualización de los datos de una Zona existente.
+ * La letra no admite los caracteres < ni >, por lo que no acepta scripts.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -18,6 +20,7 @@ import lombok.NoArgsConstructor;
 public class ZonaUpdate {
 
     @Size(max = 10, message = "La letra no puede superar los 10 caracteres")
+    @Pattern(regexp = "^[^<>]*$", message = "La letra no puede contener los caracteres < o >")
     private String letra;
 
     private TipoVehiculo tipoVehiculo;

@@ -2,6 +2,7 @@ package com.guarderiaCentral.guarderia_Backend.repositories.vehiculos;
 
 import com.guarderiaCentral.guarderia_Backend.modelos.TipoVehiculo;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Objeto de solicitud para la actualización de los datos de un Vehículo existente.
+ * Los campos de texto no admiten los caracteres < ni >, por lo que no aceptan scripts.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -20,9 +22,11 @@ public class VehiculoUpdate {
     private Integer socioId;
 
     @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
+    @Pattern(regexp = "^[^<>]*$", message = "El nombre no puede contener los caracteres < o >")
     private String nombre;
 
     @Size(max = 50, message = "La matrícula no puede superar los 50 caracteres")
+    @Pattern(regexp = "^[^<>]*$", message = "La matrícula no puede contener los caracteres < o >")
     private String matricula;
 
     private TipoVehiculo tipo;

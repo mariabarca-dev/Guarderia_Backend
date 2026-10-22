@@ -11,10 +11,11 @@ import java.time.LocalDate;
 /**
  * Objeto de solicitud para la actualización de los datos de un Socio.
  * Un campo nulo significa "no cambiar". El DNI, si se envía, no puede estar vacío ni en blanco: un socio
- * siempre conserva su DNI. Los campos de texto solo admiten caracteres válidos, por lo que no aceptan scripts.
+ * siempre conserva su DNI. Todos los campos de texto, incluida la clave, solo admiten caracteres válidos,
+ * por lo que no aceptan scripts ni caracteres de marcado.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
- * @version 1.1
+ * @version 1.2
  */
 @Data
 @NoArgsConstructor
@@ -46,6 +47,8 @@ public class SocioUpdate {
             message = "El nombre de usuario solo puede contener letras, números, punto, guion y guion bajo")
     private String nombreUsuario;
 
+    @Size(max = 100, message = "La clave no puede superar los 100 caracteres")
+    @Pattern(regexp = "^[^<>]*$", message = "La clave no puede contener los caracteres < o >")
     private String clave;
 
     @Size(max = 20, message = "El DNI no puede superar los 20 caracteres")

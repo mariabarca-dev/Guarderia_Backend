@@ -4,6 +4,7 @@ import com.guarderiaCentral.guarderia_Backend.modelos.TipoVehiculo;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 /**
  * Objeto de solicitud para la creación o registro de una Zona.
  * Contiene Bean Validation para asegurar la integridad de los datos de entrada.
+ * La letra no admite los caracteres < ni >, por lo que no acepta scripts.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -22,6 +24,7 @@ public class ZonaRequest {
 
     @NotBlank(message = "La letra de la zona es obligatoria")
     @Size(max = 10, message = "La letra no puede superar los 10 caracteres")
+    @Pattern(regexp = "^[^<>]*$", message = "La letra no puede contener los caracteres < o >")
     private String letra;
 
     @NotNull(message = "El tipo de vehículo de la zona es obligatorio")

@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 
 /**
  * Objeto de solicitud para la actualización de los datos de un Administrador.
- * Un campo nulo significa "no cambiar". Los campos de texto solo admiten caracteres válidos,
- * por lo que no aceptan scripts.
+ * Un campo nulo significa "no cambiar". Todos los campos de texto, incluida la clave, solo admiten
+ * caracteres válidos, por lo que no aceptan scripts ni caracteres de marcado.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barcat
  */
@@ -48,5 +48,7 @@ public class AdministradorUpdate {
             message = "El nombre de usuario solo puede contener letras, números, punto, guion y guion bajo")
     private String nombreUsuario;
 
+    @Size(max = 100, message = "La clave no puede superar los 100 caracteres")
+    @Pattern(regexp = "^[^<>]*$", message = "La clave no puede contener los caracteres < o >")
     private String clave;
 }

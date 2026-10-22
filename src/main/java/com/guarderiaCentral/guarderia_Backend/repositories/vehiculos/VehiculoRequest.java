@@ -4,6 +4,7 @@ import com.guarderiaCentral.guarderia_Backend.modelos.TipoVehiculo;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 /**
  * Objeto de solicitud para la creación o registro de un Vehículo.
  * Contiene Bean Validation y los IDs de las entidades relacionadas (Socio).
+ * Los campos de texto no admiten los caracteres < ni >, por lo que no aceptan scripts.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -24,10 +26,12 @@ public class VehiculoRequest {
     private Integer socioId;
 
     @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
+    @Pattern(regexp = "^[^<>]*$", message = "El nombre no puede contener los caracteres < o >")
     private String nombre;
 
     @NotBlank(message = "La matrícula es obligatoria")
     @Size(max = 50, message = "La matrícula no puede superar los 50 caracteres")
+    @Pattern(regexp = "^[^<>]*$", message = "La matrícula no puede contener los caracteres < o >")
     private String matricula;
 
     @NotNull(message = "El tipo de vehículo es obligatorio")

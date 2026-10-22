@@ -10,7 +10,8 @@ import lombok.NoArgsConstructor;
 /**
  * Objeto de solicitud para la creación o registro de un Administrador.
  * Contiene las validaciones de Bean Validation correspondientes.
- * El DNI es opcional. Los campos de texto solo admiten caracteres válidos, por lo que no aceptan scripts.
+ * El DNI es opcional. Todos los campos de texto, incluida la clave, solo admiten caracteres válidos,
+ * por lo que no aceptan scripts ni caracteres de marcado.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barcat
  */
@@ -53,5 +54,7 @@ public class AdministradorRequest {
     private String nombreUsuario;
 
     @NotBlank(message = "La clave es obligatoria")
+    @Size(max = 100, message = "La clave no puede superar los 100 caracteres")
+    @Pattern(regexp = "^[^<>]*$", message = "La clave no puede contener los caracteres < o >")
     private String clave;
 }
