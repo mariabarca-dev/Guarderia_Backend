@@ -17,17 +17,20 @@ import java.util.List;
 
 /**
  * Interfaz de servicio que define los contratos de negocio para la gestión de Socios.
+ * El DNI del socio es obligatorio y único entre todas las cuentas del sistema.
  *
  * @author Guardería Central
  */
 public interface SocioService {
 
     /**
-     * Registra un nuevo socio en el sistema o reactiva uno inactivo existente.
+     * Registra un nuevo socio en el sistema o reactiva uno inactivo existente (si el DNI coincide con el de un
+     * socio inactivo).
      *
      * @param request DTO con los datos requeridos para el alta del socio.
      * @return DTO de respuesta con la información del socio registrado o reactivado.
-     * @throws DniDuplicadoException            Si ya existe un socio activo con el mismo DNI.
+     * @throws DniDuplicadoException            Si el DNI ya pertenece a un socio activo o a otra cuenta del sistema
+     *                                          (empleado o administrador, activa o inactiva).
      * @throws NombreUsuarioDuplicadoException Si el nombre de usuario ya pertenece a otra cuenta.
      * @throws BusinessException                Si la fecha de ingreso es anterior a la fecha de fundación de la guardería.
      */
@@ -73,7 +76,7 @@ public interface SocioService {
      * @param update DTO con los nuevos datos del socio.
      * @return DTO de respuesta con la información actualizada.
      * @throws RegistroNoEncontradoException    Si el socio no existe o no se encuentra activo.
-     * @throws DniDuplicadoException            Si el nuevo DNI ya pertenece a otro socio activo.
+     * @throws DniDuplicadoException            Si el nuevo DNI ya pertenece a otra cuenta del sistema.
      * @throws NombreUsuarioDuplicadoException Si el nuevo nombre de usuario ya está en uso.
      * @throws BusinessException                Si la nueva fecha de ingreso incumple alguna de las reglas anteriores.
      */

@@ -12,6 +12,10 @@ import java.io.Serializable;
 /**
  * Entidad base abstracta para todos los tipos de usuarios del sistema.
  * Utiliza estrategia de herencia JOINED para Socio, Empleado y Administrador.
+ * <p>
+ * El DNI es un dato opcional de la cuenta (la columna admite nulos y es única entre todos los usuarios);
+ * la subclase {@link Socio} lo exige como obligatorio.
+ * </p>
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -36,6 +40,9 @@ public abstract class Usuario implements Serializable {
 
     @Column(name = "apellido", nullable = false, length = 100)
     private String apellido;
+
+    @Column(name = "dni", unique = true, length = 20)
+    private String dni;
 
     @Column(name = "direccion", length = 200)
     private String direccion;

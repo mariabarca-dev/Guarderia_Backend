@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Objeto de respuesta para exponer la información pública de un Empleado.
+ * El DNI es nulo si el empleado no lo tiene cargado.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -18,6 +19,7 @@ public class EmpleadoResponse {
     private Integer id;
     private String nombre;
     private String apellido;
+    private String dni;
     private String direccion;
     private String telefono;
     private String nombreUsuario;

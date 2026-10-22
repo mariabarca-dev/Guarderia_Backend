@@ -109,6 +109,7 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Integer> {
         Empleado empleado = new Empleado();
         empleado.setNombre(request.getNombre());
         empleado.setApellido(request.getApellido());
+        empleado.setDni(request.getDni());
         empleado.setDireccion(request.getDireccion());
         empleado.setTelefono(request.getTelefono());
         empleado.setNombreUsuario(request.getNombreUsuario());
@@ -136,6 +137,9 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Integer> {
         }
         if (update.getApellido() != null) {
             empleado.setApellido(update.getApellido());
+        }
+        if (update.getDni() != null) {
+            empleado.setDni(update.getDni());
         }
         if (update.getDireccion() != null) {
             empleado.setDireccion(update.getDireccion());
@@ -171,6 +175,7 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Integer> {
         response.setId(empleado.getId());
         response.setNombre(empleado.getNombre());
         response.setApellido(empleado.getApellido());
+        response.setDni(empleado.getDni());
         response.setDireccion(empleado.getDireccion());
         response.setTelefono(empleado.getTelefono());
         response.setNombreUsuario(empleado.getNombreUsuario());

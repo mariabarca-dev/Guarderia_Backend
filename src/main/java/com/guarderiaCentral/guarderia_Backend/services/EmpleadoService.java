@@ -2,6 +2,7 @@ package com.guarderiaCentral.guarderia_Backend.services;
 
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.CodigoEmpleadoDuplicadoException;
+import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZonas.AsignacionEmpleadoZonaResponse;
@@ -16,6 +17,7 @@ import java.util.List;
  * Interfaz de servicio que define la lógica de negocio para la gestión de Empleados.
  * Proporciona métodos para registrar, actualizar, consultar y realizar el borrado
  * lógico de empleados, así como operaciones de consulta de zonas y vehículos a cargo.
+ * El DNI del empleado es opcional; cuando se informa, no puede pertenecer a otra cuenta del sistema.
  *
  * @author Cátedra Guardería Central
  */
@@ -28,6 +30,7 @@ public interface EmpleadoService {
      * @return {@link EmpleadoResponse} con la información del empleado registrado o reactivado.
      * @throws CodigoEmpleadoDuplicadoException si ya existe un empleado activo con el mismo código.
      * @throws NombreUsuarioDuplicadoException  si ya existe un usuario registrado con el mismo nombre de usuario.
+     * @throws DniDuplicadoException            si el DNI informado ya pertenece a otra cuenta del sistema.
      */
     EmpleadoResponse crear(EmpleadoRequest request);
 
@@ -64,6 +67,7 @@ public interface EmpleadoService {
      * @throws RegistroNoEncontradoException    si no se encuentra el empleado.
      * @throws CodigoEmpleadoDuplicadoException si el nuevo código pertenece a otro empleado activo.
      * @throws NombreUsuarioDuplicadoException  si el nuevo nombre de usuario pertenece a otra cuenta.
+     * @throws DniDuplicadoException            si el nuevo DNI ya pertenece a otra cuenta del sistema.
      */
     EmpleadoResponse actualizar(Integer id, EmpleadoUpdate update);
 

@@ -87,6 +87,7 @@ public interface AdministradorRepository extends JpaRepository<Administrador, In
         Administrador administrador = new Administrador();
         administrador.setNombre(request.getNombre());
         administrador.setApellido(request.getApellido());
+        administrador.setDni(request.getDni());
         administrador.setDireccion(request.getDireccion());
         administrador.setTelefono(request.getTelefono());
         administrador.setNombreUsuario(request.getNombreUsuario());
@@ -112,6 +113,9 @@ public interface AdministradorRepository extends JpaRepository<Administrador, In
         }
         if (update.getApellido() != null) {
             administrador.setApellido(update.getApellido());
+        }
+        if (update.getDni() != null) {
+            administrador.setDni(update.getDni());
         }
         if (update.getDireccion() != null) {
             administrador.setDireccion(update.getDireccion());
@@ -141,6 +145,7 @@ public interface AdministradorRepository extends JpaRepository<Administrador, In
         response.setId(administrador.getId());
         response.setNombre(administrador.getNombre());
         response.setApellido(administrador.getApellido());
+        response.setDni(administrador.getDni());
         response.setDireccion(administrador.getDireccion());
         response.setTelefono(administrador.getTelefono());
         response.setNombreUsuario(administrador.getNombreUsuario());

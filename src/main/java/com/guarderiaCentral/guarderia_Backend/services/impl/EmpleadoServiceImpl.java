@@ -2,6 +2,7 @@ package com.guarderiaCentral.guarderia_Backend.services.impl;
 
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.CodigoEmpleadoDuplicadoException;
+import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.modelos.AsignacionEmpleadoZona;
@@ -33,9 +34,10 @@ import java.util.stream.Collectors;
 
 /**
  * Implementación de la capa de servicio {@link EmpleadoService}.
- * Maneja la lógica de negocio de los empleados, validaciones de código y nombre de usuario,
- * guardado inteligente/reactivación, propagación en cascada de baja lógica sobre asignaciones,
- * la relación empleado-vehículo (vehículos que cada empleado atiende) y las consultas del empleado autenticado.
+ * Maneja la lógica de negocio de los empleados, validaciones de código, nombre de usuario y DNI (opcional,
+ * pero único entre todas las cuentas cuando se carga), guardado inteligente/reactivación, propagación en
+ * cascada de baja lógica sobre asignaciones, la relación empleado-vehículo (vehículos que cada empleado
+ * atiende) y las consultas del empleado autenticado.
  *
  * @author Cátedra Guardería Central
  */
@@ -73,11 +75,15 @@ public class EmpleadoServiceImpl implements EmpleadoService {
                 throw new CodigoEmpleadoDuplicadoException("Ya existe un empleado activo con el código: " + request.getCodigo());
             }
 
+            // El DNI (si se envió) no puede pertenecer a otra cuenta distinta del empleado que se reactiva
+            validarDniUnico(request.getDni(), existente.getId());
+
             log.info("Reactivando empleado inactivo con ID: {}", existente.getId());
 
             EmpleadoUpdate update = new EmpleadoUpdate();
             update.setNombre(request.getNombre());
             update.setApellido(request.getApellido());
+            update.setDni(request.getDni());
             update.setDireccion(request.getDireccion());
             update.setTelefono(request.getTelefono());
             update.setNombreUsuario(request.getNombreUsuario());
@@ -94,7 +100,10 @@ public class EmpleadoServiceImpl implements EmpleadoService {
             return empleadoRepository.fromEntity(reactivado);
         }
 
-        // 3. Si no existe, se crea una nueva entidad
+        // 3. Validar que el DNI (si se envió) no pertenezca a ninguna otra cuenta del sistema
+        validarDniUnico(request.getDni(), null);
+
+        // 4. Si no existe, se crea una nueva entidad
         Empleado empleado = empleadoRepository.toEntity(request);
         empleado.setClave(passwordEncoder.encode(request.getClave()));
         empleado.setActivo(true);
@@ -155,6 +164,10 @@ public class EmpleadoServiceImpl implements EmpleadoService {
 
         if (update.getNombreUsuario() != null && !update.getNombreUsuario().equalsIgnoreCase(empleado.getNombreUsuario())) {
             validarNombreUsuarioUnico(update.getNombreUsuario(), id);
+        }
+
+        if (update.getDni() != null && !update.getDni().equalsIgnoreCase(empleado.getDni())) {
+            validarDniUnico(update.getDni(), id);
         }
 
         empleadoRepository.updateEntity(empleado, update);
@@ -400,6 +413,24 @@ public class EmpleadoServiceImpl implements EmpleadoService {
         Optional<Integer> duenoOpt = usuarioRepository.buscarIdPorNombreUsuarioIncluyendoInactivos(nombreUsuario);
         if (duenoOpt.isPresent() && (idExcluir == null || !duenoOpt.get().equals(idExcluir))) {
             throw new NombreUsuarioDuplicadoException("El nombre de usuario '" + nombreUsuario + "' ya se encuentra registrado.");
+        }
+    }
+
+    /**
+     * Valida que el DNI no pertenezca a ninguna otra cuenta del sistema (activa o inactiva, de cualquier tipo).
+     * El DNI es opcional en el empleado: si es nulo o está en blanco, no se valida.
+     *
+     * @param dni       DNI a validar (puede ser nulo).
+     * @param idExcluir ID de la cuenta que se está modificando o reactivando; null en un alta nueva.
+     * @throws DniDuplicadoException Si el DNI ya pertenece a otra cuenta.
+     */
+    private void validarDniUnico(String dni, Integer idExcluir) {
+        if (dni == null || dni.isBlank()) {
+            return;
+        }
+        Optional<Integer> duenoOpt = usuarioRepository.buscarIdPorDniIncluyendoInactivos(dni);
+        if (duenoOpt.isPresent() && (idExcluir == null || !duenoOpt.get().equals(idExcluir))) {
+            throw new DniDuplicadoException("El DNI " + dni + " ya se encuentra registrado en otra cuenta.");
         }
     }
 }

@@ -47,6 +47,16 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
     Optional<Integer> buscarIdPorNombreUsuarioIncluyendoInactivos(@Param("nombreUsuario") String nombreUsuario);
 
     /**
+     * Consulta nativa para verificar si un DNI ya existe en la tabla raíz 'usuarios', considerando cuentas
+     * activas e inactivas de cualquier tipo (socio, empleado o administrador).
+     *
+     * @param dni DNI a verificar.
+     * @return {@link Optional} con el ID de la cuenta que tiene ese DNI, si existe.
+     */
+    @Query(value = "SELECT id FROM usuarios WHERE dni = :dni", nativeQuery = true)
+    Optional<Integer> buscarIdPorDniIncluyendoInactivos(@Param("dni") String dni);
+
+    /**
      * Consulta nativa para obtener la lista completa de todos los usuarios registrados
      * en la tabla raíz 'usuarios', incluyendo activos e inactivos (borrado lógico).
      *
@@ -80,6 +90,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
         response.setId(usuario.getId());
         response.setNombre(usuario.getNombre());
         response.setApellido(usuario.getApellido());
+        response.setDni(usuario.getDni());
         response.setNombreUsuario(usuario.getNombreUsuario());
         response.setRol(usuario.getRol());
         response.setActivo(usuario.getActivo());

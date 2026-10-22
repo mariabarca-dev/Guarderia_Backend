@@ -1,6 +1,7 @@
 package com.guarderiaCentral.guarderia_Backend.services;
 
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
+import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.SysAdminProtegidoException;
@@ -15,6 +16,7 @@ import java.util.List;
  * Define las operaciones de negocio permitidas a los roles ADMINISTRADOR y SYSADMIN.
  * El SYSADMIN opera sobre todas las cuentas; el ADMINISTRADOR no puede ver, modificar ni dar de baja
  * cuentas con rol SYSADMIN. Por eso las consultas y modificaciones reciben el nombre de usuario de quien llama.
+ * El DNI del administrador es opcional; cuando se informa, no puede pertenecer a otra cuenta del sistema.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barcat
  */
@@ -28,6 +30,7 @@ public interface AdministradorService {
      * @return {@link AdministradorResponse} con el registro creado o reactivado.
      * @throws NombreUsuarioDuplicadoException Si el nombre de usuario pertenece a otra cuenta activa, a una cuenta
      *                                         SYSADMIN inactiva o a otro tipo de usuario inactivo.
+     * @throws DniDuplicadoException           Si el DNI informado ya pertenece a otra cuenta del sistema.
      */
     AdministradorResponse crear(AdministradorRequest request);
 
@@ -69,6 +72,7 @@ public interface AdministradorService {
      * @throws RegistroNoEncontradoException   Si el administrador no existe o está inactivo.
      * @throws SysAdminProtegidoException      Si quien opera es ADMINISTRADOR y la cuenta es SYSADMIN.
      * @throws NombreUsuarioDuplicadoException Si el nuevo nombre de usuario pertenece a otra cuenta.
+     * @throws DniDuplicadoException           Si el nuevo DNI ya pertenece a otra cuenta del sistema.
      */
     AdministradorResponse actualizar(Integer id, AdministradorUpdate update, String nombreUsuarioLlamador);
 

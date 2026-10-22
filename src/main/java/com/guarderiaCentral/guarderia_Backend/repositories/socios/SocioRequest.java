@@ -13,9 +13,10 @@ import java.time.LocalDate;
 /**
  * Objeto de solicitud para la creación o registro de un Socio.
  * Contiene los campos heredados de usuario y los específicos de socio, junto con Bean Validation.
+ * Los campos de texto solo admiten caracteres válidos para cada dato, por lo que no aceptan scripts.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
- * @version 1.0
+ * @version 1.1
  */
 @Data
 @NoArgsConstructor
@@ -24,16 +25,24 @@ public class SocioRequest {
 
     @NotBlank(message = "El nombre es obligatorio")
     @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
+    @Pattern(regexp = "^[\\p{L}][\\p{L} .'’-]*$",
+            message = "El nombre solo puede contener letras, espacios, punto, apóstrofe y guion")
     private String nombre;
 
     @NotBlank(message = "El apellido es obligatorio")
     @Size(max = 100, message = "El apellido no puede superar los 100 caracteres")
+    @Pattern(regexp = "^[\\p{L}][\\p{L} .'’-]*$",
+            message = "El apellido solo puede contener letras, espacios, punto, apóstrofe y guion")
     private String apellido;
 
     @Size(max = 200, message = "La dirección no puede superar los 200 caracteres")
+    @Pattern(regexp = "^[\\p{L}\\p{N} .,#°ºª/()'’-]*$",
+            message = "La dirección contiene caracteres no permitidos")
     private String direccion;
 
     @Size(max = 50, message = "El teléfono no puede superar los 50 caracteres")
+    @Pattern(regexp = "^[0-9+() -]*$",
+            message = "El teléfono solo puede contener números, espacios, +, paréntesis y guiones")
     private String telefono;
 
     @NotBlank(message = "El nombre de usuario es obligatorio")
@@ -47,6 +56,8 @@ public class SocioRequest {
 
     @NotBlank(message = "El DNI es obligatorio")
     @Size(max = 20, message = "El DNI no puede superar los 20 caracteres")
+    @Pattern(regexp = "^[0-9A-Za-z.-]+$",
+            message = "El DNI solo puede contener letras, números, punto y guion")
     private String dni;
 
     @NotNull(message = "La fecha de ingreso es obligatoria")

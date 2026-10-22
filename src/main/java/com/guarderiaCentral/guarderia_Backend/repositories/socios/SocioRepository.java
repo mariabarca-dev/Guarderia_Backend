@@ -14,9 +14,10 @@ import java.util.Optional;
  * Gestiona la persistencia, consultas específicas por DNI y nombre de usuario,
  * consultas nativas con JOIN para herencia JOINED y métodos por defecto de mapeo
  * entre {@link SocioRequest}, {@link SocioUpdate}, {@link SocioResponse} y la entidad.
+ * El DNI se guarda en la tabla raíz 'usuarios' (heredado de Usuario).
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
- * @version 1.0
+ * @version 1.1
  */
 @Repository
 public interface SocioRepository extends JpaRepository<Socio, Integer> {
@@ -88,12 +89,12 @@ public interface SocioRepository extends JpaRepository<Socio, Integer> {
 
     /**
      * Busca un socio por su DNI único incluyendo registros inactivos (borrado lógico).
-     * Realiza un JOIN nativo con la tabla raíz usuarios debido a la estrategia JOINED.
+     * Realiza un JOIN nativo con la tabla raíz usuarios, que es donde se guarda el DNI.
      *
      * @param dni DNI del socio.
      * @return {@link Optional} con la entidad Socio (activa o inactiva).
      */
-    @Query(value = "SELECT u.*, s.* FROM usuarios u JOIN socios s ON s.usuario_id = u.id WHERE s.dni = ?1", nativeQuery = true)
+    @Query(value = "SELECT u.*, s.* FROM usuarios u JOIN socios s ON s.usuario_id = u.id WHERE u.dni = ?1", nativeQuery = true)
     Optional<Socio> findByDniIncludingInactive(String dni);
 
     /**

@@ -38,6 +38,9 @@ import java.util.stream.Collectors;
  * El rol de toda cuenta de socio es siempre {@code Rol.SOCIO}: lo fija el repository y no se
  * puede elegir ni modificar desde el Request o el Update.
  * <p>
+ * El DNI del socio es obligatorio y único entre todas las cuentas del sistema (no solo entre socios).
+ * </p>
+ * <p>
  * La fecha de ingreso no puede ser anterior a la fundación de la guardería (al crear y al modificar) ni
  * posterior a la compra más antigua de los garages del socio (al modificar), para que nunca quede un garage
  * comprado antes de que el socio ingresara.
@@ -61,6 +64,8 @@ public class SocioServiceImpl implements SocioService {
 
     /**
      * {@inheritDoc}
+     * Si el DNI pertenece a un socio inactivo, se reactiva ese socio; si pertenece a cualquier otra cuenta
+     * (activa o inactiva), se rechaza el alta.
      */
     @Override
     @Transactional
@@ -73,7 +78,8 @@ public class SocioServiceImpl implements SocioService {
         // 2. Verificar si el nombreUsuario pertenece a otro usuario en toda la jerarquía (activos e inactivos)
         Optional<Integer> duenoNombreUsuarioOpt = usuarioRepository.buscarIdPorNombreUsuarioIncluyendoInactivos(request.getNombreUsuario());
 
-        // 3. Buscar socio por DNI incluyendo inactivos para guardado inteligente / reactivación
+        // 3. Verificar a quién pertenece el DNI en toda la jerarquía y buscar el socio por DNI (incluyendo inactivos)
+        Optional<Integer> duenoDniOpt = usuarioRepository.buscarIdPorDniIncluyendoInactivos(request.getDni());
         Optional<Socio> socioInactivoOpt = socioRepository.findByDniIncludingInactive(request.getDni());
 
         if (socioInactivoOpt.isPresent()) {
@@ -108,6 +114,12 @@ public class SocioServiceImpl implements SocioService {
 
             Socio reactivado = socioRepository.save(existente);
             return socioRepository.fromEntity(reactivado);
+        }
+
+        // El DNI pertenece a una cuenta que no es de un socio (empleado o administrador, activa o inactiva)
+        if (duenoDniOpt.isPresent()) {
+            log.error("Error al registrar socio: el DNI {} ya pertenece a otra cuenta.", request.getDni());
+            throw new DniDuplicadoException("El DNI " + request.getDni() + " ya se encuentra registrado en otra cuenta.");
         }
 
         if (duenoNombreUsuarioOpt.isPresent()) {
@@ -181,8 +193,9 @@ public class SocioServiceImpl implements SocioService {
 
     /**
      * {@inheritDoc}
-     * Si se modifica la fecha de ingreso, no puede ser anterior a la fundación de la guardería ni posterior a la
-     * compra más antigua de los garages activos del socio.
+     * Si se modifica el DNI, no puede pertenecer a ninguna otra cuenta del sistema. Si se modifica la fecha
+     * de ingreso, no puede ser anterior a la fundación de la guardería ni posterior a la compra más antigua
+     * de los garages activos del socio.
      */
     @Override
     @Transactional
@@ -196,11 +209,7 @@ public class SocioServiceImpl implements SocioService {
                 });
 
         if (update.getDni() != null && !update.getDni().equalsIgnoreCase(socioExistente.getDni())) {
-            Optional<Socio> dniExistenteOpt = socioRepository.findByDniIncludingInactive(update.getDni());
-            if (dniExistenteOpt.isPresent() && !dniExistenteOpt.get().getId().equals(id)) {
-                log.error("El DNI {} ya se encuentra en uso por otro socio (ID: {})", update.getDni(), dniExistenteOpt.get().getId());
-                throw new DniDuplicadoException("El DNI " + update.getDni() + " ya está asignado a otro socio.");
-            }
+            validarDniUnico(update.getDni(), id);
         }
 
         if (update.getNombreUsuario() != null && !update.getNombreUsuario().equalsIgnoreCase(socioExistente.getNombreUsuario())) {
@@ -357,6 +366,21 @@ public class SocioServiceImpl implements SocioService {
         Socio socio = obtenerSocioAutenticado(nombreUsuario);
         log.debug("Listando garages ocupados por los vehículos del socio autenticado ID: {}", socio.getId());
         return asignacionVehiculoGarageService.listarGaragesOcupadosPorSocio(socio.getId());
+    }
+
+    /**
+     * Valida que el DNI no pertenezca a ninguna otra cuenta del sistema (activa o inactiva, de cualquier tipo).
+     *
+     * @param dni       DNI a validar.
+     * @param idExcluir ID de la cuenta que se está modificando (no cuenta como "otra").
+     * @throws DniDuplicadoException Si el DNI ya pertenece a otra cuenta.
+     */
+    private void validarDniUnico(String dni, Integer idExcluir) {
+        Optional<Integer> duenoOpt = usuarioRepository.buscarIdPorDniIncluyendoInactivos(dni);
+        if (duenoOpt.isPresent() && !duenoOpt.get().equals(idExcluir)) {
+            log.error("El DNI {} ya se encuentra en uso por otra cuenta (ID: {})", dni, duenoOpt.get());
+            throw new DniDuplicadoException("El DNI " + dni + " ya está asignado a otra cuenta.");
+        }
     }
 
     /**

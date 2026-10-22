@@ -1,6 +1,7 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
+import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.SysAdminProtegidoException;
@@ -30,6 +31,9 @@ import java.util.Optional;
  * El SYSADMIN opera sobre todas las cuentas. Si quien llama es un ADMINISTRADOR, las cuentas SYSADMIN
  * no se listan y no se pueden consultar, modificar, dar de baja ni reactivar. El SYSADMIN no puede dar de
  * baja su propia cuenta, para que el sistema no se quede sin SYSADMIN.
+ * </p>
+ * <p>
+ * El DNI es opcional en el administrador; cuando se carga, es único entre todas las cuentas del sistema.
  * </p>
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barcat
@@ -63,11 +67,15 @@ public class AdministradorServiceImpl implements AdministradorService {
             if (inactivoOpt.isPresent()) {
                 Administrador inactivo = inactivoOpt.get();
                 if (Boolean.FALSE.equals(inactivo.getActivo()) && inactivo.getRol() != Rol.SYSADMIN) {
+                    // El DNI (si se envió) no puede pertenecer a otra cuenta distinta de la que se reactiva
+                    validarDniUnico(request.getDni(), inactivo.getId());
+
                     log.info("Reactivando administrador inactivo con ID: {}", inactivo.getId());
 
                     AdministradorUpdate update = new AdministradorUpdate();
                     update.setNombre(request.getNombre());
                     update.setApellido(request.getApellido());
+                    update.setDni(request.getDni());
                     update.setDireccion(request.getDireccion());
                     update.setTelefono(request.getTelefono());
                     update.setNombreUsuario(request.getNombreUsuario());
@@ -83,6 +91,9 @@ public class AdministradorServiceImpl implements AdministradorService {
             }
             throw new NombreUsuarioDuplicadoException("El nombre de usuario '" + request.getNombreUsuario() + "' ya se encuentra registrado.");
         }
+
+        // El DNI (si se envió) no puede pertenecer a ninguna otra cuenta del sistema
+        validarDniUnico(request.getDni(), null);
 
         Administrador administrador = administradorRepository.toEntity(request);
         administrador.setClave(passwordEncoder.encode(request.getClave()));
@@ -159,6 +170,10 @@ public class AdministradorServiceImpl implements AdministradorService {
             }
         }
 
+        if (update.getDni() != null && !update.getDni().equalsIgnoreCase(admin.getDni())) {
+            validarDniUnico(update.getDni(), id);
+        }
+
         if (update.getClave() != null && !update.getClave().isBlank()) {
             update.setClave(passwordEncoder.encode(update.getClave()));
         }
@@ -194,6 +209,24 @@ public class AdministradorServiceImpl implements AdministradorService {
         admin.setActivo(false);
         administradorRepository.save(admin);
         log.info("Administrador con ID: {} desactivado correctamente.", id);
+    }
+
+    /**
+     * Valida que el DNI no pertenezca a ninguna otra cuenta del sistema (activa o inactiva, de cualquier tipo).
+     * El DNI es opcional en el administrador: si es nulo o está en blanco, no se valida.
+     *
+     * @param dni       DNI a validar (puede ser nulo).
+     * @param idExcluir ID de la cuenta que se está modificando o reactivando; null en un alta nueva.
+     * @throws DniDuplicadoException Si el DNI ya pertenece a otra cuenta.
+     */
+    private void validarDniUnico(String dni, Integer idExcluir) {
+        if (dni == null || dni.isBlank()) {
+            return;
+        }
+        Optional<Integer> duenoOpt = usuarioRepository.buscarIdPorDniIncluyendoInactivos(dni);
+        if (duenoOpt.isPresent() && (idExcluir == null || !duenoOpt.get().equals(idExcluir))) {
+            throw new DniDuplicadoException("El DNI " + dni + " ya se encuentra registrado en otra cuenta.");
+        }
     }
 
     /**
