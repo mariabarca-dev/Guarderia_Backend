@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * Controlador RESTful para la gestión de las asignaciones de empleados a zonas (AsignacionEmpleadoZona).
  * Todas las operaciones son exclusivas del ADMINISTRADOR. El EMPLEADO consulta sus zonas por
- * {@code /api/empleados/me/zonas}.
+ * {@code /api/usuarios/me/empleado/zonas}.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  * @version 1.1

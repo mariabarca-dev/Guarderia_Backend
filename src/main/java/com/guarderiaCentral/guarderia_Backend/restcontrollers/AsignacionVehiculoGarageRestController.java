@@ -27,7 +27,7 @@ import java.util.List;
  * Proporciona endpoints REST limpios para operaciones CRUD sobre la relación asociativa 1 a 1 de asignación,
  * respetando la matriz de seguridad mediante Spring Security y anotaciones @PreAuthorize.
  * Todas las operaciones son exclusivas del ADMINISTRADOR. El SOCIO consulta los garages que ocupan sus
- * vehículos por {@code /api/socios/me/garages-ocupados}.
+ * vehículos por {@code /api/usuarios/me/socio/garages-ocupados}.
  *
  * @version 1.1
  */

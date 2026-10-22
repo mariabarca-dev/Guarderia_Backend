@@ -28,7 +28,7 @@ import java.util.Objects;
 /**
  * Controlador RESTful para la gestión y administración de las relaciones de propiedad entre Socios y Garajes.
  * Todas las operaciones son exclusivas del ADMINISTRADOR. El SOCIO consulta sus propiedades por
- * {@code /api/socios/me/propiedades}.
+ * {@code /api/usuarios/me/socio/propiedades}.
  *
  * @version 1.1
  */

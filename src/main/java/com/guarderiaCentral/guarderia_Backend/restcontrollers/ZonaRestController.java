@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * Controlador REST API para la gestión de Zonas en la Guardería Central.
  * Todas las operaciones (consulta, alta, modificación y baja) son exclusivas del ADMINISTRADOR.
- * El EMPLEADO consulta sus zonas por {@code /api/empleados/me/zonas}.
+ * El EMPLEADO consulta sus zonas por {@code /api/usuarios/me/empleado/zonas}.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  * @version 1.1

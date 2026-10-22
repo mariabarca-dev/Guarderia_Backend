@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * Controlador REST para la gestión de la entidad Vehículo.
  * Todas las operaciones (consultas, alta, modificación, baja y consulta de inactivos) son exclusivas del
- * ADMINISTRADOR. El SOCIO consulta sus vehículos por {@code /api/socios/me/vehiculos}. El EMPLEADO y el
+ * ADMINISTRADOR. El SOCIO consulta sus vehículos por {@code /api/usuarios/me/socio/vehiculos}. El EMPLEADO y el
  * SYSADMIN no tienen acceso a este recurso.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca

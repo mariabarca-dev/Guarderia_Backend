@@ -30,8 +30,8 @@ import java.util.List;
  * Cumple con las restricciones de seguridad basadas en roles expuestas en la matriz del sistema:
  * - ADMINISTRADOR: Control total (CRUD - GET/POST/PUT/DELETE) sobre la entidad Garage, incluida la consulta de inactivos
  *   y el reporte de disponibilidad por zona.
- * - EMPLEADO: Sin acceso directo; consulta sus zonas por {@code /api/empleados/me/zonas}.
- * - SOCIO: Sin acceso directo; consulta sus garages por los endpoints {@code /api/socios/me/...}.
+ * - EMPLEADO: Sin acceso directo; consulta sus zonas por {@code /api/usuarios/me/empleado/zonas}.
+ * - SOCIO: Sin acceso directo; consulta sus garages por los endpoints {@code /api/usuarios/me/socio/...}.
  * - SYSADMIN: Sin acceso a la entidad de negocio Garage.
  *
  * @version 1.2
