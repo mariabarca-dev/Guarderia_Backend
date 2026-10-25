@@ -2,12 +2,15 @@ package com.guarderiaCentral.guarderia_Backend.services.impl;
 
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.modelos.Usuario;
+import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.empleados.EmpleadoUpdate;
+import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioUpdate;
@@ -22,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,7 +38,7 @@ import java.util.stream.Collectors;
  * La protección de las cuentas SYSADMIN frente al ADMINISTRADOR vive en {@link AdministradorService}.
  *
  * @author GuarderiaCentral
- * @version 1.3
+ * @version 1.4
  */
 @Slf4j
 @Service
@@ -41,6 +46,9 @@ import java.util.stream.Collectors;
 public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final SocioRepository socioRepository;
+    private final EmpleadoRepository empleadoRepository;
+    private final AdministradorRepository administradorRepository;
     private final SocioService socioService;
     private final EmpleadoService empleadoService;
     private final AdministradorService administradorService;
@@ -90,12 +98,20 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     /**
      * {@inheritDoc}
+     * Como la herencia es JOINED, la lista se arma juntando las cuentas de cada subtipo: sus consultas
+     * nativas ya hacen el JOIN con la tabla raíz y no filtran por borrado lógico. Las cuentas SYSADMIN
+     * están incluidas entre los administradores. El resultado se ordena por ID.
      */
     @Override
     @Transactional(readOnly = true)
     public List<UsuarioResponse> listarTodosIncluyendoInactivos() {
         log.info("Listando todos los usuarios (incluyendo inactivos).");
-        return usuarioRepository.listarTodosIncluyendoInactivos().stream()
+        List<Usuario> todos = new ArrayList<>();
+        todos.addAll(socioRepository.findAllIncludingInactive());
+        todos.addAll(empleadoRepository.findAllIncludingInactive());
+        todos.addAll(administradorRepository.findAllIncludingInactive());
+        return todos.stream()
+                .sorted(Comparator.comparing(Usuario::getId))
                 .map(usuarioRepository::fromEntity)
                 .collect(Collectors.toList());
     }
