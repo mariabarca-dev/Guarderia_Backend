@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZonas;
 
+import com.guarderiaCentral.guarderia_Backend.repositories.RelacionSegura;
 import com.guarderiaCentral.guarderia_Backend.modelos.AsignacionEmpleadoZona;
 import com.guarderiaCentral.guarderia_Backend.modelos.Empleado;
 import com.guarderiaCentral.guarderia_Backend.modelos.Zona;
@@ -116,8 +117,16 @@ public interface AsignacionEmpleadoZonaRepository extends JpaRepository<Asignaci
         }
         AsignacionEmpleadoZonaResponse response = new AsignacionEmpleadoZonaResponse();
         response.setId(asignacion.getId());
-        response.setEmpleadoId(asignacion.getEmpleado() != null ? asignacion.getEmpleado().getId() : null);
-        response.setZonaId(asignacion.getZona() != null ? asignacion.getZona().getId() : null);
+        if (asignacion.getEmpleado() != null) {
+            response.setEmpleadoId(asignacion.getEmpleado().getId());
+            response.setEmpleadoCodigo(RelacionSegura.leer(() -> asignacion.getEmpleado().getCodigo()));
+            response.setEmpleadoNombre(RelacionSegura.leer(() -> asignacion.getEmpleado().getNombre()));
+            response.setEmpleadoApellido(RelacionSegura.leer(() -> asignacion.getEmpleado().getApellido()));
+        }
+        if (asignacion.getZona() != null) {
+            response.setZonaId(asignacion.getZona().getId());
+            response.setZonaLetra(RelacionSegura.leer(() -> asignacion.getZona().getLetra()));
+        }
         response.setCantVehiculosACargo(asignacion.getCantVehiculosACargo());
         response.setActivo(asignacion.getActivo());
         return response;
