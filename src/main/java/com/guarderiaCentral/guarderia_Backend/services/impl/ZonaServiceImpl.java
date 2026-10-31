@@ -199,8 +199,8 @@ public class ZonaServiceImpl implements ZonaService {
             boolean tieneGarajes = garageRepository.existsByZonaIdAndActivoTrue(id);
             if (tieneGarajes) {
                 log.error("Bloqueo de modificación de tipo de vehículo en zona ID {}: posee garajes activos asociados.", id);
-                throw new BusinessException("Error: No se puede cambiar el tipo de vehículo de la zona '"
-                        + zonaExistente.getLetra() + "' porque ya posee garajes asociados.");
+                throw new BusinessException("Error: No se puede cambiar el tipo de rodado de la zona '"
+                        + zonaExistente.getLetra() + "' porque ya posee cocheras asociadas.");
             }
         }
 
@@ -217,7 +217,7 @@ public class ZonaServiceImpl implements ZonaService {
                         id, update.getCapacidadVehiculos(), garajesEnZona);
                 throw new BusinessException("Error: No se puede reducir la capacidad de la zona '"
                         + zonaExistente.getLetra() + "' a " + update.getCapacidadVehiculos()
-                        + " porque ya tiene " + garajesEnZona + " garajes activos. Primero dá de baja garajes de la zona"
+                        + " porque ya tiene " + garajesEnZona + " cocheras activas. Primero dá de baja cocheras de la zona"
                         + " o elegí una capacidad de al menos " + garajesEnZona + ".", HttpStatus.CONFLICT);
             }
 
@@ -231,8 +231,8 @@ public class ZonaServiceImpl implements ZonaService {
                         id, update.getCapacidadVehiculos(), vehiculosACargo);
                 throw new BusinessException("Error: No se puede reducir la capacidad de la zona '"
                         + zonaExistente.getLetra() + "' a " + update.getCapacidadVehiculos()
-                        + " porque los empleados ya tienen a cargo " + vehiculosACargo + " vehículos en la zona."
-                        + " Primero reducí la cantidad de vehículos a cargo de los empleados o elegí una capacidad de al menos "
+                        + " porque los empleados ya tienen a cargo " + vehiculosACargo + " rodados en la zona."
+                        + " Primero reducí la cantidad de rodados a cargo de los empleados o elegí una capacidad de al menos "
                         + vehiculosACargo + ".", HttpStatus.CONFLICT);
             }
         }
@@ -251,13 +251,13 @@ public class ZonaServiceImpl implements ZonaService {
     }
 
     /**
-     * Desactiva lógicamente una zona del sistema. Bloquea la operación si la zona
-     * aún tiene garajes asociados activos para resguardar la integridad referencial.
-     * Propaga la baja lógica a las asignaciones de empleado a zona activas.
+     * Desactiva lógicamente una zona del sistema. Bloquea la operación si la zona aún tiene garajes
+     * asociados activos o sectores (asignaciones de empleado a la zona) activos, para resguardar la
+     * integridad referencial: primero hay que dar de baja los garajes y los sectores de la zona.
      *
      * @param id Identificador único de la zona a desactivar.
      * @throws RegistroNoEncontradoException Si no se encuentra la zona activa.
-     * @throws BusinessException Si existen garajes asociados activos a la zona.
+     * @throws BusinessException Si existen garajes o sectores activos asociados a la zona.
      */
     @Override
     @Transactional
@@ -275,7 +275,14 @@ public class ZonaServiceImpl implements ZonaService {
         if (tieneGarajes) {
             log.error("Bloqueo de eliminación para la zona ID {}: existen garajes asociados.", id);
             throw new BusinessException("Error: No se puede eliminar la zona '" + zona.getLetra()
-                    + "' porque existen garajes asociados a ella.");
+                    + "' porque existen cocheras asociadas a ella. Primero dá de baja sus cocheras.");
+        }
+
+        boolean tieneSectores = !asignacionEmpleadoZonaRepository.findAllByZonaIdAndActivoTrue(id).isEmpty();
+        if (tieneSectores) {
+            log.error("Bloqueo de eliminación para la zona ID {}: existen sectores (empleados asignados) activos.", id);
+            throw new BusinessException("Error: No se puede eliminar la zona '" + zona.getLetra()
+                    + "' porque tiene sectores activos. Primero dá de baja sus sectores.");
         }
 
         zona.setActivo(false);
