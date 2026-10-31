@@ -9,7 +9,7 @@ import java.time.LocalDate;
 /**
  * Objeto de respuesta para exponer la información de la propiedad de garage,
  * exponiendo IDs limpios de las entidades relacionadas y los datos legibles del socio (DNI, nombre y apellido)
- * y del garage (número).
+ * y del garage (número). En "mis propiedades" del socio indica además quién ocupa la cochera.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -27,4 +27,8 @@ public class PropiedadGarageResponse {
     private Integer garageNumero;
     private LocalDate fechaCompraGarage;
     private Boolean activo;
+    /** Matrícula del rodado que ocupa la cochera (solo se completa en "mis propiedades" del socio; null si está libre). */
+    private String ocupadaPorMatricula;
+    /** true si el rodado que la ocupa es del propio socio, false si es de otro socio; null si está libre. */
+    private Boolean ocupadaPorPropio;
 }

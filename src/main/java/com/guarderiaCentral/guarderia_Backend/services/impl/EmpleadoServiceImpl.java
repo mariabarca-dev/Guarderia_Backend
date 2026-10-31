@@ -6,8 +6,10 @@ import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.modelos.AsignacionEmpleadoZona;
+import com.guarderiaCentral.guarderia_Backend.modelos.AsignacionVehiculoGarage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Empleado;
 import com.guarderiaCentral.guarderia_Backend.modelos.Vehiculo;
+import com.guarderiaCentral.guarderia_Backend.repositories.RelacionSegura;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZonas.AsignacionEmpleadoZonaRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionEmpleadoZonas.AsignacionEmpleadoZonaResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageRepository;
@@ -26,6 +28,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -257,9 +260,29 @@ public class EmpleadoServiceImpl implements EmpleadoService {
         log.info("Obteniendo vehículos a cargo del empleado ID: {}", empleadoId);
         obtenerEmpleadoActivoPorId(empleadoId);
 
+        // Ocupación activa de cada vehículo (vehículoId -> asignación), para informar cochera y zona
+        Map<Integer, AsignacionVehiculoGarage> ocupacionPorVehiculo = new HashMap<>();
+        asignacionVehiculoGarageRepository.findAllByActivoTrue().forEach(a -> {
+            if (a.getVehiculo() != null) {
+                ocupacionPorVehiculo.put(a.getVehiculo().getId(), a);
+            }
+        });
+
         return vehiculoRepository.findAllByActivoTrue().stream()
                 .filter(v -> v.getEmpleado() != null && v.getEmpleado().getId().equals(empleadoId))
-                .map(vehiculoRepository::fromEntity)
+                .map(v -> {
+                    VehiculoResponse response = vehiculoRepository.fromEntity(v);
+                    AsignacionVehiculoGarage ocupacion = ocupacionPorVehiculo.get(v.getId());
+                    if (ocupacion != null && ocupacion.getGarage() != null) {
+                        response.setGarageNumero(RelacionSegura.leer(() -> ocupacion.getGarage().getNumeroGarage()));
+                        if (ocupacion.getGarage().getZona() != null) {
+                            response.setZonaLetra(RelacionSegura.leer(() -> ocupacion.getGarage().getZona().getLetra()));
+                        }
+                    }
+                    return response;
+                })
+                .sorted(Comparator.comparing(VehiculoResponse::getZonaLetra, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(VehiculoResponse::getGarageNumero, Comparator.nullsLast(Comparator.naturalOrder())))
                 .collect(Collectors.toList());
     }
 

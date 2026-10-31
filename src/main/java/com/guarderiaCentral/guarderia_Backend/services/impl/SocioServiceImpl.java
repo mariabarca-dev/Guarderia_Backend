@@ -7,7 +7,10 @@ import com.guarderiaCentral.guarderia_Backend.exceptions.DependenciasActivasExce
 import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
+import com.guarderiaCentral.guarderia_Backend.modelos.AsignacionVehiculoGarage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Socio;
+import com.guarderiaCentral.guarderia_Backend.repositories.RelacionSegura;
+import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.GarageOcupadoResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.socios.SocioRepository;
@@ -28,7 +31,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -59,6 +64,7 @@ public class SocioServiceImpl implements SocioService {
     private final VehiculoService vehiculoService;
     private final PropiedadGarageService propiedadGarageService;
     private final AsignacionVehiculoGarageService asignacionVehiculoGarageService;
+    private final AsignacionVehiculoGarageRepository asignacionVehiculoGarageRepository;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -353,7 +359,24 @@ public class SocioServiceImpl implements SocioService {
     public List<PropiedadGarageResponse> listarMisPropiedades(String nombreUsuario) {
         Socio socio = obtenerSocioAutenticado(nombreUsuario);
         log.debug("Listando propiedades de garage del socio autenticado ID: {}", socio.getId());
-        return propiedadGarageService.listarPorSocio(socio.getId());
+        List<PropiedadGarageResponse> propiedades = propiedadGarageService.listarPorSocio(socio.getId());
+
+        // Ocupación activa de cada garage (garageId -> asignación): sirve para informar quién ocupa cada cochera
+        Map<Integer, AsignacionVehiculoGarage> ocupacionPorGarage = new HashMap<>();
+        asignacionVehiculoGarageRepository.findAllByActivoTrue().forEach(a -> {
+            if (a.getGarage() != null) {
+                ocupacionPorGarage.put(a.getGarage().getId(), a);
+            }
+        });
+        propiedades.forEach(p -> {
+            AsignacionVehiculoGarage ocupacion = ocupacionPorGarage.get(p.getGarageId());
+            if (ocupacion != null && ocupacion.getVehiculo() != null) {
+                p.setOcupadaPorMatricula(RelacionSegura.leer(() -> ocupacion.getVehiculo().getMatricula()));
+                Integer duenoDelRodado = RelacionSegura.leer(() -> ocupacion.getVehiculo().getSocio().getId());
+                p.setOcupadaPorPropio(socio.getId().equals(duenoDelRodado));
+            }
+        });
+        return propiedades;
     }
 
     /**
