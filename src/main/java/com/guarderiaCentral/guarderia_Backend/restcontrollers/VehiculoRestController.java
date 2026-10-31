@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -47,7 +46,6 @@ public class VehiculoRestController {
      * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} y estado HTTP 200 (OK).
      */
     @GetMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<VehiculoResponse>> listarTodosLosVehiculos() {
         log.info("REST Request: Consulta para listar todos los vehículos");
         return ResponseEntity.ok(vehiculoService.listarTodos());
@@ -60,7 +58,6 @@ public class VehiculoRestController {
      * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/inactivos")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<VehiculoResponse>> listarVehiculosIncluyendoInactivos() {
         log.info("REST Request: Consulta administrativa de vehículos incluyendo inactivos");
         return ResponseEntity.ok(vehiculoService.listarTodosIncluyendoInactivos());
@@ -74,7 +71,6 @@ public class VehiculoRestController {
      * @throws RegistroNoEncontradoException Si el vehículo no existe o está inactivo.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<VehiculoResponse> buscarVehiculoPorId(@PathVariable Integer id) {
         log.info("REST Request: Consulta de vehículo por ID: {}", id);
         return ResponseEntity.ok(vehiculoService.buscarPorId(id));
@@ -88,7 +84,6 @@ public class VehiculoRestController {
      * @throws RegistroNoEncontradoException Si no existe un vehículo activo con esa matrícula.
      */
     @GetMapping("/matricula/{matricula}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<VehiculoResponse> buscarVehiculoPorMatricula(@PathVariable String matricula) {
         log.info("REST Request: Consulta de vehículo por matrícula: {}", matricula);
         return ResponseEntity.ok(vehiculoService.buscarPorMatricula(matricula));
@@ -101,7 +96,6 @@ public class VehiculoRestController {
      * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/tipo/{tipo}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<VehiculoResponse>> listarVehiculosPorTipo(@PathVariable TipoVehiculo tipo) {
         log.info("REST Request: Consulta de vehículos por tipo: {}", tipo);
         return ResponseEntity.ok(vehiculoService.buscarPorTipo(tipo));
@@ -115,7 +109,6 @@ public class VehiculoRestController {
      * @throws RegistroNoEncontradoException Si el socio no existe o está inactivo.
      */
     @GetMapping("/socio/{socioId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<VehiculoResponse>> listarVehiculosPorSocio(@PathVariable Integer socioId) {
         log.info("REST Request: Consulta de vehículos para el socio ID: {}", socioId);
         return ResponseEntity.ok(vehiculoService.listarPorSocio(socioId));
@@ -131,7 +124,6 @@ public class VehiculoRestController {
      * @throws RegistroNoEncontradoException Si el socio indicado no existe o está inactivo.
      */
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<VehiculoResponse> registrarVehiculo(@Valid @RequestBody VehiculoRequest request) {
         log.info("REST Request: Alta de nuevo vehículo con matrícula: {}", request.getMatricula());
         return ResponseEntity.status(HttpStatus.CREATED).body(vehiculoService.crear(request));
@@ -148,7 +140,6 @@ public class VehiculoRestController {
      * @throws MatriculaDuplicadaException   Si la nueva matrícula pertenece a otro vehículo.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<VehiculoResponse> modificarVehiculo(
             @PathVariable Integer id,
             @Valid @RequestBody VehiculoUpdate update) {
@@ -165,7 +156,6 @@ public class VehiculoRestController {
      * @throws RegistroNoEncontradoException Si el vehículo no existe o ya está inactivo.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminarVehiculo(@PathVariable Integer id) {
         log.info("REST Request: Baja lógica de vehículo con ID: {}", id);
         vehiculoService.eliminar(id);

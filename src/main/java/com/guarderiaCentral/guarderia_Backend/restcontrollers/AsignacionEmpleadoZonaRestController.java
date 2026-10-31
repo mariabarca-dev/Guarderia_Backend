@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,7 +45,6 @@ public class AsignacionEmpleadoZonaRestController {
      * @return ResponseEntity con la lista de {@link AsignacionEmpleadoZonaResponse} y código HTTP 200 OK.
      */
     @GetMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<AsignacionEmpleadoZonaResponse>> obtenerTodas() {
         logger.info("REST Request para obtener todas las asignaciones de empleado a zona activas.");
         List<AsignacionEmpleadoZonaResponse> lista = asignacionService.listarTodas();
@@ -61,7 +59,6 @@ public class AsignacionEmpleadoZonaRestController {
      * @return ResponseEntity con la lista completa de {@link AsignacionEmpleadoZonaResponse} y código HTTP 200 OK.
      */
     @GetMapping("/admin/todas")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<AsignacionEmpleadoZonaResponse>> obtenerTodasIncluyendoInactivas() {
         logger.info("REST Request para obtener todas las asignaciones (incluyendo inactivas).");
         List<AsignacionEmpleadoZonaResponse> lista = asignacionService.listarTodasIncluyendoInactivas();
@@ -76,7 +73,6 @@ public class AsignacionEmpleadoZonaRestController {
      * @return ResponseEntity con la {@link AsignacionEmpleadoZonaResponse} encontrada y código HTTP 200 OK.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<AsignacionEmpleadoZonaResponse> obtenerPorId(@PathVariable Integer id) {
         logger.info("REST Request para obtener la asignación con ID: {}", id);
         AsignacionEmpleadoZonaResponse response = asignacionService.buscarPorId(id);
@@ -92,7 +88,6 @@ public class AsignacionEmpleadoZonaRestController {
      * @return ResponseEntity con la {@link AsignacionEmpleadoZonaResponse} creada y código HTTP 201 Created.
      */
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<AsignacionEmpleadoZonaResponse> crear(
             @Valid @RequestBody AsignacionEmpleadoZonaRequest request) {
         logger.info("REST Request para crear una nueva asignación entre empleado ID: {} y zona ID: {}",
@@ -111,7 +106,6 @@ public class AsignacionEmpleadoZonaRestController {
      * @return ResponseEntity con la {@link AsignacionEmpleadoZonaResponse} actualizada y código HTTP 200 OK.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<AsignacionEmpleadoZonaResponse> actualizar(
             @PathVariable Integer id,
             @Valid @RequestBody AsignacionEmpleadoZonaUpdate update) {
@@ -128,7 +122,6 @@ public class AsignacionEmpleadoZonaRestController {
      * @return ResponseEntity con código HTTP 204 No Content.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         logger.info("REST Request para eliminar (borrado lógico) la asignación con ID: {}", id);
         asignacionService.eliminarAsignacion(id);

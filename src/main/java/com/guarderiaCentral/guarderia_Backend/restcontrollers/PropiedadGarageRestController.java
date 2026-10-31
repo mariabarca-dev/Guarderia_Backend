@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -43,7 +42,6 @@ public class PropiedadGarageRestController {
     private final GarageService garageService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<PropiedadGarageResponse>> obtenerTodas() {
         logger.info("REST Request para listar todas las propiedades de garajes activas.");
         List<PropiedadGarageResponse> lista = propiedadGarageService.listarTodas();
@@ -51,7 +49,6 @@ public class PropiedadGarageRestController {
     }
 
     @GetMapping("/inactivas")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<PropiedadGarageResponse>> listarTodasIncluyendoInactivas() {
         logger.info("REST Request para listar todas las propiedades de garajes (incluyendo inactivas).");
         List<PropiedadGarageResponse> lista = propiedadGarageService.listarTodasIncluyendoInactivas();
@@ -59,7 +56,6 @@ public class PropiedadGarageRestController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<PropiedadGarageResponse> obtenerPorId(@PathVariable Integer id) {
         logger.info("REST Request para obtener la propiedad de garaje con ID: {}", id);
         PropiedadGarageResponse response = propiedadGarageService.obtenerPorId(id);
@@ -67,7 +63,6 @@ public class PropiedadGarageRestController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<PropiedadGarageResponse> registrarPropiedad(@Valid @RequestBody PropiedadGarageRequest request) {
         logger.info("REST Request para registrar la propiedad del garaje ID {} al socio ID {}",
                 request.getGarageId(), request.getSocioId());
@@ -76,7 +71,6 @@ public class PropiedadGarageRestController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<PropiedadGarageResponse> actualizar(
             @PathVariable Integer id,
             @Valid @RequestBody PropiedadGarageUpdate update) {
@@ -86,7 +80,6 @@ public class PropiedadGarageRestController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         logger.info("REST Request para dar de baja la propiedad de garaje con ID: {}", id);
         propiedadGarageService.eliminar(id);
@@ -94,7 +87,6 @@ public class PropiedadGarageRestController {
     }
 
     @GetMapping("/socio/{socioId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<GarageResponse>> listarPorSocio(@PathVariable Integer socioId) {
         logger.info("REST Request para listar los garajes pertenecientes al socio ID: {}", socioId);
         List<GarageResponse> garages = propiedadGarageService.listarPorSocio(socioId).stream()

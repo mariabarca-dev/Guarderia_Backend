@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -25,8 +24,12 @@ import java.util.List;
 
 /**
  * Configuración de Spring Security: autenticación por sesión HTTP (cookie), reglas de acceso por rol
- * centralizadas en un único bean, cierre de sesión, seguridad por métodos (@PreAuthorize), CORS y beans de
- * autenticación.
+ * centralizadas en un único bean, cierre de sesión, CORS y beans de autenticación.
+ * <p>
+ * ÚNICO lugar donde se definen las autorizaciones: los RestController no llevan {@code @PreAuthorize}. Para dar
+ * acceso a un rol nuevo se agrega el valor en el enum {@code Rol}, una constante acá y su rol en las reglas que
+ * correspondan. Spring toma la PRIMERA regla que coincide, por lo que las reglas más específicas van antes.
+ * </p>
  * <p>
  * El rol del usuario se lee de la base de datos al iniciar sesión y queda guardado en la sesión del servidor.
  * Cada solicitud posterior se identifica por la cookie de sesión.
@@ -37,7 +40,6 @@ import java.util.List;
  */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
 public class SecurityConfig {
 
     private static final String ADMINISTRADOR = "ADMINISTRADOR";

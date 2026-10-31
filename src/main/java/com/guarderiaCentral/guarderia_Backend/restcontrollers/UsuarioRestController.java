@@ -23,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -80,7 +79,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con el {@link UsuarioResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/me")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UsuarioResponse> miUsuario(Authentication authentication) {
         log.info("REST Request: Consulta de los datos del usuario autenticado");
         return ResponseEntity.ok(usuarioService.buscarMiUsuario(authentication.getName()));
@@ -98,7 +96,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con el {@link SocioResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/me/socio")
-    @PreAuthorize("hasRole('SOCIO')")
     public ResponseEntity<SocioResponse> miPerfilSocio(Authentication authentication) {
         log.info("REST Request: Consulta del perfil del socio autenticado");
         return ResponseEntity.ok(socioService.buscarMiPerfil(authentication.getName()));
@@ -112,7 +109,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/me/socio/vehiculos")
-    @PreAuthorize("hasRole('SOCIO')")
     public ResponseEntity<List<VehiculoResponse>> misVehiculosSocio(Authentication authentication) {
         log.info("REST Request: Consulta de los vehículos del socio autenticado");
         return ResponseEntity.ok(socioService.listarMisVehiculos(authentication.getName()));
@@ -128,7 +124,6 @@ public class UsuarioRestController {
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.AccesoDenegadoException Si el vehículo pertenece a otro socio (403).
      */
     @GetMapping("/me/socio/vehiculos/{vehiculoId}")
-    @PreAuthorize("hasRole('SOCIO')")
     public ResponseEntity<VehiculoResponse> miVehiculoSocio(@PathVariable Integer vehiculoId,
                                                             Authentication authentication) {
         log.info("REST Request: Consulta del vehículo ID {} por el socio autenticado", vehiculoId);
@@ -143,7 +138,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con la lista de {@link PropiedadGarageResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/me/socio/propiedades")
-    @PreAuthorize("hasRole('SOCIO')")
     public ResponseEntity<List<PropiedadGarageResponse>> misPropiedadesSocio(Authentication authentication) {
         log.info("REST Request: Consulta de las propiedades de garage del socio autenticado");
         return ResponseEntity.ok(socioService.listarMisPropiedades(authentication.getName()));
@@ -158,7 +152,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con la lista de {@link GarageOcupadoResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/me/socio/garages-ocupados")
-    @PreAuthorize("hasRole('SOCIO')")
     public ResponseEntity<List<GarageOcupadoResponse>> misGaragesOcupadosSocio(Authentication authentication) {
         log.info("REST Request: Consulta de los garages ocupados por los vehículos del socio autenticado");
         return ResponseEntity.ok(socioService.listarMisGaragesOcupados(authentication.getName()));
@@ -176,7 +169,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con el {@link EmpleadoResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/me/empleado")
-    @PreAuthorize("hasRole('EMPLEADO')")
     public ResponseEntity<EmpleadoResponse> miPerfilEmpleado(Authentication authentication) {
         log.info("REST Request: Consulta del perfil del empleado autenticado");
         return ResponseEntity.ok(empleadoService.buscarMiPerfil(authentication.getName()));
@@ -190,7 +182,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con la lista de {@link AsignacionEmpleadoZonaResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/me/empleado/zonas")
-    @PreAuthorize("hasRole('EMPLEADO')")
     public ResponseEntity<List<AsignacionEmpleadoZonaResponse>> misZonasEmpleado(Authentication authentication) {
         log.info("REST Request: Consulta de las zonas del empleado autenticado");
         return ResponseEntity.ok(empleadoService.listarMisZonas(authentication.getName()));
@@ -204,7 +195,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/me/empleado/vehiculos")
-    @PreAuthorize("hasRole('EMPLEADO')")
     public ResponseEntity<List<VehiculoResponse>> misVehiculosEmpleado(Authentication authentication) {
         log.info("REST Request: Consulta de los vehículos a cargo del empleado autenticado");
         return ResponseEntity.ok(empleadoService.listarMisVehiculos(authentication.getName()));
@@ -221,7 +211,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con la lista de {@link UsuarioResponse} y estado HTTP 200 (OK).
      */
     @GetMapping
-    @PreAuthorize("hasRole('SYSADMIN')")
     public ResponseEntity<List<UsuarioResponse>> listarTodos() {
         log.info("REST Request: Consulta de todos los usuarios activos");
         return ResponseEntity.ok(usuarioService.listarTodos());
@@ -234,7 +223,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con la lista de {@link UsuarioResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/inactivos")
-    @PreAuthorize("hasRole('SYSADMIN')")
     public ResponseEntity<List<UsuarioResponse>> listarTodosIncluyendoInactivos() {
         log.info("REST Request: Consulta de todos los usuarios incluyendo inactivos");
         return ResponseEntity.ok(usuarioService.listarTodosIncluyendoInactivos());
@@ -248,7 +236,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con el {@link UsuarioResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('SYSADMIN')")
     public ResponseEntity<UsuarioResponse> buscarPorId(@PathVariable Integer id) {
         log.info("REST Request: Consulta de usuario por ID: {}", id);
         return ResponseEntity.ok(usuarioService.buscarPorId(id));
@@ -265,7 +252,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con la lista de {@link SocioResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/socios")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<List<SocioResponse>> listarSocios() {
         log.info("REST Request: Consulta para listar todos los socios activos");
         return ResponseEntity.ok(socioService.listarTodos());
@@ -278,7 +264,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con la lista de {@link SocioResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/socios/inactivos")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<List<SocioResponse>> listarSociosInactivos() {
         log.info("REST Request: Consulta de listado completo de socios incluyendo inactivos");
         return ResponseEntity.ok(socioService.listarTodosIncluyendoInactivos());
@@ -293,7 +278,6 @@ public class UsuarioRestController {
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el ID no existe o está inactivo.
      */
     @GetMapping("/socios/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<SocioResponse> buscarSocioPorId(@PathVariable Integer id) {
         log.info("REST Request: Consulta de socio por ID: {}", id);
         return ResponseEntity.ok(socioService.buscarPorId(id));
@@ -308,7 +292,6 @@ public class UsuarioRestController {
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el DNI no corresponde a un socio activo.
      */
     @GetMapping("/socios/dni/{dni}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<SocioResponse> buscarSocioPorDni(@PathVariable String dni) {
         log.info("REST Request: Consulta de socio por DNI: {}", dni);
         return ResponseEntity.ok(socioService.buscarPorDni(dni));
@@ -324,7 +307,6 @@ public class UsuarioRestController {
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException Si el nombre de usuario ya está registrado.
      */
     @PostMapping("/socios")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<SocioResponse> crearSocio(@Valid @RequestBody SocioRequest request) {
         log.info("REST Request: Alta de socio con DNI: {}", request.getDni());
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.crearSocio(request));
@@ -340,7 +322,6 @@ public class UsuarioRestController {
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el socio no existe o está inactivo.
      */
     @PutMapping("/socios/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<SocioResponse> actualizarSocio(
             @PathVariable Integer id,
             @Valid @RequestBody SocioUpdate update) {
@@ -358,7 +339,6 @@ public class UsuarioRestController {
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.DependenciasActivasException Si el socio tiene vehículos activos o garages a su nombre.
      */
     @DeleteMapping("/socios/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<Void> eliminarSocio(@PathVariable Integer id) {
         log.info("REST Request: Baja de socio ID {}", id);
         usuarioService.eliminarSocio(id);
@@ -378,7 +358,6 @@ public class UsuarioRestController {
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el socio no existe o está inactivo.
      */
     @GetMapping("/socios/{socioId}/vehiculos")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<VehiculoResponse>> listarVehiculosPorSocio(@PathVariable Integer socioId) {
         log.info("REST Request: Consulta de vehículos asociados al socio ID: {}", socioId);
         return ResponseEntity.ok(socioService.listarVehiculosPorSocio(socioId));
@@ -393,7 +372,6 @@ public class UsuarioRestController {
      * @throws com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException Si el socio no existe o está inactivo.
      */
     @GetMapping("/socios/{socioId}/garages")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<PropiedadGarageResponse>> listarGaragesPorSocio(@PathVariable Integer socioId) {
         log.info("REST Request: Consulta de propiedades de garage del socio ID: {}", socioId);
         return ResponseEntity.ok(socioService.listarGarajesPorSocio(socioId));
@@ -410,7 +388,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con la lista de {@link EmpleadoResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/empleados")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<List<EmpleadoResponse>> listarEmpleados() {
         log.info("REST Request: Consulta para listar todos los empleados activos");
         return ResponseEntity.ok(empleadoService.listarTodos());
@@ -423,7 +400,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con la lista de {@link EmpleadoResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/empleados/inactivos")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<List<EmpleadoResponse>> listarEmpleadosInactivos() {
         log.info("REST Request: Consulta de listado completo de empleados incluyendo inactivos");
         return ResponseEntity.ok(empleadoService.listarTodosIncluyendoInactivos());
@@ -437,7 +413,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con el {@link EmpleadoResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/empleados/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<EmpleadoResponse> buscarEmpleadoPorId(@PathVariable Integer id) {
         log.info("REST Request: Consulta de empleado por ID: {}", id);
         return ResponseEntity.ok(empleadoService.buscarPorId(id));
@@ -451,7 +426,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con el {@link EmpleadoResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/empleados/codigo/{codigo}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<EmpleadoResponse> buscarEmpleadoPorCodigo(@PathVariable String codigo) {
         log.info("REST Request: Consulta de empleado por código: {}", codigo);
         return ResponseEntity.ok(empleadoService.buscarPorCodigo(codigo));
@@ -465,7 +439,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con el {@link EmpleadoResponse} creado y estado HTTP 201 (CREATED).
      */
     @PostMapping("/empleados")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<EmpleadoResponse> crearEmpleado(@Valid @RequestBody EmpleadoRequest request) {
         log.info("REST Request: Alta de empleado con código: {}", request.getCodigo());
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.crearEmpleado(request));
@@ -480,7 +453,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con el {@link EmpleadoResponse} actualizado y estado HTTP 200 (OK).
      */
     @PutMapping("/empleados/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<EmpleadoResponse> actualizarEmpleado(
             @PathVariable Integer id,
             @Valid @RequestBody EmpleadoUpdate update) {
@@ -496,7 +468,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} sin contenido y estado HTTP 204 (NO_CONTENT).
      */
     @DeleteMapping("/empleados/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<Void> eliminarEmpleado(@PathVariable Integer id) {
         log.info("REST Request: Baja de empleado ID {}", id);
         usuarioService.eliminarEmpleado(id);
@@ -515,7 +486,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con la lista de {@link AsignacionEmpleadoZonaResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/empleados/{empleadoId}/zonas")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<AsignacionEmpleadoZonaResponse>> listarZonasAsignadas(@PathVariable Integer empleadoId) {
         log.info("REST Request: Consulta de las zonas asignadas al empleado ID: {}", empleadoId);
         return ResponseEntity.ok(empleadoService.listarZonasAsignadas(empleadoId));
@@ -529,7 +499,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con la lista de {@link VehiculoResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/empleados/{empleadoId}/vehiculos-a-cargo")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<VehiculoResponse>> listarVehiculosBajoResponsabilidad(@PathVariable Integer empleadoId) {
         log.info("REST Request: Consulta de los vehículos a cargo del empleado ID: {}", empleadoId);
         return ResponseEntity.ok(empleadoService.listarVehiculosBajoResponsabilidad(empleadoId));
@@ -545,7 +514,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con el {@link VehiculoResponse} asignado y estado HTTP 200 (OK).
      */
     @PutMapping("/empleados/{empleadoId}/vehiculos/{vehiculoId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<VehiculoResponse> asignarVehiculo(
             @PathVariable Integer empleadoId,
             @PathVariable Integer vehiculoId) {
@@ -562,7 +530,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} sin contenido y estado HTTP 204 (NO_CONTENT).
      */
     @DeleteMapping("/empleados/{empleadoId}/vehiculos/{vehiculoId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> desasignarVehiculo(
             @PathVariable Integer empleadoId,
             @PathVariable Integer vehiculoId) {
@@ -584,7 +551,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con la lista de {@link AdministradorResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/administradores")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<List<AdministradorResponse>> listarAdministradores(Authentication authentication) {
         log.info("REST Request: Consulta del listado de administradores activos");
         return ResponseEntity.ok(administradorService.listarTodos(authentication.getName()));
@@ -599,7 +565,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con la lista de {@link AdministradorResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/administradores/inactivos")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<List<AdministradorResponse>> listarAdministradoresInactivos(Authentication authentication) {
         log.info("REST Request: Consulta del listado de administradores incluyendo inactivos");
         return ResponseEntity.ok(administradorService.listarTodosIncluyendoInactivos(authentication.getName()));
@@ -615,7 +580,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con el {@link AdministradorResponse} y estado HTTP 200 (OK).
      */
     @GetMapping("/administradores/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<AdministradorResponse> buscarAdministradorPorId(@PathVariable Integer id,
                                                                           Authentication authentication) {
         log.info("REST Request: Consulta de administrador por ID: {}", id);
@@ -631,7 +595,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con el {@link AdministradorResponse} creado y estado HTTP 201 (CREATED).
      */
     @PostMapping("/administradores")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<AdministradorResponse> crearAdministrador(@Valid @RequestBody AdministradorRequest request) {
         log.info("REST Request: Alta de administrador con usuario: {}", request.getNombreUsuario());
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.crearAdministrador(request));
@@ -648,7 +611,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} con el {@link AdministradorResponse} actualizado y estado HTTP 200 (OK).
      */
     @PutMapping("/administradores/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<AdministradorResponse> actualizarAdministrador(
             @PathVariable Integer id,
             @Valid @RequestBody AdministradorUpdate update,
@@ -667,7 +629,6 @@ public class UsuarioRestController {
      * @return {@link ResponseEntity} sin contenido y estado HTTP 204 (NO_CONTENT).
      */
     @DeleteMapping("/administradores/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
     public ResponseEntity<Void> eliminarAdministrador(@PathVariable Integer id, Authentication authentication) {
         log.info("REST Request: Baja de administrador ID {}", id);
         usuarioService.eliminarAdministrador(id, authentication.getName());

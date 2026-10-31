@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,7 +24,7 @@ import java.util.List;
 /**
  * Controlador RESTful para la gestión de asignaciones entre vehículos y garajes (AsignacionVehiculoGarage).
  * Proporciona endpoints REST limpios para operaciones CRUD sobre la relación asociativa 1 a 1 de asignación,
- * respetando la matriz de seguridad mediante Spring Security y anotaciones @PreAuthorize.
+ * respetando la matriz de seguridad definida en SecurityConfig.
  * Todas las operaciones son exclusivas del ADMINISTRADOR. El SOCIO consulta los garages que ocupan sus
  * vehículos por {@code /api/usuarios/me/socio/garages-ocupados}.
  *
@@ -47,7 +46,6 @@ public class AsignacionVehiculoGarageRestController {
      * @return ResponseEntity conteniendo la lista de {@link AsignacionVehiculoGarageResponse} y código HTTP 200 OK.
      */
     @GetMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<AsignacionVehiculoGarageResponse>> obtenerTodas() {
         logger.info("REST Request para listar todas las asignaciones de vehículo a garaje activas.");
         List<AsignacionVehiculoGarageResponse> lista = asignacionService.listarTodas();
@@ -62,7 +60,6 @@ public class AsignacionVehiculoGarageRestController {
      * @return ResponseEntity conteniendo la lista completa de {@link AsignacionVehiculoGarageResponse} y código HTTP 200 OK.
      */
     @GetMapping("/admin/todas")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<AsignacionVehiculoGarageResponse>> obtenerTodasIncluyendoInactivas() {
         logger.info("REST Request para listar todas las asignaciones de vehículo a garaje (incluyendo inactivas).");
         List<AsignacionVehiculoGarageResponse> lista = asignacionService.listarTodasIncluyendoInactivas();
@@ -77,7 +74,6 @@ public class AsignacionVehiculoGarageRestController {
      * @return ResponseEntity con la {@link AsignacionVehiculoGarageResponse} encontrada y código HTTP 200 OK.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<AsignacionVehiculoGarageResponse> obtenerPorId(@PathVariable Integer id) {
         logger.info("REST Request para obtener la asignación de vehículo a garaje por ID: {}", id);
         AsignacionVehiculoGarageResponse response = asignacionService.buscarPorId(id);
@@ -92,7 +88,6 @@ public class AsignacionVehiculoGarageRestController {
      * @return ResponseEntity con la {@link AsignacionVehiculoGarageResponse} asociada al vehículo y código HTTP 200 OK.
      */
     @GetMapping("/vehiculo/{vehiculoId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<AsignacionVehiculoGarageResponse> buscarPorVehiculo(@PathVariable Integer vehiculoId) {
         logger.info("REST Request para consultar la asignación asociada al vehículo ID: {}", vehiculoId);
         AsignacionVehiculoGarageResponse response = asignacionService.buscarPorVehiculo(vehiculoId);
@@ -108,7 +103,6 @@ public class AsignacionVehiculoGarageRestController {
      * @return ResponseEntity con la {@link AsignacionVehiculoGarageResponse} creada y código HTTP 201 Created.
      */
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<AsignacionVehiculoGarageResponse> crear(
             @Valid @RequestBody AsignacionVehiculoGarageRequest request) {
         logger.info("REST Request para registrar una asignación del vehículo ID: {} al garaje ID: {}",
@@ -127,7 +121,6 @@ public class AsignacionVehiculoGarageRestController {
      * @return ResponseEntity con la {@link AsignacionVehiculoGarageResponse} actualizada y código HTTP 200 OK.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<AsignacionVehiculoGarageResponse> actualizar(
             @PathVariable Integer id,
             @Valid @RequestBody AsignacionVehiculoGarageUpdate update) {
@@ -144,7 +137,6 @@ public class AsignacionVehiculoGarageRestController {
      * @return ResponseEntity con código HTTP 204 No Content.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         logger.info("REST Request para eliminar (borrado lógico) la asignación con ID: {}", id);
         asignacionService.eliminarAsignacion(id);

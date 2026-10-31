@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,7 +45,6 @@ public class ZonaRestController {
      * @return {@link ResponseEntity} con la {@link ZonaResponse} creada y código HTTP 201 Created.
      */
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<ZonaResponse> registrarZona(@Valid @RequestBody ZonaRequest request) {
         log.info("REST Request para registrar nueva Zona con letra: {}", request.getLetra());
         ZonaResponse nuevaZona = zonaService.registrarZona(request);
@@ -60,7 +58,6 @@ public class ZonaRestController {
      * @return {@link ResponseEntity} con la lista de {@link ZonaResponse} activas y código HTTP 200 OK.
      */
     @GetMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<ZonaResponse>> listarZonas() {
         log.info("REST Request para listar todas las zonas activas");
         List<ZonaResponse> zonas = zonaService.listarTodas();
@@ -74,7 +71,6 @@ public class ZonaRestController {
      * @return {@link ResponseEntity} con la lista completa de {@link ZonaResponse} y código HTTP 200 OK.
      */
     @GetMapping("/inactivos")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<ZonaResponse>> listarZonasIncluyendoInactivas() {
         log.info("REST Request para listar todas las zonas (incluyendo inactivas)");
         List<ZonaResponse> zonas = zonaService.listarTodasIncluyendoInactivas();
@@ -89,7 +85,6 @@ public class ZonaRestController {
      * @return {@link ResponseEntity} con la {@link ZonaResponse} encontrada y código HTTP 200 OK.
      */
     @GetMapping("/{letra}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<ZonaResponse> buscarPorLetra(
             @PathVariable
             @Pattern(regexp = REGEX_LETRA_ZONA, message = "La letra de la zona debe contener entre 1 y 3 caracteres alfabéticos.")
@@ -109,7 +104,6 @@ public class ZonaRestController {
      * @return {@link ResponseEntity} con la {@link ZonaResponse} actualizada y código HTTP 200 OK.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<ZonaResponse> actualizarZona(
             @PathVariable Integer id,
             @Valid @RequestBody ZonaUpdate update) {
@@ -127,7 +121,6 @@ public class ZonaRestController {
      * @return {@link ResponseEntity} con respuesta sin contenido (204 No Content).
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminarZona(@PathVariable Integer id) {
         log.info("REST Request para realizar borrado lógico de Zona con ID: {}", id);
         zonaService.eliminarZona(id);

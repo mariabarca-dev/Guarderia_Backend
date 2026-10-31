@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -52,7 +51,6 @@ public class GarageRestController {
      * @return ResponseEntity conteniendo la lista de {@link GarageResponse} y código HTTP 200 OK.
      */
     @GetMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<GarageResponse>> obtenerTodos() {
         logger.info("REST Request para listar todos los garages activos.");
         List<GarageResponse> lista = garageService.listarTodos();
@@ -66,7 +64,6 @@ public class GarageRestController {
      * @return ResponseEntity conteniendo la lista de {@link GarageResponse} y código HTTP 200 OK.
      */
     @GetMapping("/inactivos")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<GarageResponse>> obtenerTodosIncluyendoInactivos() {
         logger.info("REST Request para listar todos los garages (incluyendo inactivos).");
         List<GarageResponse> lista = garageService.listarTodosIncluyendoInactivos();
@@ -81,7 +78,6 @@ public class GarageRestController {
      * @return ResponseEntity con la lista de {@link ZonaResponse} y código HTTP 200 OK.
      */
     @GetMapping("/disponibilidad")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<List<ZonaResponse>> consultarDisponibilidad() {
         logger.info("REST Request para obtener el reporte global de disponibilidad de garages por zona.");
         List<ZonaResponse> reporte = garageService.consultarDisponibilidadGarages();
@@ -96,7 +92,6 @@ public class GarageRestController {
      * @return ResponseEntity con la información de {@link GarageResponse} y código HTTP 200 OK.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<GarageResponse> obtenerPorId(@PathVariable Integer id) {
         logger.info("REST Request para obtener el garage con ID: {}", id);
         GarageResponse response = garageService.buscarPorId(id);
@@ -111,7 +106,6 @@ public class GarageRestController {
      * @return ResponseEntity con la información de {@link GarageResponse} y código HTTP 200 OK.
      */
     @GetMapping("/numero/{numeroGarage}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<GarageResponse> obtenerPorNumero(@PathVariable int numeroGarage) {
         logger.info("REST Request para obtener el garage con número: {}", numeroGarage);
         GarageResponse response = garageService.buscarPorNumero(numeroGarage);
@@ -127,7 +121,6 @@ public class GarageRestController {
      * @return ResponseEntity con el {@link GarageResponse} creado y código HTTP 201 Created.
      */
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<GarageResponse> crear(@Valid @RequestBody GarageRequest request) {
         logger.info("REST Request para dar de alta un nuevo garage.");
         GarageResponse nuevoGarage = garageService.crear(request);
@@ -144,7 +137,6 @@ public class GarageRestController {
      * @return ResponseEntity con el {@link GarageResponse} actualizado y código HTTP 200 OK.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<GarageResponse> actualizar(
             @PathVariable Integer id,
             @Valid @RequestBody GarageUpdate update) {
@@ -161,7 +153,6 @@ public class GarageRestController {
      * @return ResponseEntity con código HTTP 204 No Content.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         logger.info("REST Request para dar de baja lógicamente el garage con ID: {}", id);
         garageService.eliminar(id);
