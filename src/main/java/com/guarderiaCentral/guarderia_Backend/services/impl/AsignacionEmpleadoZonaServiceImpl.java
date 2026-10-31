@@ -98,8 +98,8 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
     @Transactional(readOnly = true)
     public List<AsignacionEmpleadoZonaResponse> listarTodasIncluyendoInactivas() {
         log.info("Listando todas las asignaciones (incluyendo inactivas) por solicitud administrativa.");
-        return asignacionRepository.findAllIncludingInactive().stream()
-                .map(asignacionRepository::fromEntity)
+        return asignacionRepository.historialCompleto().stream()
+                .map(asignacionRepository::filaAResponse)
                 .collect(Collectors.toList());
     }
 

@@ -55,11 +55,46 @@ public interface AsignacionEmpleadoZonaRepository extends JpaRepository<Asignaci
     List<AsignacionEmpleadoZona> findAllByZonaIdAndActivoTrue(Integer zonaId);
 
     /**
-     * Método explícito para uso administrativo que devuelve todas las asignaciones (activas e inactivas).
-     * @return Lista completa de asignaciones.
+     * Historial administrativo: todas las asignaciones, activas y dadas de baja, con los datos legibles del empleado
+     * y de la zona ya resueltos en la misma consulta.
+     * <p>
+     * Se usa SQL nativo porque {@code @SQLRestriction("activo = true")} de las entidades también se aplica a las
+     * consultas JPQL y a las relaciones, y dejaría afuera las bajas. Con los {@code LEFT JOIN} el código, nombre
+     * y apellido del empleado y la letra de la zona se obtienen aunque el empleado o la zona estén dados de baja.
+     * </p>
+     * Orden de las columnas: id, empleado_id, codigo, nombre, apellido, zona_id, letra, cant_vehiculos_a_cargo, activo.
+     *
+     * @return filas crudas; convertirlas con {@link #filaAResponse(Object[])}.
      */
-    @Query("SELECT a FROM AsignacionEmpleadoZona a")
-    List<AsignacionEmpleadoZona> findAllIncludingInactive();
+    @Query(value = "SELECT a.id, a.empleado_id, e.codigo, u.nombre, u.apellido, a.zona_id, z.letra, "
+            + "a.cant_vehiculos_a_cargo, a.activo "
+            + "FROM asignaciones_empleado_zona a "
+            + "LEFT JOIN empleados e ON e.usuario_id = a.empleado_id "
+            + "LEFT JOIN usuarios u ON u.id = a.empleado_id "
+            + "LEFT JOIN zonas z ON z.id = a.zona_id "
+            + "ORDER BY a.id", nativeQuery = true)
+    List<Object[]> historialCompleto();
+
+    /**
+     * Convierte una fila de {@link #historialCompleto()} en un {@link AsignacionEmpleadoZonaResponse}.
+     *
+     * @param fila columnas en el orden indicado en {@link #historialCompleto()}
+     * @return DTO de respuesta con la información legible
+     */
+    default AsignacionEmpleadoZonaResponse filaAResponse(Object[] fila) {
+        AsignacionEmpleadoZonaResponse response = new AsignacionEmpleadoZonaResponse();
+        response.setId(fila[0] != null ? ((Number) fila[0]).intValue() : null);
+        response.setEmpleadoId(fila[1] != null ? ((Number) fila[1]).intValue() : null);
+        response.setEmpleadoCodigo(fila[2] != null ? fila[2].toString() : null);
+        response.setEmpleadoNombre(fila[3] != null ? fila[3].toString() : null);
+        response.setEmpleadoApellido(fila[4] != null ? fila[4].toString() : null);
+        response.setZonaId(fila[5] != null ? ((Number) fila[5]).intValue() : null);
+        response.setZonaLetra(fila[6] != null ? fila[6].toString() : null);
+        response.setCantVehiculosACargo(fila[7] != null ? ((Number) fila[7]).intValue() : 0);
+        Object activo = fila[8];
+        response.setActivo(activo instanceof Boolean ? (Boolean) activo : activo != null && ((Number) activo).intValue() != 0);
+        return response;
+    }
 
     /**
      * Convierte un {@link AsignacionEmpleadoZonaRequest} en una entidad {@link AsignacionEmpleadoZona}.
