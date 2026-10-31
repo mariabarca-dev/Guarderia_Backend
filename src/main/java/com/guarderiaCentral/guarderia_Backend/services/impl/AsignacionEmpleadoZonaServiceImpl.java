@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
+import com.guarderiaCentral.guarderia_Backend.exceptions.AsignacionDuplicadaException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.ZonaSinCapacidadException;
@@ -53,7 +54,7 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
                 .orElseThrow(() -> new RegistroNoEncontradoException("La zona con ID " + request.getZonaId() + " no existe o está inactiva."));
 
         if (request.getCantVehiculosACargo() < 0) {
-            throw new IllegalArgumentException("La cantidad de vehículos a cargo no puede ser negativa.");
+            throw new BusinessException("La cantidad de vehículos a cargo no puede ser negativa.", HttpStatus.BAD_REQUEST);
         }
 
         // Validar si ya existe una asignación activa para este empleado en esta zona
@@ -62,7 +63,7 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
                         && a.getZona() != null && a.getZona().getId().equals(zona.getId()));
 
         if (yaAsignado) {
-            throw new IllegalArgumentException("El empleado ya se encuentra asignado a la zona seleccionada.");
+            throw new AsignacionDuplicadaException("El empleado ya se encuentra asignado a la zona seleccionada.");
         }
 
         // Validar capacidad de la zona considerando las asignaciones activas actuales
@@ -127,7 +128,7 @@ public class AsignacionEmpleadoZonaServiceImpl implements AsignacionEmpleadoZona
 
         if (update.getCantVehiculosACargo() != null) {
             if (update.getCantVehiculosACargo() < 0) {
-                throw new IllegalArgumentException("La cantidad de vehículos a cargo no puede ser negativa.");
+                throw new BusinessException("La cantidad de vehículos a cargo no puede ser negativa.", HttpStatus.BAD_REQUEST);
             }
 
             // No se puede bajar la cantidad por debajo de los vehículos que el empleado ya tiene asignados en la zona
