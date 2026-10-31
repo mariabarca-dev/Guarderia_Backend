@@ -5,7 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Objeto de respuesta para exponer la información pública de un Garage.
+ * Objeto de respuesta para exponer la información pública de un Garage, con el ID de su zona y la letra de
+ * esa zona (dato legible que se muestra en lugar del ID).
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -19,5 +20,6 @@ public class GarageResponse {
     private double lecturaLuz;
     private boolean servicioMantenimiento;
     private Integer zonaId;
+    private String zonaLetra;
     private Boolean activo;
 }

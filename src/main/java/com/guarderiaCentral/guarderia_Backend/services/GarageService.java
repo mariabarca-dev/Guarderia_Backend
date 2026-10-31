@@ -57,6 +57,15 @@ public interface GarageService {
     GarageResponse buscarPorId(Integer id);
 
     /**
+     * Busca un garaje activo por su número, con una consulta puntual a la base de datos.
+     *
+     * @param numeroGarage Número del garaje.
+     * @return {@link GarageResponse} con los datos del garaje encontrado.
+     * @throws RegistroNoEncontradoException Si no existe un garaje activo con ese número.
+     */
+    GarageResponse buscarPorNumero(int numeroGarage);
+
+    /**
      * Actualiza la información de un garaje existente.
      *
      * @param id     Identificador del garaje a actualizar.

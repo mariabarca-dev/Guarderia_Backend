@@ -25,7 +25,8 @@ public interface PropiedadGarageService {
      * @return {@link PropiedadGarageResponse} con la propiedad registrada.
      * @throws RegistroNoEncontradoException Si el socio o el garage no existen o están inactivos.
      * @throws GarageYaVendidoException Si el garage ya cuenta con un propietario asignado.
-     * @throws BusinessException Si la fecha de compra es anterior a la fecha de ingreso del socio.
+     * @throws BusinessException Si la fecha de compra es anterior a la fecha de ingreso del socio o a la fecha de
+     *                            fundación de la guardería.
      */
     PropiedadGarageResponse registrarPropiedad(PropiedadGarageRequest request);
 

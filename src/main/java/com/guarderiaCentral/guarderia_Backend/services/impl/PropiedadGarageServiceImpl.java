@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
+import com.guarderiaCentral.guarderia_Backend.config.ConstantesNegocio;
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.GarageYaVendidoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
@@ -26,7 +27,8 @@ import java.util.stream.Collectors;
 /**
  * Implementación del servicio de gestión de propiedades de garage.
  * Un garage pertenece a un solo socio y su fecha de compra no puede ser anterior al ingreso del socio:
- * ambas reglas se aplican tanto al registrar como al modificar una propiedad.
+ * ambas reglas se aplican tanto al registrar como al modificar una propiedad. La fecha de compra tampoco puede ser
+ * anterior a la fundación de la guardería.
  *
  * @author Cátedra
  * @version 1.0
@@ -63,6 +65,7 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
             throw new GarageYaVendidoException("Error: El garaje N° " + garage.getNumeroGarage() + " ya tiene un socio propietario asignado.");
         }
 
+        validarFechaCompraDesdeFundacion(request.getFechaCompraGarage());
         validarFechaCompraPosteriorAlIngreso(request.getFechaCompraGarage(), socio);
 
         PropiedadGarage nuevaPropiedad = propiedadGarageRepository.toEntity(request);
@@ -159,6 +162,7 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
         LocalDate fechaCompraResultante = update.getFechaCompraGarage() != null
                 ? update.getFechaCompraGarage()
                 : propiedadExistente.getFechaCompraGarage();
+        validarFechaCompraDesdeFundacion(fechaCompraResultante);
         validarFechaCompraPosteriorAlIngreso(fechaCompraResultante, socio);
 
         propiedadGarageRepository.updateEntity(propiedadExistente, update);
@@ -183,6 +187,21 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
         propiedad.setActivo(false);
         propiedadGarageRepository.save(propiedad);
         log.info("Borrado lógico completado para propiedad con ID: {}", id);
+    }
+
+    /**
+     * Valida que la fecha de compra no sea anterior a la fecha de fundación de la guardería. Se usa tanto al
+     * registrar como al modificar una propiedad.
+     *
+     * @param fechaCompra Fecha de compra del garage (puede ser null, en cuyo caso no se valida).
+     * @throws BusinessException Si la fecha de compra es anterior a la fundación (400).
+     */
+    private void validarFechaCompraDesdeFundacion(LocalDate fechaCompra) {
+        if (fechaCompra != null && fechaCompra.isBefore(ConstantesNegocio.FECHA_FUNDACION)) {
+            throw new BusinessException("Error de negocio: La fecha de compra (" + fechaCompra
+                    + ") no puede ser anterior a la fecha de fundación de la guardería ("
+                    + ConstantesNegocio.FECHA_FUNDACION + ").", HttpStatus.BAD_REQUEST);
+        }
     }
 
     /**

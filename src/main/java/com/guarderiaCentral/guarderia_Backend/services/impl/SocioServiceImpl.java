@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
+import com.guarderiaCentral.guarderia_Backend.config.ConstantesNegocio;
 import com.guarderiaCentral.guarderia_Backend.exceptions.AccesoDenegadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.DependenciasActivasException;
@@ -59,8 +60,6 @@ public class SocioServiceImpl implements SocioService {
     private final PropiedadGarageService propiedadGarageService;
     private final AsignacionVehiculoGarageService asignacionVehiculoGarageService;
     private final PasswordEncoder passwordEncoder;
-
-    private static final LocalDate FECHA_FUNDACION = LocalDate.of(2000, 1, 1);
 
     /**
      * {@inheritDoc}
@@ -391,9 +390,9 @@ public class SocioServiceImpl implements SocioService {
      * @throws BusinessException Si la fecha es anterior a la fundación.
      */
     private void validarFechaIngresoDesdeFundacion(LocalDate fechaIngreso) {
-        if (fechaIngreso != null && fechaIngreso.isBefore(FECHA_FUNDACION)) {
+        if (fechaIngreso != null && fechaIngreso.isBefore(ConstantesNegocio.FECHA_FUNDACION)) {
             log.error("Fecha de ingreso {} anterior a la fundación.", fechaIngreso);
-            throw new BusinessException("La fecha de ingreso no puede ser anterior a la fecha de fundación del sistema (" + FECHA_FUNDACION + ").");
+            throw new BusinessException("La fecha de ingreso no puede ser anterior a la fecha de fundación del sistema (" + ConstantesNegocio.FECHA_FUNDACION + ").");
         }
     }
 

@@ -1,5 +1,7 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
+import java.time.LocalDate;
+import com.guarderiaCentral.guarderia_Backend.config.ConstantesNegocio;
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.GarageYaOcupadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
@@ -56,6 +58,9 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
             log.error("Error al crear asignación: Identificadores de vehículo y garaje obligatorios");
             throw new BusinessException("Error: El vehículo y el garaje son obligatorios.", HttpStatus.BAD_REQUEST);
         }
+
+        // 0. REGLA DE NEGOCIO: la fecha de asignación no puede ser anterior a la fundación de la guardería
+        validarFechaDesdeFundacion(request.getFechaAsignacionGarage());
 
         // 1. Recuperar y verificar que las entidades existen y están activas
         Vehiculo vehiculo = buscarVehiculoActivo(request.getVehiculoId());
@@ -171,6 +176,7 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
                 .map(a -> new GarageOcupadoResponse(
                         a.getId(),
                         a.getVehiculo().getId(),
+                        a.getVehiculo().getMatricula(),
                         garageRepository.fromEntity(a.getGarage()),
                         a.getFechaAsignacionGarage()))
                 .collect(Collectors.toList());
@@ -182,6 +188,7 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
      * garage, debe estar libre y, si está en otra zona, esa zona debe tener capacidad. Si cambia cualquiera de
      * los dos, el vehículo debe encajar en la zona del garage (tipo y dimensiones). Si el vehículo cambia o el
      * garage nuevo está en otra zona, el vehículo anterior deja de estar a cargo del empleado que lo atendía.
+     * Si se envía una fecha de asignación, no puede ser anterior a la fundación de la guardería.
      */
     @Override
     @Transactional
@@ -191,6 +198,8 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
         AsignacionVehiculoGarage asignacionExistente = asignacionRepository.findById(id)
                 .filter(AsignacionVehiculoGarage::getActivo)
                 .orElseThrow(() -> new RegistroNoEncontradoException("No existe la asignación activa a actualizar con ID: " + id));
+
+        validarFechaDesdeFundacion(update.getFechaAsignacionGarage());
 
         // Se guarda lo anterior antes de aplicar los cambios
         Vehiculo vehiculoAnterior = asignacionExistente.getVehiculo();
@@ -221,6 +230,10 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
         }
 
         asignacionRepository.updateEntity(asignacionExistente, update);
+        // updateEntity solo asigna referencias con el ID: se vuelven a poner las entidades completas
+        // para que la respuesta incluya la matrícula, el número de garage y la letra de la zona
+        asignacionExistente.setVehiculo(vehiculoDestino);
+        asignacionExistente.setGarage(garageDestino);
         AsignacionVehiculoGarage actualizada = asignacionRepository.save(asignacionExistente);
 
         if (cambiaVehiculo || !Objects.equals(zonaAnteriorId, zonaNuevaId)) {
@@ -273,6 +286,21 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
                         && a.getGarage().getZona() != null
                         && a.getGarage().getZona().getId().equals(zonaId))
                 .forEach(a -> validarEncaje(a.getVehiculo(), a.getGarage().getZona()));
+    }
+
+    /**
+     * Valida que la fecha de asignación no sea anterior a la fecha de fundación de la guardería.
+     *
+     * @param fechaAsignacion fecha de asignación a validar (puede ser null, en cuyo caso no se valida)
+     * @throws BusinessException Si la fecha es anterior a la fundación (400).
+     */
+    private void validarFechaDesdeFundacion(LocalDate fechaAsignacion) {
+        if (fechaAsignacion != null && fechaAsignacion.isBefore(ConstantesNegocio.FECHA_FUNDACION)) {
+            log.warn("Fecha de asignación {} anterior a la fundación de la guardería.", fechaAsignacion);
+            throw new BusinessException("Error de negocio: La fecha de asignación (" + fechaAsignacion
+                    + ") no puede ser anterior a la fecha de fundación de la guardería ("
+                    + ConstantesNegocio.FECHA_FUNDACION + ").", HttpStatus.BAD_REQUEST);
+        }
     }
 
     /**

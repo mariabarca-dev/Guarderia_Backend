@@ -130,6 +130,18 @@ public class EmpleadoServiceImpl implements EmpleadoService {
      */
     @Override
     @Transactional(readOnly = true)
+    public EmpleadoResponse buscarPorCodigo(String codigo) {
+        log.info("Buscando empleado activo por código: {}", codigo);
+        Empleado empleado = empleadoRepository.findByCodigoAndActivoTrue(codigo)
+                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró un empleado activo con el código: " + codigo));
+        return empleadoRepository.fromEntity(empleado);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
     public List<EmpleadoResponse> listarTodos() {
         log.info("Obteniendo listado de todos los empleados activos.");
         return empleadoRepository.findAllByActivoTrue().stream()

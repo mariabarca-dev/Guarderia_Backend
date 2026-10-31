@@ -8,7 +8,8 @@ import java.time.LocalDate;
 
 /**
  * Objeto de respuesta para exponer la información de la propiedad de garage,
- * exponiendo IDs limpios de las entidades relacionadas.
+ * exponiendo IDs limpios de las entidades relacionadas y los datos legibles del socio (DNI, nombre y apellido)
+ * y del garage (número).
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barca
  */
@@ -19,7 +20,11 @@ public class PropiedadGarageResponse {
 
     private Integer id;
     private Integer socioId;
+    private String socioDni;
+    private String socioNombre;
+    private String socioApellido;
     private Integer garageId;
+    private Integer garageNumero;
     private LocalDate fechaCompraGarage;
     private Boolean activo;
 }

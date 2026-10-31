@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.vehiculos;
 
+import com.guarderiaCentral.guarderia_Backend.repositories.RelacionSegura;
 import com.guarderiaCentral.guarderia_Backend.modelos.Socio;
 import com.guarderiaCentral.guarderia_Backend.modelos.TipoVehiculo;
 import com.guarderiaCentral.guarderia_Backend.modelos.Vehiculo;
@@ -162,6 +163,9 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Integer> {
         response.setId(vehiculo.getId());
         if (vehiculo.getSocio() != null) {
             response.setSocioId(vehiculo.getSocio().getId());
+            response.setSocioDni(RelacionSegura.leer(() -> vehiculo.getSocio().getDni()));
+            response.setSocioNombre(RelacionSegura.leer(() -> vehiculo.getSocio().getNombre()));
+            response.setSocioApellido(RelacionSegura.leer(() -> vehiculo.getSocio().getApellido()));
         }
         response.setNombre(vehiculo.getNombre());
         response.setMatricula(vehiculo.getMatricula());

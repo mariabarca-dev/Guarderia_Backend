@@ -104,6 +104,21 @@ public class GarageRestController {
     }
 
     /**
+     * Busca y retorna un garage activo según su número, con una consulta puntual a la base de datos.
+     * Permitido para rol: ADMINISTRADOR.
+     *
+     * @param numeroGarage Número del garage.
+     * @return ResponseEntity con la información de {@link GarageResponse} y código HTTP 200 OK.
+     */
+    @GetMapping("/numero/{numeroGarage}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<GarageResponse> obtenerPorNumero(@PathVariable int numeroGarage) {
+        logger.info("REST Request para obtener el garage con número: {}", numeroGarage);
+        GarageResponse response = garageService.buscarPorNumero(numeroGarage);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Registra un nuevo garage en el sistema.
      * La sintaxis y estructura son verificadas automáticamente mediante {@code @Valid}.
      * Permitido para rol: ADMINISTRADOR.

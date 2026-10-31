@@ -131,6 +131,18 @@ public class GarageServiceImpl implements GarageService {
 
     /**
      * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public GarageResponse buscarPorNumero(int numeroGarage) {
+        log.info("Buscando garage activo con número: {}", numeroGarage);
+        Garage garage = garageRepository.findByNumeroGarageAndActivoTrue(numeroGarage)
+                .orElseThrow(() -> new RegistroNoEncontradoException("No se encontró un garage activo con el número: " + numeroGarage));
+        return garageRepository.fromEntity(garage);
+    }
+
+    /**
+     * {@inheritDoc}
      * No permite cambiar la zona de un garage que está ocupado por un vehículo: el administrador debe
      * liberar primero el garage (eliminando la asignación vehículo-garage) y volver a asignar el vehículo después.
      */

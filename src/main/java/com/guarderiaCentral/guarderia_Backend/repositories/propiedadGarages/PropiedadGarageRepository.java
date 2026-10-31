@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages;
 
+import com.guarderiaCentral.guarderia_Backend.repositories.RelacionSegura;
 import com.guarderiaCentral.guarderia_Backend.modelos.Garage;
 import com.guarderiaCentral.guarderia_Backend.modelos.PropiedadGarage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Socio;
@@ -119,9 +120,13 @@ public interface PropiedadGarageRepository extends JpaRepository<PropiedadGarage
         response.setId(propiedad.getId());
         if (propiedad.getSocio() != null) {
             response.setSocioId(propiedad.getSocio().getId());
+            response.setSocioDni(RelacionSegura.leer(() -> propiedad.getSocio().getDni()));
+            response.setSocioNombre(RelacionSegura.leer(() -> propiedad.getSocio().getNombre()));
+            response.setSocioApellido(RelacionSegura.leer(() -> propiedad.getSocio().getApellido()));
         }
         if (propiedad.getGarage() != null) {
             response.setGarageId(propiedad.getGarage().getId());
+            response.setGarageNumero(RelacionSegura.leer(() -> propiedad.getGarage().getNumeroGarage()));
         }
         response.setFechaCompraGarage(propiedad.getFechaCompraGarage());
         response.setActivo(propiedad.getActivo());

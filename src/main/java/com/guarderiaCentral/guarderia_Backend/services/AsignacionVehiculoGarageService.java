@@ -29,7 +29,8 @@ public interface AsignacionVehiculoGarageService {
      * @throws RegistroNoEncontradoException Si el vehículo o el garaje no existen o están inactivos.
      * @throws GarageYaOcupadoException      Si el garaje ya tiene una asignación activa.
      * @throws ZonaSinCapacidadException     Si la zona asociada al garaje ha alcanzado su capacidad máxima.
-     * @throws BusinessException             Si el vehículo ya está asignado, su tipo no es compatible con la zona
+     * @throws BusinessException             Si la fecha de asignación es anterior a la fundación de la guardería,
+     *                                       el vehículo ya está asignado, su tipo no es compatible con la zona
      *                                       o no entra en las dimensiones de los garages de la zona.
      */
     AsignacionVehiculoGarageResponse crearAsignacion(AsignacionVehiculoGarageRequest request);
@@ -95,7 +96,8 @@ public interface AsignacionVehiculoGarageService {
      * @throws RegistroNoEncontradoException Si la asignación, el vehículo o el garage no existen o están inactivos.
      * @throws GarageYaOcupadoException      Si el garage nuevo ya tiene una asignación activa.
      * @throws ZonaSinCapacidadException     Si la zona del garage nuevo alcanzó su capacidad máxima.
-     * @throws BusinessException             Si los nuevos datos incumplen las reglas de negocio.
+     * @throws BusinessException             Si los nuevos datos incumplen las reglas de negocio, incluida una fecha
+     *                                       de asignación anterior a la fundación de la guardería.
      */
     AsignacionVehiculoGarageResponse actualizarAsignacion(Integer id, AsignacionVehiculoGarageUpdate update);
 

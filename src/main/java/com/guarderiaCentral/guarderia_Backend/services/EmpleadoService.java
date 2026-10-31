@@ -44,6 +44,15 @@ public interface EmpleadoService {
     EmpleadoResponse buscarPorId(Integer id);
 
     /**
+     * Busca un empleado activo por su código único, con una consulta puntual a la base de datos.
+     *
+     * @param codigo Código único del empleado.
+     * @return {@link EmpleadoResponse} del empleado encontrado.
+     * @throws RegistroNoEncontradoException si no existe un empleado activo con ese código.
+     */
+    EmpleadoResponse buscarPorCodigo(String codigo);
+
+    /**
      * Obtiene el listado de todos los empleados activos en el sistema.
      *
      * @return Lista de {@link EmpleadoResponse}.

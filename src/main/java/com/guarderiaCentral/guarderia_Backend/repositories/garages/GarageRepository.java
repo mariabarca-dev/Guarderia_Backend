@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.garages;
 
+import com.guarderiaCentral.guarderia_Backend.repositories.RelacionSegura;
 import com.guarderiaCentral.guarderia_Backend.modelos.Garage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Zona;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,6 +30,15 @@ public interface GarageRepository extends JpaRepository<Garage, Integer> {
      */
     @Query(value = "SELECT * FROM garages WHERE numero_garage = ?1", nativeQuery = true)
     Optional<Garage> findByNumeroGarageIncludingInactive(int numeroGarage);
+
+    /**
+     * Busca un garage activo por su número único. JPA arma la consulta con el nombre del método
+     * ({@code WHERE numero_garage = ? AND activo = true}), sin traer toda la colección.
+     *
+     * @param numeroGarage Número de garage a buscar.
+     * @return Optional con el garage activo, o vacío si no existe.
+     */
+    Optional<Garage> findByNumeroGarageAndActivoTrue(int numeroGarage);
 
     /**
      * Verifica la existencia de garajes activos asociados a una zona específica.
@@ -105,7 +115,7 @@ public interface GarageRepository extends JpaRepository<Garage, Integer> {
      * Convierte una entidad {@link Garage} en un {@link GarageResponse}.
      *
      * @param garage Entidad Garage de origen.
-     * @return Objeto de respuesta con la información pública y la referencia a la zona.
+     * @return Objeto de respuesta con la información pública, la referencia a la zona y su letra.
      */
     default GarageResponse fromEntity(Garage garage) {
         if (garage == null) {
@@ -118,6 +128,7 @@ public interface GarageRepository extends JpaRepository<Garage, Integer> {
         response.setServicioMantenimiento(garage.isServicioMantenimiento());
         if (garage.getZona() != null) {
             response.setZonaId(garage.getZona().getId());
+            response.setZonaLetra(RelacionSegura.leer(() -> garage.getZona().getLetra()));
         }
         response.setActivo(garage.getActivo());
         return response;

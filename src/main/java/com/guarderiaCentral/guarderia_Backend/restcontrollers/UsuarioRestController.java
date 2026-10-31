@@ -444,6 +444,20 @@ public class UsuarioRestController {
     }
 
     /**
+     * Busca un empleado activo por su código único, con una consulta puntual a la base de datos.
+     * Permitido para los roles ADMINISTRADOR y SYSADMIN.
+     *
+     * @param codigo Código único del empleado.
+     * @return {@link ResponseEntity} con el {@link EmpleadoResponse} y estado HTTP 200 (OK).
+     */
+    @GetMapping("/empleados/codigo/{codigo}")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'SYSADMIN')")
+    public ResponseEntity<EmpleadoResponse> buscarEmpleadoPorCodigo(@PathVariable String codigo) {
+        log.info("REST Request: Consulta de empleado por código: {}", codigo);
+        return ResponseEntity.ok(empleadoService.buscarPorCodigo(codigo));
+    }
+
+    /**
      * Registra una nueva cuenta de empleado (o reactiva una inactiva).
      * Permitido para los roles ADMINISTRADOR y SYSADMIN.
      *
