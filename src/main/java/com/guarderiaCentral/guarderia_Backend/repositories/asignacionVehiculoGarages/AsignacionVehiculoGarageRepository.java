@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages;
 
+import com.guarderiaCentral.guarderia_Backend.repositories.RelacionSegura;
 import com.guarderiaCentral.guarderia_Backend.modelos.AsignacionVehiculoGarage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Garage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Vehiculo;
@@ -129,9 +130,12 @@ public interface AsignacionVehiculoGarageRepository extends JpaRepository<Asigna
         response.setId(asignacion.getId());
         if (asignacion.getVehiculo() != null) {
             response.setVehiculoId(asignacion.getVehiculo().getId());
+            response.setVehiculoMatricula(RelacionSegura.leer(() -> asignacion.getVehiculo().getMatricula()));
         }
         if (asignacion.getGarage() != null) {
             response.setGarageId(asignacion.getGarage().getId());
+            response.setGarageNumero(RelacionSegura.leer(() -> asignacion.getGarage().getNumeroGarage()));
+            response.setZonaLetra(RelacionSegura.leer(() -> asignacion.getGarage().getZona().getLetra()));
         }
         response.setFechaAsignacionGarage(asignacion.getFechaAsignacionGarage());
         response.setActivo(asignacion.getActivo());
