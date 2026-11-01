@@ -1,4 +1,4 @@
-# GuarderiaCentral – Backend (API REST)
+# GuarderíaCentral – Backend (API REST)
 
 Trabajo práctico de **Programación 2** – Tecnicatura Universitaria en Informática Aplicada, UTN-INSPT.
 **Grupo A – Tema 9.** Profesor: Miguel Silva.
