@@ -1,6 +1,7 @@
 package com.guarderiaCentral.guarderia_Backend.services;
 
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
+import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorUpdate;
@@ -77,6 +78,13 @@ public interface UsuarioService {
     // --- Métodos delegados para gestión de Administradores desde UsuarioRestController ---
 
     AdministradorResponse crearAdministrador(AdministradorRequest request);
+
+    /**
+     * Devuelve los roles que se pueden elegir al crear una cuenta de administración (delega en AdministradorService).
+     *
+     * @return Lista de roles permitidos.
+     */
+    List<Rol> listarRolesCreablesAdministrador();
 
     AdministradorResponse actualizarAdministrador(Integer id, AdministradorUpdate update, String nombreUsuarioLlamador);
 

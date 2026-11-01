@@ -5,6 +5,7 @@ import com.guarderiaCentral.guarderia_Backend.exceptions.DniDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NombreUsuarioDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.SysAdminProtegidoException;
+import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorUpdate;
@@ -31,8 +32,18 @@ public interface AdministradorService {
      * @throws NombreUsuarioDuplicadoException Si el nombre de usuario pertenece a otra cuenta activa, a una cuenta
      *                                         SYSADMIN inactiva o a otro tipo de usuario inactivo.
      * @throws DniDuplicadoException           Si el DNI informado ya pertenece a otra cuenta del sistema.
+     * @throws BusinessException               Si el rol pedido es SOCIO, EMPLEADO o SYSADMIN (400).
      */
     AdministradorResponse crear(AdministradorRequest request);
+
+    /**
+     * Devuelve los roles que se pueden asignar al crear una cuenta desde la pantalla de administradores:
+     * todos los valores del enum {@link Rol} salvo SOCIO, EMPLEADO (tienen su propia entidad) y SYSADMIN
+     * (cuenta protegida). Un rol nuevo agregado al enum aparece acá automáticamente.
+     *
+     * @return Lista de roles permitidos, en el orden del enum.
+     */
+    List<Rol> listarRolesCreables();
 
     /**
      * Busca un administrador activo por su ID.

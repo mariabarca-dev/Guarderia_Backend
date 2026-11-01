@@ -20,8 +20,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Implementación de la lógica de negocio para la entidad Administrador.
@@ -48,14 +51,30 @@ public class AdministradorServiceImpl implements AdministradorService {
     private final PasswordEncoder passwordEncoder;
 
     /**
+     * Roles que NO se pueden asignar desde la pantalla de administradores: SOCIO y EMPLEADO tienen su propia
+     * entidad y SYSADMIN es una cuenta protegida. Cualquier otro valor del enum {@link Rol} se acepta, por lo que
+     * un rol nuevo funciona sin tocar esta lista.
+     */
+    private static final Set<Rol> ROLES_NO_CREABLES = EnumSet.of(Rol.SOCIO, Rol.EMPLEADO, Rol.SYSADMIN);
+
+    /**
      * {@inheritDoc}
      * Solo se reactivan administradores comunes inactivos: una cuenta SYSADMIN inactiva no se reactiva por esta
      * vía, por lo que su nombre de usuario se informa como ya registrado.
+     * Antes de cualquier otra cosa se valida el rol pedido: si viene vacío se usa ADMINISTRADOR y si es SOCIO,
+     * EMPLEADO o SYSADMIN se rechaza con 400.
      */
     @Override
     @Transactional
     public AdministradorResponse crear(AdministradorRequest request) {
         log.info("Iniciando creación de administrador con nombreUsuario: {}", request.getNombreUsuario());
+
+        Rol rolPedido = request.getRol() != null ? request.getRol() : Rol.ADMINISTRADOR;
+        if (ROLES_NO_CREABLES.contains(rolPedido)) {
+            log.warn("Se intentó crear una cuenta de administración con el rol no permitido {}.", rolPedido);
+            throw new BusinessException("Error: El rol " + rolPedido + " no se puede asignar desde esta pantalla.",
+                    HttpStatus.BAD_REQUEST);
+        }
 
         // Verificar si el nombreUsuario ya pertenece a otro registro (activo o inactivo) en toda la jerarquía
         Optional<Integer> duenoOpt = usuarioRepository.buscarIdPorNombreUsuarioIncluyendoInactivos(request.getNombreUsuario());
@@ -103,6 +122,16 @@ public class AdministradorServiceImpl implements AdministradorService {
         log.info("Administrador creado exitosamente con ID: {}", guardado.getId());
 
         return administradorRepository.fromEntity(guardado);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Rol> listarRolesCreables() {
+        return Arrays.stream(Rol.values())
+                .filter(rol -> !ROLES_NO_CREABLES.contains(rol))
+                .toList();
     }
 
     /**

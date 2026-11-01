@@ -73,12 +73,13 @@ public interface AdministradorRepository extends JpaRepository<Administrador, In
 
     /**
      * Convierte un {@link AdministradorRequest} en una entidad {@link Administrador}.
-     * El rol de la cuenta siempre es {@link Rol#ADMINISTRADOR}: no se toma del Request, de modo que
-     * esta ruta nunca pueda crear cuentas con otro rol (por ejemplo SYSADMIN).
+     * El rol se toma del Request; si viene nulo se usa {@link Rol#ADMINISTRADOR}. Esta clase no valida qué
+     * roles están permitidos: esa regla vive en {@code AdministradorServiceImpl.crear}, que rechaza SOCIO,
+     * EMPLEADO y SYSADMIN antes de llamar a este método.
      * La clave NO se copia acá: la asigna el service ya encriptada.
      *
      * @param request Objeto con los datos de entrada.
-     * @return Entidad Administrador mapeada con rol ADMINISTRADOR y activo = true.
+     * @return Entidad Administrador mapeada con el rol pedido (o ADMINISTRADOR) y activo = true.
      */
     default Administrador toEntity(AdministradorRequest request) {
         if (request == null) {
@@ -91,7 +92,7 @@ public interface AdministradorRepository extends JpaRepository<Administrador, In
         administrador.setDireccion(request.getDireccion());
         administrador.setTelefono(request.getTelefono());
         administrador.setNombreUsuario(request.getNombreUsuario());
-        administrador.setRol(Rol.ADMINISTRADOR);
+        administrador.setRol(request.getRol() != null ? request.getRol() : Rol.ADMINISTRADOR);
         administrador.setActivo(true);
         return administrador;
     }

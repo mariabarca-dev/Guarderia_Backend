@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.administradores;
 
+import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -12,6 +13,8 @@ import lombok.NoArgsConstructor;
  * Contiene las validaciones de Bean Validation correspondientes.
  * El DNI es opcional. Todos los campos de texto, incluida la clave, solo admiten caracteres válidos,
  * por lo que no aceptan scripts ni caracteres de marcado.
+ * El rol es opcional: si no se informa, la cuenta se crea con rol ADMINISTRADOR. El service rechaza los roles que
+ * tienen su propia entidad (SOCIO y EMPLEADO) y el rol protegido SYSADMIN.
  *
  * @author Franco Buyatti, Daniela Forclaz, Héctor Machaca, María Eugenia Barcat
  */
@@ -57,4 +60,7 @@ public class AdministradorRequest {
     @Size(max = 100, message = "La clave no puede superar los 100 caracteres")
     @Pattern(regexp = "^[^<>]*$", message = "La clave no puede contener los caracteres < o >")
     private String clave;
+
+    /** Rol de la cuenta (opcional). Si es nulo se usa ADMINISTRADOR. */
+    private Rol rol;
 }

@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 
+import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorUpdate;
@@ -571,6 +572,20 @@ public class UsuarioRestController {
     }
 
     /**
+     * Devuelve los roles que se pueden elegir al crear una cuenta en la pantalla de administradores
+     * (el enum {@link Rol} sin SOCIO, EMPLEADO ni SYSADMIN). Sirve para llenar el desplegable de Rol del formulario.
+     * Es una ruta fija: Spring la prefiere sobre {@code /administradores/{id}}.
+     * Permitido para los roles ADMINISTRADOR y SYSADMIN.
+     *
+     * @return {@link ResponseEntity} con la lista de {@link Rol} y estado HTTP 200 (OK).
+     */
+    @GetMapping("/administradores/roles-creables")
+    public ResponseEntity<List<Rol>> listarRolesCreables() {
+        log.info("REST Request: Consulta de los roles que se pueden asignar al crear una cuenta de administración");
+        return ResponseEntity.ok(usuarioService.listarRolesCreablesAdministrador());
+    }
+
+    /**
      * Busca un administrador activo por su identificador único.
      * Un ADMINISTRADOR no puede consultar cuentas SYSADMIN (403).
      * Permitido para los roles ADMINISTRADOR y SYSADMIN.
@@ -587,8 +602,8 @@ public class UsuarioRestController {
     }
 
     /**
-     * Registra una nueva cuenta de administrador (o reactiva una inactiva). La cuenta creada siempre es de rol
-     * ADMINISTRADOR.
+     * Registra una nueva cuenta de administración (o reactiva una inactiva). El rol es opcional: si no se envía
+     * es ADMINISTRADOR; SOCIO, EMPLEADO y SYSADMIN se rechazan (400).
      * Permitido para los roles ADMINISTRADOR y SYSADMIN.
      *
      * @param request {@link AdministradorRequest} validado.

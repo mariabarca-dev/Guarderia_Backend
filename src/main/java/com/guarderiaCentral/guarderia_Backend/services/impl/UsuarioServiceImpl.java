@@ -1,6 +1,7 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
+import com.guarderiaCentral.guarderia_Backend.modelos.Rol;
 import com.guarderiaCentral.guarderia_Backend.modelos.Usuario;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.administradores.AdministradorRequest;
@@ -169,6 +170,11 @@ public class UsuarioServiceImpl implements UsuarioService {
     public AdministradorResponse crearAdministrador(AdministradorRequest request) {
         log.info("UsuarioService delegando creación de administrador a AdministradorService.");
         return administradorService.crear(request);
+    }
+
+    @Override
+    public List<Rol> listarRolesCreablesAdministrador() {
+        return administradorService.listarRolesCreables();
     }
 
     @Override
