@@ -130,11 +130,22 @@ mvn spring-boot:run
 
 La API queda en `http://localhost:8080`. **Levantá primero el backend y después el frontend.**
 
-## Datos de prueba
+## Orden para cargar datos
 
-El orden recomendado para cargar datos (zona → cocheras → socio → rodado → compra → ocupación → empleado → sector) está en la guía de pruebas del grupo. Un registro no se puede dar de baja mientras otro activo dependa de él (por ejemplo, una zona con cocheras o sectores activos).
+Al iniciar, el sistema crea solo el usuario SYSADMIN. El resto de los datos se carga desde la web, y conviene respetar este orden porque cada paso necesita lo anterior:
 
-## Estructura del proyecto
+1. **Zona:** letra, tipo de rodado, capacidad y medidas de las cocheras.
+2. **Cocheras:** cada una pertenece a una zona.
+3. **Socio:** cuenta del socio.
+4. **Rodado:** se registra a nombre de un socio.
+5. **Compra:** un socio compra una cochera.
+6. **Ocupación:** un rodado ocupa una cochera.
+7. **Empleado:** cuenta del empleado.
+8. **Sector:** se asigna un empleado a una zona (la zona debe existir).
+
+Un registro no se puede dar de baja mientras otro activo dependa de él. Por ejemplo, una zona con cocheras o sectores activos, un socio con rodados o compras, o una cochera ocupada o comprada. Para dar de baja, se hace en el orden inverso.
+
+# Estructura del proyecto
 
 ```
 Guarderia_Backend/
