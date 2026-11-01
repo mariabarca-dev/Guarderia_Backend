@@ -59,8 +59,8 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
             throw new BusinessException("Error: El vehículo y el garaje son obligatorios.", HttpStatus.BAD_REQUEST);
         }
 
-        // 0. REGLA DE NEGOCIO: la fecha de asignación no puede ser anterior a la fundación de la guardería
-        validarFechaDesdeFundacion(request.getFechaAsignacionGarage());
+        // 0. REGLA DE NEGOCIO: la fecha de asignación no puede ser anterior a la fundación de la guardería ni superar en más de un año a la fecha actual
+        validarRangoFechaAsignacion(request.getFechaAsignacionGarage());
 
         // 1. Recuperar y verificar que las entidades existen y están activas
         Vehiculo vehiculo = buscarVehiculoActivo(request.getVehiculoId());
@@ -199,7 +199,7 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
                 .filter(AsignacionVehiculoGarage::getActivo)
                 .orElseThrow(() -> new RegistroNoEncontradoException("No existe la asignación activa a actualizar con ID: " + id));
 
-        validarFechaDesdeFundacion(update.getFechaAsignacionGarage());
+        validarRangoFechaAsignacion(update.getFechaAsignacionGarage());
 
         // Se guarda lo anterior antes de aplicar los cambios
         Vehiculo vehiculoAnterior = asignacionExistente.getVehiculo();
@@ -289,17 +289,25 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
     }
 
     /**
-     * Valida que la fecha de asignación no sea anterior a la fecha de fundación de la guardería.
+     * Valida que la fecha de asignación no sea anterior a la fecha de fundación de la guardería ni supere en
+     * más de un año a la fecha actual.
      *
      * @param fechaAsignacion fecha de asignación a validar (puede ser null, en cuyo caso no se valida)
-     * @throws BusinessException Si la fecha es anterior a la fundación (400).
+     * @throws BusinessException Si la fecha es anterior a la fundación o supera el límite hacia adelante (400).
      */
-    private void validarFechaDesdeFundacion(LocalDate fechaAsignacion) {
+    private void validarRangoFechaAsignacion(LocalDate fechaAsignacion) {
         if (fechaAsignacion != null && fechaAsignacion.isBefore(ConstantesNegocio.FECHA_FUNDACION)) {
             log.warn("Fecha de asignación {} anterior a la fundación de la guardería.", fechaAsignacion);
-            throw new BusinessException("Error de negocio: La fecha de asignación (" + fechaAsignacion
+            throw new BusinessException("La fecha de asignación (" + fechaAsignacion
                     + ") no puede ser anterior a la fecha de fundación de la guardería ("
                     + ConstantesNegocio.FECHA_FUNDACION + ").", HttpStatus.BAD_REQUEST);
+        }
+        if (fechaAsignacion != null && fechaAsignacion.isAfter(ConstantesNegocio.fechaMaximaPermitida())) {
+            log.warn("Fecha de asignación {} supera el límite de un año hacia adelante.", fechaAsignacion);
+            throw new BusinessException("La fecha de asignación (" + fechaAsignacion
+                    + ") no puede superar en más de " + ConstantesNegocio.ANIOS_MAXIMOS_HACIA_ADELANTE
+                    + " año a la fecha actual (límite: " + ConstantesNegocio.fechaMaximaPermitida() + ").",
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -346,7 +354,7 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
 
         if (vehiculoYaAsignado) {
             log.warn("El vehículo ID: {} ya dispone de una asignación activa en el sistema", vehiculo.getId());
-            throw new BusinessException("Error de negocio: El vehículo con matrícula " + vehiculo.getMatricula()
+            throw new BusinessException("El vehículo con matrícula " + vehiculo.getMatricula()
                     + " ya está asignado a un garaje en el sistema.", HttpStatus.CONFLICT);
         }
     }
@@ -361,7 +369,7 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
         Zona zona = garage.getZona();
         if (zona == null) {
             log.error("El garaje ID {} no tiene ninguna zona asociada", garage.getId());
-            throw new BusinessException("Error de negocio: El garaje especificado no está asociado a ninguna zona.", HttpStatus.BAD_REQUEST);
+            throw new BusinessException("El garaje especificado no está asociado a ninguna zona.", HttpStatus.BAD_REQUEST);
         }
         validarEncaje(vehiculo, zona);
     }
@@ -375,13 +383,13 @@ public class AsignacionVehiculoGarageServiceImpl implements AsignacionVehiculoGa
     private void validarEncaje(Vehiculo vehiculo, Zona zona) {
         if (vehiculo.getTipo() != zona.getTipoVehiculo()) {
             log.warn("Incompatibilidad de tipo -> Vehículo: {}, Zona: {}", vehiculo.getTipo(), zona.getTipoVehiculo());
-            throw new BusinessException("Error de negocio: El vehículo de tipo " + vehiculo.getTipo()
+            throw new BusinessException("El vehículo de tipo " + vehiculo.getTipo()
                     + " no es compatible con la zona asignada de " + zona.getTipoVehiculo() + ".", HttpStatus.BAD_REQUEST);
         }
 
         if (vehiculo.getAncho() > zona.getAnchoGarage() || vehiculo.getProfundidad() > zona.getLargoGarage()) {
             log.warn("El vehículo ID {} no entra en los garages de la zona ID {}", vehiculo.getId(), zona.getId());
-            throw new BusinessException("Error de negocio: El vehículo con matrícula " + vehiculo.getMatricula()
+            throw new BusinessException("El vehículo con matrícula " + vehiculo.getMatricula()
                     + " (ancho " + vehiculo.getAncho() + ", profundidad " + vehiculo.getProfundidad()
                     + ") no entra en los garages de la zona '" + zona.getLetra()
                     + "' (ancho " + zona.getAnchoGarage() + ", profundidad " + zona.getLargoGarage() + ").",

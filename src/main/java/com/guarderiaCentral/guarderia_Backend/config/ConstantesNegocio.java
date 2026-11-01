@@ -12,8 +12,25 @@ public final class ConstantesNegocio {
     /**
      * Fecha de fundación de la Guardería Central. Ninguna fecha de ingreso de un socio, de asignación de un
      * vehículo a un garage ni de compra de un garage puede ser anterior a ella.
+     * Tampoco pueden superar {@link #fechaMaximaPermitida()}.
      */
     public static final LocalDate FECHA_FUNDACION = LocalDate.of(1926, 1, 1);
+
+    /**
+     * Cantidad de años hacia adelante, contados desde hoy, que se permite en las fechas de ingreso de un socio,
+     * de compra de un garage y de asignación de un vehículo a un garage. Permite registrar con anticipación
+     * pero evita errores de carga (por ejemplo, un año mal tipeado).
+     */
+    public static final int ANIOS_MAXIMOS_HACIA_ADELANTE = 1;
+
+    /**
+     * Calcula la fecha máxima permitida para las fechas de ingreso, compra y asignación.
+     *
+     * @return La fecha de hoy más {@link #ANIOS_MAXIMOS_HACIA_ADELANTE} año(s).
+     */
+    public static LocalDate fechaMaximaPermitida() {
+        return LocalDate.now().plusYears(ANIOS_MAXIMOS_HACIA_ADELANTE);
+    }
 
     private ConstantesNegocio() {
         // Clase de constantes: no se instancia.

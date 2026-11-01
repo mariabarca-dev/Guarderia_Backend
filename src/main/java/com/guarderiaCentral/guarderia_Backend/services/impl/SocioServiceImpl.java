@@ -77,8 +77,8 @@ public class SocioServiceImpl implements SocioService {
     public SocioResponse crear(SocioRequest request) {
         log.info("Iniciando registro de nuevo socio con DNI: {}", request.getDni());
 
-        // 1. Validar fecha de ingreso
-        validarFechaIngresoDesdeFundacion(request.getFechaIngreso());
+        // 1. Validar fecha de ingreso (desde la fundación y hasta un año hacia adelante)
+        validarRangoFechaIngreso(request.getFechaIngreso());
 
         // 2. Verificar si el nombreUsuario pertenece a otro usuario en toda la jerarquía (activos e inactivos)
         Optional<Integer> duenoNombreUsuarioOpt = usuarioRepository.buscarIdPorNombreUsuarioIncluyendoInactivos(request.getNombreUsuario());
@@ -225,7 +225,7 @@ public class SocioServiceImpl implements SocioService {
         }
 
         if (update.getFechaIngreso() != null) {
-            validarFechaIngresoDesdeFundacion(update.getFechaIngreso());
+            validarRangoFechaIngreso(update.getFechaIngreso());
             validarFechaIngresoAnteriorALasCompras(id, update.getFechaIngreso());
         }
 
@@ -406,16 +406,22 @@ public class SocioServiceImpl implements SocioService {
     }
 
     /**
-     * Valida que la fecha de ingreso no sea anterior a la fecha de fundación de la guardería.
-     * Se usa tanto al crear como al modificar un socio.
+     * Valida que la fecha de ingreso no sea anterior a la fecha de fundación de la guardería ni supere
+     * en más de un año a la fecha actual. Se usa tanto al crear como al modificar un socio.
      *
      * @param fechaIngreso Fecha de ingreso a validar (puede ser null, en cuyo caso no se valida).
-     * @throws BusinessException Si la fecha es anterior a la fundación.
+     * @throws BusinessException Si la fecha es anterior a la fundación o supera el límite hacia adelante.
      */
-    private void validarFechaIngresoDesdeFundacion(LocalDate fechaIngreso) {
+    private void validarRangoFechaIngreso(LocalDate fechaIngreso) {
         if (fechaIngreso != null && fechaIngreso.isBefore(ConstantesNegocio.FECHA_FUNDACION)) {
             log.error("Fecha de ingreso {} anterior a la fundación.", fechaIngreso);
             throw new BusinessException("La fecha de ingreso no puede ser anterior a la fecha de fundación del sistema (" + ConstantesNegocio.FECHA_FUNDACION + ").");
+        }
+        if (fechaIngreso != null && fechaIngreso.isAfter(ConstantesNegocio.fechaMaximaPermitida())) {
+            log.error("Fecha de ingreso {} supera el límite de un año hacia adelante.", fechaIngreso);
+            throw new BusinessException("La fecha de ingreso (" + fechaIngreso + ") no puede superar en más de "
+                    + ConstantesNegocio.ANIOS_MAXIMOS_HACIA_ADELANTE + " año a la fecha actual (límite: "
+                    + ConstantesNegocio.fechaMaximaPermitida() + ").");
         }
     }
 

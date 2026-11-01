@@ -65,7 +65,7 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
             throw new GarageYaVendidoException("Error: El garaje N° " + garage.getNumeroGarage() + " ya tiene un socio propietario asignado.");
         }
 
-        validarFechaCompraDesdeFundacion(request.getFechaCompraGarage());
+        validarRangoFechaCompra(request.getFechaCompraGarage());
         validarFechaCompraPosteriorAlIngreso(request.getFechaCompraGarage(), socio);
 
         PropiedadGarage nuevaPropiedad = propiedadGarageRepository.toEntity(request);
@@ -162,7 +162,7 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
         LocalDate fechaCompraResultante = update.getFechaCompraGarage() != null
                 ? update.getFechaCompraGarage()
                 : propiedadExistente.getFechaCompraGarage();
-        validarFechaCompraDesdeFundacion(fechaCompraResultante);
+        validarRangoFechaCompra(fechaCompraResultante);
         validarFechaCompraPosteriorAlIngreso(fechaCompraResultante, socio);
 
         propiedadGarageRepository.updateEntity(propiedadExistente, update);
@@ -190,17 +190,23 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
     }
 
     /**
-     * Valida que la fecha de compra no sea anterior a la fecha de fundación de la guardería. Se usa tanto al
-     * registrar como al modificar una propiedad.
+     * Valida que la fecha de compra no sea anterior a la fecha de fundación de la guardería ni supere en más
+     * de un año a la fecha actual. Se usa tanto al registrar como al modificar una propiedad.
      *
      * @param fechaCompra Fecha de compra del garage (puede ser null, en cuyo caso no se valida).
-     * @throws BusinessException Si la fecha de compra es anterior a la fundación (400).
+     * @throws BusinessException Si la fecha de compra es anterior a la fundación o supera el límite hacia adelante (400).
      */
-    private void validarFechaCompraDesdeFundacion(LocalDate fechaCompra) {
+    private void validarRangoFechaCompra(LocalDate fechaCompra) {
         if (fechaCompra != null && fechaCompra.isBefore(ConstantesNegocio.FECHA_FUNDACION)) {
-            throw new BusinessException("Error de negocio: La fecha de compra (" + fechaCompra
+            throw new BusinessException("La fecha de compra (" + fechaCompra
                     + ") no puede ser anterior a la fecha de fundación de la guardería ("
                     + ConstantesNegocio.FECHA_FUNDACION + ").", HttpStatus.BAD_REQUEST);
+        }
+        if (fechaCompra != null && fechaCompra.isAfter(ConstantesNegocio.fechaMaximaPermitida())) {
+            throw new BusinessException("La fecha de compra (" + fechaCompra
+                    + ") no puede superar en más de " + ConstantesNegocio.ANIOS_MAXIMOS_HACIA_ADELANTE
+                    + " año a la fecha actual (límite: " + ConstantesNegocio.fechaMaximaPermitida() + ").",
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -214,7 +220,7 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
      */
     private void validarFechaCompraPosteriorAlIngreso(LocalDate fechaCompra, Socio socio) {
         if (fechaCompra != null && socio.getFechaIngreso() != null && fechaCompra.isBefore(socio.getFechaIngreso())) {
-            throw new BusinessException("Error de negocio: La fecha de compra (" + fechaCompra
+            throw new BusinessException("La fecha de compra (" + fechaCompra
                     + ") no puede ser anterior a la fecha de ingreso del socio (" + socio.getFechaIngreso() + ").", HttpStatus.BAD_REQUEST);
         }
     }
