@@ -16,6 +16,7 @@ Este repositorio es el **backend** del sistema de la cochera "Guardería Central
 | Persistencia | Spring Data JPA + Hibernate, MySQL |
 | Seguridad | Spring Security con sesión HTTP (cookie `GUARDERIA_BACK`) |
 | Validación | Bean Validation (`jakarta.validation`) |
+| Serialización | Jackson (incluido en Spring Boot) |
 | Utilidades | Lombok |
 | Puerto | `8080` |
 
@@ -36,6 +37,10 @@ El backend se organiza en capas dentro del paquete `com.guarderiaCentral.guarder
 | `security` | `SecurityConfig` (autorización por rol), login y manejo de la sesión. |
 | `exceptions` | Excepciones de negocio y `GlobalExceptionHandler`, que las traduce a respuestas HTTP. |
 | `config` | Constantes de negocio y creación del SYSADMIN inicial. |
+
+### Serialización de datos
+
+La API usa **Jackson** (incluido en Spring Boot). Los DTO `Request` / `Update` se deserializan desde el JSON del cuerpo de la petición y los `Response` se serializan a JSON en la respuesta. Las entidades JPA nunca se exponen directamente.
 
 ### Modelo de datos
 
