@@ -5,7 +5,7 @@ Trabajo práctico de **Programación 2** – Tecnicatura Universitaria en Inform
 
 **Integrantes:** Franco Buyatti, Daniela Forclaz, Héctor Machaca y María Eugenia Barca.
 
-Este repositorio es el **backend** del sistema de la cochera "Guardería Central". Expone una API REST con la lógica de negocio, la persistencia en MySQL y la seguridad por rol. La interfaz web está en el repositorio del **frontend** (`Guarderia_Frontend`), que consume esta API.
+Este repositorio es el **backend** del sistema "Guardería Central", una aplicación para gestionar una guardería de rodados (motorhomes, casas rodantes de arrastre, caravanas y trailers). Permite administrar socios, empleados, zonas, cocheras, rodados, compras y ocupaciones, con reglas de negocio validadas en la capa de servicios (fechas, medidas, capacidad y exclusividad), borrado lógico y acceso por rol. Expone una API REST con la persistencia en MySQL y la seguridad por rol. La interfaz web está en el repositorio del **frontend** (`Guarderia_Frontend`), que consume esta API.
 
 ## Tecnologías
 
@@ -150,10 +150,11 @@ Al iniciar, el sistema crea solo el usuario SYSADMIN. El resto de los datos se c
 
 Un registro no se puede dar de baja mientras otro activo dependa de él. Por ejemplo, una zona con cocheras o sectores activos, un socio con rodados o compras, o una cochera ocupada o comprada. Para dar de baja, se hace en el orden inverso.
 
-# Estructura del proyecto
+## Estructura del proyecto
 
 ```
 Guarderia_Backend/
+├── documentacion/            ← diagramas: casos de uso, entidad-relación y UML
 ├── entorno/                  ← credenciales (NO se sube a Git)
 │   └── config.properties
 ├── src/main/java/.../guarderia_Backend/
@@ -162,3 +163,7 @@ Guarderia_Backend/
 ├── src/main/resources/application.properties
 └── pom.xml
 ```
+
+## Documentación
+
+Los diagramas del sistema (casos de uso, entidad-relación y UML) están en la carpeta `documentacion` de este repositorio.
