@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 /**
  * Objeto de respuesta para exponer la información pública de un Garage, con el ID de su zona y la letra de
  * esa zona (dato legible que se muestra en lugar del ID).
@@ -19,6 +21,7 @@ public class GarageResponse {
     private int numeroGarage;
     private double lecturaLuz;
     private boolean servicioMantenimiento;
+    private BigDecimal cuotaGarage;
     private Integer zonaId;
     private String zonaLetra;
     private Boolean activo;

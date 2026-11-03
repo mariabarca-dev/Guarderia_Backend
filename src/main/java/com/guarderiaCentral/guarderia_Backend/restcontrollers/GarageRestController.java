@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 
+import com.guarderiaCentral.guarderia_Backend.repositories.garages.CuotaGarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageUpdate;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -82,6 +84,23 @@ public class GarageRestController {
         logger.info("REST Request para obtener el reporte global de disponibilidad de garages por zona.");
         List<ZonaResponse> reporte = garageService.consultarDisponibilidadGarages();
         return ResponseEntity.ok(reporte);
+    }
+
+    /**
+     * Calcula la cuota de una cochera a partir de sus datos, sin guardar nada.
+     * Permitido exclusivamente para rol: ADMINISTRADOR.
+     * Se declara antes de {@code /{id}} para que la ruta fija no choque con el parámetro de ruta.
+     *
+     * @param lecturaLuz            Lectura del contador de luz, en kWh.
+     * @param servicioMantenimiento Indica si la cochera tiene el servicio de mantenimiento.
+     * @return ResponseEntity con el {@link CuotaGarageResponse} calculado y código HTTP 200 OK.
+     */
+    @GetMapping("/cuota")
+    public ResponseEntity<CuotaGarageResponse> calcularCuota(
+            @RequestParam Double lecturaLuz,
+            @RequestParam Boolean servicioMantenimiento) {
+        logger.info("REST Request para calcular la cuota de una cochera.");
+        return ResponseEntity.ok(garageService.calcularCuota(lecturaLuz, servicioMantenimiento));
     }
 
     /**

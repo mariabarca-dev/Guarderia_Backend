@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.services.impl;
 
+import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.DependenciasActivasException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NumeroGarageDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
@@ -8,6 +9,7 @@ import com.guarderiaCentral.guarderia_Backend.modelos.AsignacionVehiculoGarage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Garage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Zona;
 import com.guarderiaCentral.guarderia_Backend.repositories.asignacionVehiculoGarages.AsignacionVehiculoGarageRepository;
+import com.guarderiaCentral.guarderia_Backend.repositories.garages.CuotaGarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageResponse;
@@ -272,6 +274,17 @@ public class GarageServiceImpl implements GarageService {
 
             return dto;
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CuotaGarageResponse calcularCuota(Double lecturaLuz, Boolean servicioMantenimiento) {
+        if (!Double.isFinite(lecturaLuz) || lecturaLuz < 0) {
+            throw new BusinessException("La lectura de luz debe ser un número mayor o igual a 0.");
+        }
+        return new CuotaGarageResponse(Garage.calcularCuota(lecturaLuz, servicioMantenimiento));
     }
 
     // --- Métodos Privados Auxiliares ---

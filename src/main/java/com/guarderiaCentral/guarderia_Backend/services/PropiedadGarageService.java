@@ -3,6 +3,7 @@ package com.guarderiaCentral.guarderia_Backend.services;
 import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.GarageYaVendidoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
+import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PresupuestoCompraResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageUpdate;
@@ -84,4 +85,15 @@ public interface PropiedadGarageService {
      * @throws RegistroNoEncontradoException Si el registro no existe o ya está inactivo.
      */
     void eliminar(Integer id);
+
+    /**
+     * Calcula el valor de una compra según la cochera y los meses a contratar, sin guardar nada.
+     *
+     * @param garageId Identificador de la cochera.
+     * @param meses    Meses a contratar.
+     * @return {@link PresupuestoCompraResponse} con el valor total, la promoción y el total con descuento.
+     * @throws RegistroNoEncontradoException Si la cochera no existe o está inactiva.
+     * @throws BusinessException Si la cantidad de meses está fuera del rango permitido.
+     */
+    PresupuestoCompraResponse calcularPresupuesto(Integer garageId, Integer meses);
 }

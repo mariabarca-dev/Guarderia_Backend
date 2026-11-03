@@ -1,9 +1,11 @@
 package com.guarderiaCentral.guarderia_Backend.services;
 
+import com.guarderiaCentral.guarderia_Backend.exceptions.BusinessException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.DependenciasActivasException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.NumeroGarageDuplicadoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.RegistroNoEncontradoException;
 import com.guarderiaCentral.guarderia_Backend.exceptions.ZonaSinCapacidadException;
+import com.guarderiaCentral.guarderia_Backend.repositories.garages.CuotaGarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageUpdate;
@@ -94,4 +96,14 @@ public interface GarageService {
      * @return Lista de objetos {@link ZonaResponse} con el informe de disponibilidad por zona.
      */
     List<ZonaResponse> consultarDisponibilidadGarages();
+
+    /**
+     * Calcula la cuota que le corresponde a una cochera, sin guardar nada.
+     *
+     * @param lecturaLuz            Lectura del contador de luz, en kWh.
+     * @param servicioMantenimiento Indica si la cochera tiene el servicio de mantenimiento.
+     * @return {@link CuotaGarageResponse} con el importe calculado.
+     * @throws BusinessException Si la lectura de luz es negativa o no es un número válido.
+     */
+    CuotaGarageResponse calcularCuota(Double lecturaLuz, Boolean servicioMantenimiento);
 }

@@ -1,6 +1,7 @@
 package com.guarderiaCentral.guarderia_Backend.restcontrollers;
 
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageResponse;
+import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PresupuestoCompraResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageUpdate;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -53,6 +55,21 @@ public class PropiedadGarageRestController {
         logger.info("REST Request para listar todas las propiedades de garajes (incluyendo inactivas).");
         List<PropiedadGarageResponse> lista = propiedadGarageService.listarTodasIncluyendoInactivas();
         return ResponseEntity.ok(lista);
+    }
+
+    /**
+     * Calcula el valor de una compra según la cochera y los meses a contratar, sin guardar nada.
+     *
+     * @param garageId Identificador de la cochera.
+     * @param meses    Meses a contratar.
+     * @return ResponseEntity con el {@link PresupuestoCompraResponse} y código HTTP 200 OK.
+     */
+    @GetMapping("/presupuesto")
+    public ResponseEntity<PresupuestoCompraResponse> calcularPresupuesto(
+            @RequestParam Integer garageId,
+            @RequestParam Integer meses) {
+        logger.info("REST Request para calcular el valor de una compra del garaje ID {} por {} meses.", garageId, meses);
+        return ResponseEntity.ok(propiedadGarageService.calcularPresupuesto(garageId, meses));
     }
 
     @GetMapping("/{id}")

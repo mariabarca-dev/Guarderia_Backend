@@ -77,6 +77,8 @@ public interface PropiedadGarageRepository extends JpaRepository<PropiedadGarage
         }
 
         propiedad.setFechaCompraGarage(request.getFechaCompraGarage());
+        propiedad.setMesesContratados(request.getMesesContratados());
+        propiedad.setMetodoPago(request.getMetodoPago());
         propiedad.setActivo(true);
         return propiedad;
     }
@@ -104,6 +106,12 @@ public interface PropiedadGarageRepository extends JpaRepository<PropiedadGarage
         if (update.getFechaCompraGarage() != null) {
             propiedad.setFechaCompraGarage(update.getFechaCompraGarage());
         }
+        if (update.getMesesContratados() != null) {
+            propiedad.setMesesContratados(update.getMesesContratados());
+        }
+        if (update.getMetodoPago() != null) {
+            propiedad.setMetodoPago(update.getMetodoPago());
+        }
     }
 
     /**
@@ -127,8 +135,12 @@ public interface PropiedadGarageRepository extends JpaRepository<PropiedadGarage
         if (propiedad.getGarage() != null) {
             response.setGarageId(propiedad.getGarage().getId());
             response.setGarageNumero(RelacionSegura.leer(() -> propiedad.getGarage().getNumeroGarage()));
+            response.setPresupuesto(RelacionSegura.leer(() -> PresupuestoCompraResponse.calcular(
+                    propiedad.getGarage().calcularCuota(), propiedad.getMesesContratados())));
         }
         response.setFechaCompraGarage(propiedad.getFechaCompraGarage());
+        response.setMesesContratados(propiedad.getMesesContratados());
+        response.setMetodoPago(propiedad.getMetodoPago());
         response.setActivo(propiedad.getActivo());
         return response;
     }

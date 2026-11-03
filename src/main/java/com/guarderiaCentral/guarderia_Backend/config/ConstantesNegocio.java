@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.config;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -22,6 +23,30 @@ public final class ConstantesNegocio {
      * pero evita errores de carga (por ejemplo, un año mal tipeado).
      */
     public static final int ANIOS_MAXIMOS_HACIA_ADELANTE = 1;
+
+    /** Valor base mensual de una cochera, igual para todas. Valor de ejemplo. */
+    public static final BigDecimal VALOR_BASE_GARAGE = new BigDecimal("20000.00");
+
+    /** Precio de cada kWh de la lectura del contador de luz. Valor de ejemplo. */
+    public static final BigDecimal PRECIO_KWH = new BigDecimal("150.00");
+
+    /** Importe mensual del servicio de mantenimiento, para las cocheras que lo tienen. Valor de ejemplo. */
+    public static final BigDecimal VALOR_MANTENIMIENTO = new BigDecimal("5000.00");
+
+    /** Cantidad máxima de meses que se pueden contratar en una compra. */
+    public static final int MESES_MAXIMOS_CONTRATO = 12;
+
+    /** Cantidad de meses a partir de la cual se aplica {@link #DESCUENTO_12_MESES}. */
+    public static final int MESES_PROMO_12 = 12;
+
+    /** Porcentaje de descuento por contratar 12 meses. */
+    public static final int DESCUENTO_12_MESES = 20;
+
+    /** Cantidad de meses a partir de la cual se aplica {@link #DESCUENTO_6_MESES}. */
+    public static final int MESES_PROMO_6 = 6;
+
+    /** Porcentaje de descuento por contratar de 6 a 11 meses. */
+    public static final int DESCUENTO_6_MESES = 10;
 
     /**
      * Calcula la fecha máxima permitida para las fechas de ingreso, compra y asignación.

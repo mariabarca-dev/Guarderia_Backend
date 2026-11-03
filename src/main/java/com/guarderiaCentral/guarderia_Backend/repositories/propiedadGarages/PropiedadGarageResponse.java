@@ -1,5 +1,6 @@
 package com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages;
 
+import com.guarderiaCentral.guarderia_Backend.modelos.MetodoPago;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,6 +27,10 @@ public class PropiedadGarageResponse {
     private Integer garageId;
     private Integer garageNumero;
     private LocalDate fechaCompraGarage;
+    private Integer mesesContratados;
+    private MetodoPago metodoPago;
+    /** Valor de la compra y promoción aplicada; null si la cochera ya no está disponible. */
+    private PresupuestoCompraResponse presupuesto;
     private Boolean activo;
     /** Matrícula del rodado que ocupa la cochera (solo se completa en "mis propiedades" del socio; null si está libre). */
     private String ocupadaPorMatricula;

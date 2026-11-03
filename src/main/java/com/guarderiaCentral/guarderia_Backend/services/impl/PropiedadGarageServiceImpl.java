@@ -8,6 +8,7 @@ import com.guarderiaCentral.guarderia_Backend.modelos.Garage;
 import com.guarderiaCentral.guarderia_Backend.modelos.PropiedadGarage;
 import com.guarderiaCentral.guarderia_Backend.modelos.Socio;
 import com.guarderiaCentral.guarderia_Backend.repositories.garages.GarageRepository;
+import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PresupuestoCompraResponse;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageRepository;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageRequest;
 import com.guarderiaCentral.guarderia_Backend.repositories.propiedadGarages.PropiedadGarageResponse;
@@ -187,6 +188,22 @@ public class PropiedadGarageServiceImpl implements PropiedadGarageService {
         propiedad.setActivo(false);
         propiedadGarageRepository.save(propiedad);
         log.info("Borrado lógico completado para propiedad con ID: {}", id);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public PresupuestoCompraResponse calcularPresupuesto(Integer garageId, Integer meses) {
+        if (meses < 1 || meses > ConstantesNegocio.MESES_MAXIMOS_CONTRATO) {
+            throw new BusinessException("La cantidad de meses debe estar entre 1 y "
+                    + ConstantesNegocio.MESES_MAXIMOS_CONTRATO + ".");
+        }
+        Garage garage = garageRepository.findById(garageId)
+                .filter(Garage::getActivo)
+                .orElseThrow(() -> new RegistroNoEncontradoException("El garage especificado no existe o está inactivo en el sistema."));
+        return PresupuestoCompraResponse.calcular(garage.calcularCuota(), meses);
     }
 
     /**

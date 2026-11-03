@@ -38,6 +38,15 @@ public class PropiedadGarage {
     @Column(name = "fecha_compra_garage", nullable = false)
     private LocalDate fechaCompraGarage;
 
+    /** Meses contratados en la compra. Las compras anteriores a este campo quedan con 1 mes. */
+    @Column(name = "meses_contratados", nullable = false, columnDefinition = "int default 1")
+    private Integer mesesContratados = 1;
+
+    /** Método de pago de la compra. Las compras anteriores a este campo quedan sin dato (null). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "metodo_pago", length = 20, columnDefinition = "varchar(20)")
+    private MetodoPago metodoPago;
+
     @Column(name = "activo", nullable = false)
     private Boolean activo = true;
 }

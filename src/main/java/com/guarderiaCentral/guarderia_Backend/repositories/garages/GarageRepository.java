@@ -126,6 +126,7 @@ public interface GarageRepository extends JpaRepository<Garage, Integer> {
         response.setNumeroGarage(garage.getNumeroGarage());
         response.setLecturaLuz(garage.getLecturaLuz());
         response.setServicioMantenimiento(garage.isServicioMantenimiento());
+        response.setCuotaGarage(garage.calcularCuota());
         if (garage.getZona() != null) {
             response.setZonaId(garage.getZona().getId());
             response.setZonaLetra(RelacionSegura.leer(() -> garage.getZona().getLetra()));
