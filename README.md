@@ -150,6 +150,10 @@ Al iniciar, el sistema crea solo el usuario SYSADMIN. El resto de los datos se c
 
 Un registro no se puede dar de baja mientras otro activo dependa de él. Por ejemplo, una zona con cocheras o sectores activos, un socio con rodados o compras, o una cochera ocupada o comprada. Para dar de baja, se hace en el orden inverso.
 
+### Datos de prueba (opcional)
+
+Opcional: datos de prueba en `documentacion/datos_demo.sql`. Ejecutarlo después de arrancar el backend por primera vez. Las cuentas `demo_*` se crean sin clave conocida; el SYSADMIN puede asignarles una desde la web.
+
 ## Estructura del proyecto
 
 ```
